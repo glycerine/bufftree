@@ -66,8 +66,9 @@ Ordered scans sort blocks as needed and merge in buffered entries.
 When blocks fill unevenly, the BPA redistributes entries across them,
 combining inexpensive writes with efficient sequential scans.
 This does mean that a full table scan will re-write your data, which
-has locking and concurrency implications. See the notes on concurrency
-section at the end of this README.
+has locking and concurrency implications. See the 
+[notes on concurrency section](#notes-on-concurrency) at the
+end of this README.
 
 `Tree[K,V]` iterates in key order and supports range queries. `Dict[K,V]`
 iterates in insertion order. Both maintain a BP-tree and, by default, an
