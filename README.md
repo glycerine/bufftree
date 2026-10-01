@@ -37,14 +37,16 @@ c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
 ~~~
 
-# Conlusion: our bufftree is the in-memory map of choice when deterministic iteration is required.
+# Conlusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
 
 We support either insertion-ordered iteration using bufftree.Dict, or sorted key-order iteration using bufftree.BPTree.
 
 The built in Go map is deliberately randomized and so unusable when 
-determinism, sorted keys, or range queries are required.
-
-The common alternatives of tidwall/btree or a red-black tree are slower.
+determinism, sorted keys, or range queries are required. It wins 
+for write heavy workloads,
+but these are uncommon. The built-in Go map looses very badly (3x slower) 
+for full table scans since its randomized iteration
+order destroys your L1 cache hit ratio.
 
 ----------------------------
 
