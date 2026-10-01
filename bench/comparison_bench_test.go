@@ -19,6 +19,7 @@ type benchUint64Points interface {
 type benchUint64Map map[uint64]uint64
 
 func (m benchUint64Map) Get(k uint64) uint64 { return m[k] }
+func (m benchUint64Map) Len() int            { return len(m) }
 func (m benchUint64Map) Put(k, v uint64) (uint64, bool) {
 	old, found := m[k]
 	m[k] = v
@@ -34,6 +35,7 @@ func (m *benchTidwallMap) Get(k uint64) uint64 {
 	return v
 }
 func (m *benchTidwallMap) Put(k, v uint64) (uint64, bool) { return m.tree.Set(k, v) }
+func (m *benchTidwallMap) Len() int                       { return m.tree.Len() }
 func (m *benchTidwallMap) Scan(start uint64, length int, visit func(uint64, uint64) bool) {
 	if length <= 0 {
 		return
@@ -68,6 +70,7 @@ func (m *benchRBTree) Get(k uint64) uint64 {
 	}
 	return 0
 }
+func (m *benchRBTree) Len() int { return m.tree.Len() }
 func (m *benchRBTree) Put(k, v uint64) (uint64, bool) {
 	*m.probe = benchKV{key: k, value: v}
 	added, it := m.tree.InsertGetIt(m.probe)
@@ -94,9 +97,9 @@ func (m *benchRBTree) Scan(start uint64, length int, visit func(uint64, uint64) 
 	}
 }
 
-// Compare the current implementations on identical uint64 data and uniform
-// traces. All point operations use the same interface dispatch. Map updates
-// also read the previous value, matching Put's return-value contract.
+// Compare identical uint64 data, uniform lookup/update traces, and unique
+// scrambled insertions. All point operations use the same interface dispatch.
+// Map updates also read the previous value, matching Put's return-value contract.
 func BenchmarkComparePoints(b *testing.B) {
 	for _, bc := range comparisonPointCases(benchLoadSize()) {
 		b.Run(bc.name, bc.run)
@@ -108,13 +111,15 @@ type comparisonBenchmark struct {
 	run  func(*testing.B)
 }
 
-func comparisonPointCases(n int) []comparisonBenchmark {
-	var cases []comparisonBenchmark
-	ops := benchTrace(n, 8192, 1)
-	for _, layout := range []struct {
-		name string
-		make func() benchUint64Points
-	}{
+type benchPointLayout struct {
+	name string
+	make func() benchUint64Points
+}
+
+// Share constructors with the standalone heap test so it measures exactly
+// the same configurations, capacity hints, and adapters as the benchmarks.
+func comparisonPointLayouts(n int) []benchPointLayout {
+	return []benchPointLayout{
 		{"Tree", func() benchUint64Points {
 			return bufftree.NewBPTree[uint64, uint64](&bufftree.Config{DisablePointIndex: true})
 		}},
@@ -132,13 +137,27 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
-	} {
+	}
+}
+
+func comparisonPointCases(n int) []comparisonBenchmark {
+	var cases []comparisonBenchmark
+	ops := benchTrace(n, 8192, 1)
+	freshKeys := make([]uint64, n)
+	for i := range freshKeys {
+		freshKeys[i] = benchKey(i) | 1
+	}
+	for _, layout := range comparisonPointLayouts(n) {
+		load := func() benchUint64Points {
+			idx := layout.make()
+			for i := 0; i < n; i++ {
+				idx.Put(benchKey(i), uint64(i))
+			}
+			return idx
+		}
 		for _, op := range []string{"GetHit", "GetMiss", "Update"} {
 			cases = append(cases, comparisonBenchmark{layout.name + "/" + op, func(b *testing.B) {
-				idx := layout.make()
-				for i := 0; i < n; i++ {
-					idx.Put(benchKey(i), uint64(i))
-				}
+				idx := load()
 				var sum uint64
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -157,6 +176,26 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 				benchSink = sum
 			}})
 		}
+		cases = append(cases, comparisonBenchmark{layout.name + "/FreshPut", func(b *testing.B) {
+			idx := load()
+			inserted := 0
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				if inserted == n {
+					b.StopTimer()
+					idx = load()
+					inserted = 0
+					b.StartTimer()
+				}
+				// Each odd key is unique within this batch and absent from the
+				// initial even-key load. Time insertion and growth from n to 2*n
+				// records, then reload outside the timer to bound memory use.
+				idx.Put(freshKeys[inserted], uint64(i))
+				inserted++
+			}
+			b.StopTimer()
+		}})
 	}
 	return cases
 }
@@ -364,5 +403,31 @@ func TestComparisonPointAdapters(t *testing.T) {
 		if n := testing.AllocsPerRun(100, func() { idx.Get(50); idx.Get(500) }); n != 0 {
 			t.Fatal("comparison lookup allocates", n)
 		}
+	}
+}
+
+func TestComparisonFreshPuts(t *testing.T) {
+	const n = 257
+	for _, layout := range comparisonPointLayouts(n) {
+		t.Run(layout.name, func(t *testing.T) {
+			idx := layout.make()
+			for i := 0; i < n; i++ {
+				idx.Put(benchKey(i), uint64(i))
+			}
+			for i := 0; i < n; i++ {
+				key := benchKey(i) | 1
+				if old, replaced := idx.Put(key, uint64(n+i)); replaced || old != 0 {
+					t.Fatalf("fresh Put %d replaced an existing key", i)
+				}
+			}
+			if idx.(interface{ Len() int }).Len() != 2*n {
+				t.Fatal("fresh puts must grow the container")
+			}
+			for i := 0; i < n; i++ {
+				if idx.Get(benchKey(i)) != uint64(i) || idx.Get(benchKey(i)|1) != uint64(n+i) {
+					t.Fatalf("fresh Put changed an existing key or lost a new key at rank %d", i)
+				}
+			}
+		})
 	}
 }

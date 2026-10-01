@@ -26,10 +26,10 @@ Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 | Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |     22.6 |           16.7 |         118.3 |          205.9 |
-| Put                        |    108.6 |           29.0 |         123.0 |          202.6 |
-| Ordered scan               |     4.71 |  not supported |          4.09 |          15.89 |
-| Dict traversal             |     2.84 |          10.14 |          2.49 |          15.56 |
+| Get                        |     22.3 |           16.6 |         121.0 |          202.2 |
+| Put                        |    108.5 |           29.0 |         125.1 |          203.2 |
+| Ordered scan               |     4.66 |  not supported |          4.10 |          15.81 |
+| Dict traversal             |     2.09 |          10.09 |          2.64 |          15.33 |
 
 ~~~
 This compares:
@@ -53,7 +53,9 @@ for full table scans.
 
 ----------------------------
 
-How it works: the BP-tree uses small internal nodes and large leaves containing buffered
+## How it works
+
+The BP-tree uses small internal nodes and large leaves containing buffered
 partitioned arrays (BPAs).
 
 The BPA organizes a leaf into three parts: a) a small insert buffer; 
@@ -253,13 +255,35 @@ queries, iteration, and named string/float keys. Benchmark operation traces
 are also checked against an independent sorted-leaf B+ tree. The `reference/`
 material is not part of the top-level package.
 
-The separate benchmark module has its own adapter and table-formatting tests:
+The separate benchmark module has its own adapter, table-formatting, and memory tests:
 
 ```sh
 go -C bench test -v
 ```
 
 Use these nonrecursive commands; `reference/` contains unbuildable material.
+
+Run the standalone 100,000-entry memory comparison with:
+
+```sh
+make memory
+# Or directly:
+go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
+```
+
+It reports retained heap bytes, MiB, and bytes per key for Dict and BPTree with
+and without their hash index, the built-in Go map, tidwall's generic Map, and
+rbtree. It shares the timing benchmarks' constructors, uint64 key/value data,
+and insertion order; the Go map uses the same capacity hint. Each container is
+measured in a fresh test process with `GOMAXPROCS=1`, with forced GC before and
+after loading, and kept alive through the final heap measurement. Results subtract
+the initial `runtime.MemStats.HeapAlloc` baseline and exclude discarded
+temporary allocations; they measure live Go heap, rather than process RSS or
+heap reserved by the runtime. The test also prints the added cost of each
+hash index, using the default cached hashes. `make memory` and `make bench`
+run separately, and the memory test never invokes `testing.Benchmark`.
+An example report is saved in
+[memory-100k.txt](benchmark-results/2026-10-01/memory-100k.txt).
 
 The benchmark families adapt the paper's experiments to Go:
 
@@ -270,7 +294,7 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkYCSB` | Section 6.2: uniform and Zipfian A/B/C/E/X/Y workloads |
 | `BenchmarkDict` | Dictionary reads, updates, insertion-order traversal, and deleting current during traversal |
 | `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree, Tree without hashing, Dict, a port of the reference's stable-slot hash layout, and Go map |
-| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update workloads for Tree and Dict in all index/cache modes, Go map, tidwall/btree, and rbtree |
+| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree and Dict in all index/cache modes, Go map, tidwall/btree, and rbtree |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 
 YCSB A uses 50% reads/50% updates, B uses 95% reads/5% updates, and C is all
@@ -314,7 +338,7 @@ BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 32
+benchmark by default and reporting their median. It measures only the 39
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
@@ -341,19 +365,22 @@ The `bufftree` column uses `Config.DisablePointIndex: true`; the hash-index
 column uses the default configuration, retaining full hashes
 (`HashNoCache: false`). Both use the current implementation. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
-neither competitor has a local module replacement. All measured operations
-below report `0 B/op` and `0 allocs/op`.
+neither competitor has a local module replacement. Reads, existing-key updates,
+and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
+and growth costs.
 
 | Operation (showing ns/key)    | bufftree | bufftree(2) | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -------: | ----------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    109.4 |        22.6 |           16.7 |         118.3 |          205.9 |
-| Tree `Get`, miss              |    106.8 |        28.8 |           16.2 |         116.1 |          223.7 |
-| Tree `Put`, existing key      |    163.9 |       108.6 |           29.0 |         123.0 |          202.6 |
-| Dict `Get`, hit               |    112.3 |        28.3 |           16.7 |         118.3 |          205.9 |
-| Dict `Put`, existing key      |    112.6 |        29.6 |           29.0 |         123.0 |          202.6 |
-| Ordered scan, maximum 10,000  |     4.75 |        4.81 |  not supported |          4.12 |          15.92 |
-| Ordered scan, maximum 100,000 |     4.67 |        4.71 |  not supported |          4.09 |          15.89 |
-| Dict traversal                |     2.28 |        2.84 |          10.14 |          2.49 |          15.56 |
+| Tree `Get`, hit               |    110.7 |        22.3 |           16.6 |         121.0 |          202.2 |
+| Tree `Get`, miss              |    108.1 |        28.4 |           16.1 |         115.9 |          222.0 |
+| Tree `Put`, existing key      |    169.5 |       108.5 |           29.0 |         125.1 |          203.2 |
+| Tree `Put`, fresh key         |    717.6 |       890.5 |          180.4 |         312.8 |          626.9 |
+| Dict `Get`, hit               |    113.9 |        26.8 |           16.6 |         121.0 |          202.2 |
+| Dict `Put`, existing key      |    115.6 |        27.7 |           29.0 |         125.1 |          203.2 |
+| Dict `Put`, fresh key         |   1088.0 |      1118.3 |          180.4 |         312.8 |          626.9 |
+| Ordered scan, maximum 10,000  |     4.77 |        4.72 |  not supported |          4.07 |          15.74 |
+| Ordered scan, maximum 100,000 |     4.67 |        4.66 |  not supported |          4.10 |          15.81 |
+| Dict traversal                |     2.25 |        2.09 |          10.09 |          2.64 |          15.33 |
 
 buftree(2) means with hash index (faster, uses more memory). This is the default.
 
@@ -364,6 +391,12 @@ for all containers. The tidwall baseline uses its generic
 with no path hints or copies. The rbtree adapter reuses a pointer-shaped query
 object to avoid boxing allocations; updates use `InsertGetIt` and change an
 existing item's value, returning its old value with one search.
+
+Fresh Put rows insert unique odd keys into the initial even-key dataset, using
+the same scrambled keys for every container. Each batch grows from 65,536 to
+131,072 entries; loading a new initial dataset between batches is outside the
+timer. This includes allocations, leaf splits, and hash-table growth during
+insertion. The simplified table's Put row measures an existing-key update.
 
 The final row measures visiting all 65,536 values and summing them. Dict visits
 in insertion order, Go map in unspecified order, and tidwall/btree and rbtree
@@ -386,8 +419,11 @@ its allocation totals include benchmark setup outside the timed loop.
 
 Raw benchmark runs, tests, profiles, and reproduction commands are saved in
 [benchmark-results/2026-10-01](benchmark-results/2026-10-01).
-The table uses [comparison-extended.txt](benchmark-results/2026-10-01/comparison-extended.txt),
-with medians saved in
+The tables use
+[readme-fresh-put.txt](benchmark-results/2026-10-01/readme-fresh-put.txt).
+Earlier comparison runs and cache-mode results are saved in
+[comparison-extended.txt](benchmark-results/2026-10-01/comparison-extended.txt),
+with those medians in
 [comparison-extended-medians.csv](benchmark-results/2026-10-01/comparison-extended-medians.csv).
 
 ## notes on concurrency
@@ -403,10 +439,15 @@ log are sorted, so subsequent scans reuse that ordering until writes disturb it.
 
 Section 5 explicitly addresses the locking implications. A scan first acquires a leaf’s read lock and checks sortedness. If everything it needs is sorted, it proceeds under that shared lock; otherwise, it releases the read lock and acquires the leaf’s write lock to sort. This temporarily blocks other readers and writers accessing that leaf. [Section 5](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=8).
 
-Traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4).
+Here is the scary part: it is a classic hazard to try and upgrade from a read lock
+to a write lock! Other readers or even other writers may have priority, and so the writer may have to
+yield to them! The opportunities for deadlock or livelock are multidinous, and
+this would need very careful conconcurrency modeling to get right and work well.
+Thus it is out of scope for now.
+
+In the paper, traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4). [jea note: I'm not convinced this would not stall or confuse the first writer badly... what if there is rebalancing and the node is no longer even the right node...!]
 
 Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock. Dict’s insertion-ordered traversal follows its linked sequence and does not sort BPA blocks.
-
 
 ------------------
 Copyright (C) 2026, Jason E. Aten, Ph.D.

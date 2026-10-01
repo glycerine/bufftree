@@ -13,13 +13,18 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	values["Points/TreeHash/GetHit"] = 22.57
 	values["Points/TreeHash/Update"] = 108.6
+	values["Points/TreeHash/FreshPut"] = 456.7
+	values["Points/DictHash/FreshPut"] = 567.8
+	values["Points/GoMap/FreshPut"] = 89.1
+	values["Points/Tidwall/FreshPut"] = 201.2
+	values["Points/RBTree/FreshPut"] = 300.3
 	values["Iteration/Tree/Hash/Scan100000"] = 4.713
 	values["Iteration/Dict/Hash/Iterate"] = 2.844
 	simple, detailed, err := formatReadmeBenchmarkTables(values)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 32 {
+	if len(readmeBenchmarkNames()) != 39 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -43,7 +48,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	short := strings.Split(strings.TrimSpace(simple), "\n")
 	full := strings.Split(strings.TrimSpace(detailed), "\n")
-	for i, selected := range []int{0, 2, 6, 7} {
+	for i, selected := range []int{0, 2, 8, 9} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 5; col++ {
@@ -59,6 +64,24 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	if !strings.Contains(detailed, "not supported") {
 		t.Fatal("Go map ordered scans must be marked unsupported")
+	}
+	for _, fresh := range []struct {
+		row   int
+		label string
+		want  []string
+	}{
+		{3, "Tree `Put`, fresh key", []string{"123.5", "456.7", "89.1", "201.2", "300.3"}},
+		{6, "Dict `Put`, fresh key", []string{"123.5", "567.8", "89.1", "201.2", "300.3"}},
+	} {
+		cells := strings.Split(full[fresh.row+2], "|")
+		if strings.TrimSpace(cells[1]) != fresh.label {
+			t.Fatalf("missing fresh Put row %q", fresh.label)
+		}
+		for i, want := range fresh.want {
+			if got := strings.TrimSpace(cells[i+2]); got != want {
+				t.Fatalf("%s column %d: got %q, want %q", fresh.label, i, got, want)
+			}
+		}
 	}
 	delete(values, "Points/TreeHash/GetHit")
 	if _, _, err := formatReadmeBenchmarkTables(values); err == nil {
