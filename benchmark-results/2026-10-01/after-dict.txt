@@ -1,0 +1,37 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkDict
+BenchmarkDict/Get
+BenchmarkDict/Get-48         	10379953	        26.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get-48         	10837561	        26.43 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get-48         	10652278	        26.56 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get-48         	11038102	        26.48 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get-48         	10718282	        25.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2
+BenchmarkDict/Get2-48        	10890576	        25.03 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2-48        	10627474	        26.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2-48        	10533680	        26.30 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2-48        	10843602	        26.56 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2-48        	10812356	        26.48 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update
+BenchmarkDict/Update-48      	 9967936	        27.16 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update-48      	10112299	        28.00 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update-48      	 9977506	        27.85 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update-48      	10038288	        28.11 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update-48      	 9889857	        28.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate
+BenchmarkDict/Iterate-48     	    2227	    185156 ns/op	 353950753 entries/s	         2.825 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate-48     	    2221	    185170 ns/op	 353924317 entries/s	         2.825 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate-48     	    2438	    115607 ns/op	 566887884 entries/s	         1.764 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate-48     	    2248	    125262 ns/op	 523190861 entries/s	         1.911 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate-48     	    1356	    199186 ns/op	 329018512 entries/s	         3.039 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/DeleteCurrent
+BenchmarkDict/DeleteCurrent-48         	       4	  79716634 ns/op	    822112 entries/s	      1216 iter_ns/key	     65536 keys/op	31642048 B/op	    1507 allocs/op
+BenchmarkDict/DeleteCurrent-48         	       4	  78984173 ns/op	    829736 entries/s	      1205 iter_ns/key	     65536 keys/op	31642076 B/op	    1507 allocs/op
+BenchmarkDict/DeleteCurrent-48         	       4	  82605013 ns/op	    793366 entries/s	      1260 iter_ns/key	     65536 keys/op	31642076 B/op	    1507 allocs/op
+BenchmarkDict/DeleteCurrent-48         	       4	  79900544 ns/op	    820220 entries/s	      1219 iter_ns/key	     65536 keys/op	31642048 B/op	    1507 allocs/op
+BenchmarkDict/DeleteCurrent-48         	       4	  82769543 ns/op	    791789 entries/s	      1263 iter_ns/key	     65536 keys/op	31642056 B/op	    1507 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	26.899s

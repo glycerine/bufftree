@@ -1,0 +1,26 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTree
+BenchmarkTree/BP/h32-b32
+BenchmarkTree/BP/h32-b32/Map100
+BenchmarkTree/BP/h32-b32/Map100-48  	  490802	       634.8 ns/op	  79195759 entries/s	        12.63 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48  	  502347	       634.4 ns/op	  79250251 entries/s	        12.62 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48  	  498135	       642.1 ns/op	  78288450 entries/s	        12.77 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48  	  495529	       642.4 ns/op	  78254055 entries/s	        12.78 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48  	  440438	       617.4 ns/op	  81423688 entries/s	        12.28 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     27800 ns/op	 170380686 entries/s	         5.869 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28009 ns/op	 169111833 entries/s	         5.913 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     27472 ns/op	 172413552 entries/s	         5.800 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28096 ns/op	 168586202 entries/s	         5.932 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     27806 ns/op	 170343794 entries/s	         5.870 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1990	    149368 ns/op	 173754579 entries/s	         5.755 iter_ns/key	     25953 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1951	    149322 ns/op	 173953947 entries/s	         5.749 iter_ns/key	     25975 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1962	    149702 ns/op	 173519052 entries/s	         5.763 iter_ns/key	     25976 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1965	    149742 ns/op	 173407112 entries/s	         5.767 iter_ns/key	     25966 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1957	    149559 ns/op	 173757313 entries/s	         5.755 iter_ns/key	     25987 keys/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	24.113s

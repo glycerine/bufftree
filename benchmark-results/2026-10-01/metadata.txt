@@ -1,0 +1,100 @@
+Performance measurements: 2026-10-01
+Working directory: top-level github.com/glycerine/bufftree package
+Host: Linux/amd64, AMD Ryzen Threadripper 3960X 24-Core Processor
+Go: go1.26.4; 48 logical CPUs. Benchmarks are single-goroutine.
+Load: 65,536 entries. Default BPA layout: fanout64/log32/headers32/block32.
+
+before-all.txt: complete original suite, 100ms, count=1, after Get/Get2 rename.
+before-tree/ycsb/dict.txt: original default layout, 250ms, count=5.
+after-all.txt: complete optimized suite, 100ms, count=1.
+after-tree/ycsb/dict.txt: optimized default layout, 250ms, count=5.
+after-tree-maps.txt: final map measurements, 250ms, count=5; supersedes Map
+  rows in after-tree.txt after fixing scratch value clearing across leaves.
+reference-points.txt: 16-byte string keys, 200ms, count=3. Hash port uses
+  maphash.String, uint64 values, and no internal locking; see README.
+final-tests.txt: all top-level tests and examples after public Put rename.
+medians.csv: five-run before/after medians and three-run reference medians.
+  Original iter_ns/key derived as 1e9 / entries/s before computing median.
+
+The final source renames Set to Put. Benchmark operation labels stay Update
+and Insert. This naming change does not alter behavior or performance.
+after-all.txt and most repeated timing runs preceded that naming-only change.
+Final map repeats and after profiles use Put and the final buffer-clearing fix.
+
+Reproduce optimized timing from the package root (no recursive testing):
+go test -v
+go test -v -run '^$' -bench '.' -benchmem -benchtime=100ms
+go test -v -run '^$' -bench '^BenchmarkTree$/^BP$/^h32-b32$/' -benchmem -benchtime=250ms -count=5
+go test -v -run '^$' -bench '^BenchmarkYCSB$/^BP$/^h32-b32$/' -benchmem -benchtime=250ms -count=5
+go test -v -run '^$' -bench '^BenchmarkDict$/' -benchmem -benchtime=250ms -count=5
+go test -v -run '^$' -bench '^BenchmarkReferencePoints$/' -benchmem -benchtime=200ms -count=3
+
+Reproduce optimized profiles from the package root:
+go test -v -run '^$' -bench '^BenchmarkYCSB$/^BP$/^h32-b32$/^Uniform$/(A|E|X|Y)$' -benchmem -benchtime=2s -cpuprofile=/tmp/bufftree-after.cpu -memprofile=/tmp/bufftree-after.mem -o /tmp/bufftree-after.test
+
+Read saved profiles (symbol names are included in the profile):
+go tool pprof -top benchmark-results/2026-10-01/after.cpu
+go tool pprof -top -alloc_space benchmark-results/2026-10-01/after.mem
+
+Profiles include calibration and setup. Memory allocations include untimed
+loading and write operations; they are not per-query allocation figures.
+Timed queries report zero allocations, with allocation regression tests.
+
+Times per key use actual visited keys. Scan lengths are uniform from zero to
+the named maximum and stop at the tree end. Mixed YCSB E includes insert time.
+Dict/DeleteCurrent includes deletion and rebalancing, not just iteration.
+All before/after benchmark processes were run serially to avoid contention.
+
+README comparison update: current bufftree with/without the hash index,
+plus builtin Go map. All runs use identical uint64 keys/values, a 65,536-entry
+load, and deterministic uniform traces. Point variants use the same interface
+dispatch. Go map updates read the old value before assigning, matching Put.
+Native Go map does not support ordered scans or insertion-order traversal;
+those cells are marked not supported, rather than timing a different operation.
+Hash is enabled by default. The table's bufftree column disables it using
+Config.DisablePointIndex=true. Both columns use the current optimized BP-tree.
+
+comparison.txt: 21 cases, five 250ms repeats, completed serially in 83.437s.
+comparison-medians.csv: current README numbers, medians of those five runs.
+comparison-tests.txt: top-level tests including compilation of the new harness.
+Every comparison case reports zero B/op and zero allocs/op in all repeats.
+Iteration times per key divide elapsed time by actual visited keys.
+
+Reproduce from the top-level package:
+go test -v
+go test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5
+
+Final expanded comparison: HashNoCache and published tree packages
+Config.HashNoCache=false (the default) retains full 64-bit hashes. True uses
+one-byte fingerprints, saving seven bytes per allocated index slot. The index
+is still enabled in both modes. DisablePointIndex omits the entire index.
+
+Published baseline versions: github.com/tidwall/btree v1.8.1 (generic Map,
+default degree 32, no copies/path hints) and github.com/glycerine/rbtree v0.2.2.
+The go.mod has no replace directives. An earlier run built with the local
+rbtree replacement was stopped and discarded. Final tests and all measurements
+were rebuilt with the published dependency, resolved from the module cache.
+rbtree adapter uses pointer items and a reusable query object to avoid boxing
+allocations. Updates use InsertGetIt and mutate an existing item's value,
+returning its previous value, with one search. Queries and updates allocate
+zero memory. Newly inserted items have separate pointers.
+
+comparison-extended.txt: complete final 43-case suite, five 250ms repeats.
+comparison-extended-medians.csv: all final medians, including HashNoCache cases.
+hash-cache-tests.txt: top-level tests with the final configuration and published
+dependencies. Tests cover both metadata modes, real collision chains wrapping
+across growth, backward-shift deletion, floats/NaNs, query allocations, config
+retention across Clear, and benchmark adapter scan lengths/old-value returns.
+Every final benchmark repeat reports 0 B/op and 0 allocs/op.
+
+The final README table uses comparison-extended results, superseding the
+previous comparison table. Its hash-index column retains hashes (the default).
+Go map full traversal is measured via native range. Full traversals visit all
+65,536 values, sum them, and count actual visits. Traversal order differs:
+Dict uses insertion order, Go map unspecified order, tidwall/rbtree key order.
+The final row is a comparison of full visitation cost, not order guarantees.
+Go map still has no native ordered scan timing. Traversal reports iter_ns/key.
+
+Reproduce from the top-level bufftree package:
+go test -v
+go test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5

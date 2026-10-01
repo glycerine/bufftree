@@ -1,0 +1,20 @@
+File: bufftree.test
+Build ID: 8727ed429cf7afceac40093958d1f2bbcc064760
+Type: alloc_space
+Time: 2026-10-01 14:27:47 CDT
+Showing nodes accounting for 1.88GB, 99.00% of 1.90GB total
+Dropped 59 nodes (cum <= 0.01GB)
+Showing top 12 nodes out of 15
+      flat  flat%   sum%        cum   cum%
+    1.50GB 78.99% 78.99%     1.50GB 78.99%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).mapEntries.func2
+    0.32GB 16.60% 95.59%     0.32GB 16.60%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).collect
+    0.05GB  2.69% 98.28%     0.05GB  2.69%  github.com/glycerine/bufftree.newBPA[go.shape.uint64,go.shape.uint64]
+    0.01GB  0.72% 99.00%     1.52GB 79.71%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).mapEntries
+         0     0% 99.00%     1.52GB 79.71%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).MapRange
+         0     0% 99.00%     0.37GB 19.34%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Set
+         0     0% 99.00%     0.11GB  5.58%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).splitLeaf
+         0     0% 99.00%     0.26GB 13.76%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+         0     0% 99.00%     0.26GB 13.76%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).writeLog
+         0     0% 99.00%     1.89GB 99.37%  github.com/glycerine/bufftree.BenchmarkYCSB.func1
+         0     0% 99.00%     0.33GB 17.27%  github.com/glycerine/bufftree.benchLoad
+         0     0% 99.00%     1.55GB 81.79%  github.com/glycerine/bufftree.ycsbStep

@@ -1,0 +1,144 @@
+=== RUN   TestBenchmarkWorkloadsAgainstBaseline
+--- PASS: TestBenchmarkWorkloadsAgainstBaseline (0.05s)
+=== RUN   TestBenchmarkBaselineSplits
+--- PASS: TestBenchmarkBaselineSplits (0.00s)
+=== RUN   TestBPALogFlushAndRedistribute
+--- PASS: TestBPALogFlushAndRedistribute (0.00s)
+=== RUN   TestBPARandom
+--- PASS: TestBPARandom (0.02s)
+=== RUN   TestGetAndGet2
+--- PASS: TestGetAndGet2 (0.00s)
+=== RUN   TestTreeRandomAgainstMap
+=== RUN   TestTreeRandomAgainstMap/A
+=== RUN   TestTreeRandomAgainstMap/B
+=== RUN   TestTreeRandomAgainstMap/C
+=== RUN   TestTreeRandomAgainstMap/D
+=== RUN   TestTreeRandomAgainstMap/E
+--- PASS: TestTreeRandomAgainstMap (0.10s)
+    --- PASS: TestTreeRandomAgainstMap/A (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/B (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/C (0.01s)
+    --- PASS: TestTreeRandomAgainstMap/D (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/E (0.03s)
+=== RUN   TestTreeDeleteDuringIteration
+--- PASS: TestTreeDeleteDuringIteration (0.00s)
+=== RUN   TestTreeRangeAndMutation
+--- PASS: TestTreeRangeAndMutation (0.00s)
+=== RUN   TestTreeZeroValueAndOrderedTypes
+--- PASS: TestTreeZeroValueAndOrderedTypes (0.00s)
+=== RUN   TestNaNKeysSortLast
+--- PASS: TestNaNKeysSortLast (0.00s)
+=== RUN   TestConfigValidation
+--- PASS: TestConfigValidation (0.00s)
+=== RUN   TestTreeBulkSplitAndCollapse
+--- PASS: TestTreeBulkSplitAndCollapse (0.49s)
+=== RUN   TestTreeIteratorsAndEarlyStop
+--- PASS: TestTreeIteratorsAndEarlyStop (0.00s)
+=== RUN   TestComparisonOrderedScans
+=== RUN   TestComparisonOrderedScans/Tidwall
+=== RUN   TestComparisonOrderedScans/RBTree
+--- PASS: TestComparisonOrderedScans (0.01s)
+    --- PASS: TestComparisonOrderedScans/Tidwall (0.00s)
+    --- PASS: TestComparisonOrderedScans/RBTree (0.00s)
+=== RUN   TestComparisonPointAdapters
+--- PASS: TestComparisonPointAdapters (0.00s)
+=== RUN   TestDictInsertionOrderAndDeletion
+--- PASS: TestDictInsertionOrderAndDeletion (0.00s)
+=== RUN   TestDictRandomAgainstModel
+--- PASS: TestDictRandomAgainstModel (0.01s)
+=== RUN   TestDictIteratorDeletesAheadAndSeesNewInsertions
+--- PASS: TestDictIteratorDeletesAheadAndSeesNewInsertions (0.00s)
+=== RUN   TestDictIterationSeesAppendsAfterDeletingTail
+--- PASS: TestDictIterationSeesAppendsAfterDeletingTail (0.00s)
+=== RUN   TestDictAllVisitsInsertsDuringRange
+--- PASS: TestDictAllVisitsInsertsDuringRange (0.00s)
+=== RUN   TestMapRangeDeletionAndLogShadowing
+--- PASS: TestMapRangeDeletionAndLogShadowing (0.01s)
+=== RUN   TestLazyBlockSorting
+--- PASS: TestLazyBlockSorting (0.00s)
+=== RUN   TestQueriesDoNotAllocate
+=== RUN   TestQueriesDoNotAllocate/CachedHashes
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/GetHit
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/GetMiss
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/Get2
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/Scan
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/Range
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/MapRange
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Tree/All
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Dict/GetHit
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Dict/GetMiss
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Dict/Get2
+=== RUN   TestQueriesDoNotAllocate/CachedHashes/Dict/All
+=== RUN   TestQueriesDoNotAllocate/HashNoCache
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/GetHit
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/GetMiss
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/Get2
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/Scan
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/Range
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/MapRange
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Tree/All
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Dict/GetHit
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Dict/GetMiss
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Dict/Get2
+=== RUN   TestQueriesDoNotAllocate/HashNoCache/Dict/All
+--- PASS: TestQueriesDoNotAllocate (0.04s)
+    --- PASS: TestQueriesDoNotAllocate/CachedHashes (0.02s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/GetHit (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/GetMiss (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/Get2 (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/Scan (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/Range (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/MapRange (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Tree/All (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Dict/GetHit (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Dict/GetMiss (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Dict/Get2 (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/CachedHashes/Dict/All (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/HashNoCache (0.02s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/GetHit (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/GetMiss (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/Get2 (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/Scan (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/Range (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/MapRange (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Tree/All (0.01s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Dict/GetHit (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Dict/GetMiss (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Dict/Get2 (0.00s)
+        --- PASS: TestQueriesDoNotAllocate/HashNoCache/Dict/All (0.00s)
+=== RUN   TestMapRangeReentrant
+--- PASS: TestMapRangeReentrant (0.00s)
+=== RUN   TestScansAgainstSortedModel
+--- PASS: TestScansAgainstSortedModel (0.04s)
+=== RUN   TestScanMutationWithinBlock
+--- PASS: TestScanMutationWithinBlock (0.00s)
+=== RUN   TestDel2OnContainersAndIterators
+--- PASS: TestDel2OnContainersAndIterators (0.00s)
+=== RUN   TestPointIndexRandomAndCollisions
+=== RUN   TestPointIndexRandomAndCollisions/HashNoCache=false/Collide=false
+=== RUN   TestPointIndexRandomAndCollisions/HashNoCache=false/Collide=true
+=== RUN   TestPointIndexRandomAndCollisions/HashNoCache=true/Collide=false
+=== RUN   TestPointIndexRandomAndCollisions/HashNoCache=true/Collide=true
+--- PASS: TestPointIndexRandomAndCollisions (0.11s)
+    --- PASS: TestPointIndexRandomAndCollisions/HashNoCache=false/Collide=false (0.03s)
+    --- PASS: TestPointIndexRandomAndCollisions/HashNoCache=false/Collide=true (0.05s)
+    --- PASS: TestPointIndexRandomAndCollisions/HashNoCache=true/Collide=false (0.01s)
+    --- PASS: TestPointIndexRandomAndCollisions/HashNoCache=true/Collide=true (0.03s)
+=== RUN   TestPointIndexFloatingKeys
+=== RUN   TestPointIndexFloatingKeys/HashNoCache=false
+=== RUN   TestPointIndexFloatingKeys/HashNoCache=true
+--- PASS: TestPointIndexFloatingKeys (0.00s)
+    --- PASS: TestPointIndexFloatingKeys/HashNoCache=false (0.00s)
+    --- PASS: TestPointIndexFloatingKeys/HashNoCache=true (0.00s)
+=== RUN   TestHashNoCacheConfig
+--- PASS: TestHashNoCacheConfig (0.01s)
+=== RUN   TestReferenceStringPointQueries
+--- PASS: TestReferenceStringPointQueries (0.01s)
+=== RUN   ExampleTree
+--- PASS: ExampleTree (0.00s)
+=== RUN   ExampleDict
+--- PASS: ExampleDict (0.00s)
+=== RUN   ExampleTree_Range
+--- PASS: ExampleTree_Range (0.00s)
+PASS
+ok  	github.com/glycerine/bufftree	0.905s

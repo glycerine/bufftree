@@ -1,0 +1,86 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTree
+BenchmarkTree/BP/h32-b32
+BenchmarkTree/BP/h32-b32/FindHit
+BenchmarkTree/BP/h32-b32/FindHit-48 	12979742	        22.46 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	12703150	        21.06 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	12749803	        21.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	13438278	        21.93 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	12769404	        22.03 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2
+BenchmarkTree/BP/h32-b32/FindHit2-48         	13184884	        22.36 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	12568575	        22.27 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	14900025	        21.59 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	14577054	        21.52 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	13460080	        21.04 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 9244596	        30.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 9469152	        29.38 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	10767025	        29.08 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 9554661	        30.17 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 9403604	        30.42 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 9580041	        28.65 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 9938782	        27.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 8377059	        30.78 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 9278787	        28.70 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 9389322	        30.55 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update
+BenchmarkTree/BP/h32-b32/Update-48           	 2761220	       110.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	 2305542	       108.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	 2451682	       107.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	 2600222	       103.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	 2409836	       108.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  316357	       891.0 ns/op	     290 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  330836	       919.4 ns/op	     328 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  284898	       944.0 ns/op	     315 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  335728	       956.6 ns/op	     326 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  379285	       840.1 ns/op	     292 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  264429	      1158 ns/op	     877 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  249598	      1092 ns/op	     853 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  259904	      1134 ns/op	     847 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  216879	      1174 ns/op	     873 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  231646	      1215 ns/op	     863 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100
+BenchmarkTree/BP/h32-b32/Scan100-48          	  643738	       422.1 ns/op	 119108833 entries/s	         8.396 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  632498	       408.0 ns/op	 123208985 entries/s	         8.116 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  722995	       430.3 ns/op	 116827753 entries/s	         8.560 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  638480	       435.9 ns/op	 115337328 entries/s	         8.670 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  634830	       415.5 ns/op	 121001769 entries/s	         8.264 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000
+BenchmarkTree/BP/h32-b32/Scan10000-48        	   12436	     22458 ns/op	 211527854 entries/s	         4.728 iter_ns/key	      4751 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	   12399	     23436 ns/op	 202709301 entries/s	         4.933 iter_ns/key	      4751 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	   12423	     21712 ns/op	 218787179 entries/s	         4.571 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	   12106	     23184 ns/op	 204757422 entries/s	         4.884 iter_ns/key	      4747 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	   12235	     23047 ns/op	 206051395 entries/s	         4.853 iter_ns/key	      4749 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000
+BenchmarkTree/BP/h32-b32/Scan100000-48       	    2314	    122738 ns/op	 210678289 entries/s	         4.747 iter_ns/key	     25858 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	    2337	    110818 ns/op	 233125385 entries/s	         4.290 iter_ns/key	     25834 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	    2527	    118354 ns/op	 217871501 entries/s	         4.590 iter_ns/key	     25786 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	    2425	    123796 ns/op	 208531793 entries/s	         4.795 iter_ns/key	     25815 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	    2335	    122482 ns/op	 210866841 entries/s	         4.742 iter_ns/key	     25827 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100
+BenchmarkTree/BP/h32-b32/Map100-48           	  436226	       659.1 ns/op	  76272474 entries/s	        13.11 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	  433516	       651.4 ns/op	  77178323 entries/s	        12.96 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	  447090	       642.9 ns/op	  78199845 entries/s	        12.79 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	  485570	       639.6 ns/op	  78599636 entries/s	        12.72 iter_ns/key	        50.27 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	  434746	       645.6 ns/op	  77876913 entries/s	        12.84 iter_ns/key	        50.28 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28897 ns/op	 163912564 entries/s	         6.101 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28289 ns/op	 167434611 entries/s	         5.972 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28781 ns/op	 164572810 entries/s	         6.076 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28924 ns/op	 163759203 entries/s	         6.107 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	   10000	     28903 ns/op	 163876701 entries/s	         6.102 iter_ns/key	      4737 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1849	    152180 ns/op	 169992935 entries/s	         5.883 iter_ns/key	     25869 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1869	    153453 ns/op	 168580528 entries/s	         5.932 iter_ns/key	     25869 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1870	    155366 ns/op	 166497344 entries/s	         6.006 iter_ns/key	     25868 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1902	    154158 ns/op	 168971301 entries/s	         5.918 iter_ns/key	     26048 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	    1866	    158544 ns/op	 163183749 entries/s	         6.128 iter_ns/key	     25872 keys/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	70.144s

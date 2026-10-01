@@ -1,0 +1,134 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints
+BenchmarkComparePoints/Tree/GetHit
+BenchmarkComparePoints/Tree/GetHit-48         	 2479029	       110.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit-48         	 2412655	       109.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit-48         	 2467168	       108.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit-48         	 2473951	       108.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit-48         	 2516796	       108.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss
+BenchmarkComparePoints/Tree/GetMiss-48        	 2531952	       105.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss-48        	 2472085	       109.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss-48        	 2471589	       106.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss-48        	 2457338	       105.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss-48        	 2503045	       105.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update
+BenchmarkComparePoints/Tree/Update-48         	 1723219	       166.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update-48         	 1535920	       166.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update-48         	 1687624	       171.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update-48         	 1699069	       166.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update-48         	 1722836	       161.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit
+BenchmarkComparePoints/TreeHash/GetHit-48     	13282209	        21.28 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit-48     	13211994	        21.48 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit-48     	12857344	        21.30 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit-48     	14284332	        19.35 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit-48     	13567870	        21.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss
+BenchmarkComparePoints/TreeHash/GetMiss-48    	10573561	        28.46 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss-48    	 9493921	        29.64 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss-48    	 9835219	        29.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss-48    	 9822676	        31.09 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss-48    	 9367971	        30.05 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update
+BenchmarkComparePoints/TreeHash/Update-48     	 2875566	       106.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update-48     	 2395486	       107.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update-48     	 2395671	       109.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update-48     	 2589948	       109.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update-48     	 2449131	       109.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit
+BenchmarkComparePoints/Dict/GetHit-48         	 2397163	       119.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit-48         	 2386374	       112.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit-48         	 2506810	       108.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit-48         	 2419347	       109.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit-48         	 2371632	       110.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss
+BenchmarkComparePoints/Dict/GetMiss-48        	 2663527	       101.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss-48        	 2458227	       105.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss-48        	 2638033	       100.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss-48        	 2663401	       105.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss-48        	 2748741	       104.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update
+BenchmarkComparePoints/Dict/Update-48         	 2518891	       112.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update-48         	 2420355	       112.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update-48         	 2386485	       114.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update-48         	 2658320	       109.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update-48         	 2365963	       111.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetHit
+BenchmarkComparePoints/DictHash/GetHit-48     	10305096	        27.39 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetHit-48     	 9899036	        26.58 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetHit-48     	10523038	        28.17 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetHit-48     	10340929	        27.51 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetHit-48     	10249202	        26.91 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss
+BenchmarkComparePoints/DictHash/GetMiss-48    	 8838970	        28.65 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss-48    	 9320883	        31.79 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss-48    	 8929891	        31.56 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss-48    	 9201507	        31.57 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss-48    	 9430135	        31.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update
+BenchmarkComparePoints/DictHash/Update-48     	 9758940	        28.81 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update-48     	 9781462	        28.93 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update-48     	 9761770	        29.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update-48     	 9786442	        28.91 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update-48     	 9293139	        29.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetHit
+BenchmarkComparePoints/GoMap/GetHit-48        	16753237	        16.36 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetHit-48        	16824921	        16.66 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetHit-48        	16860560	        16.75 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetHit-48        	17286697	        16.55 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetHit-48        	19988318	        16.53 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss
+BenchmarkComparePoints/GoMap/GetMiss-48       	16874496	        16.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss-48       	17196900	        16.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss-48       	17416460	        16.19 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss-48       	17390985	        16.45 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss-48       	17324026	        15.98 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update
+BenchmarkComparePoints/GoMap/Update-48        	 9800834	        28.90 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update-48        	 9630878	        28.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update-48        	 9791544	        28.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update-48        	 9810661	        29.35 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update-48        	 9793929	        28.92 ns/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration
+BenchmarkCompareIteration/Tree/NoHash/Scan10000
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48         	   11931	     22665 ns/op	 209463407 entries/s	         4.774 iter_ns/key	      4747 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48         	   11980	     22478 ns/op	 211188430 entries/s	         4.735 iter_ns/key	      4747 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48         	   12207	     21316 ns/op	 222717810 entries/s	         4.490 iter_ns/key	      4747 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48         	   12111	     22489 ns/op	 211091078 entries/s	         4.737 iter_ns/key	      4747 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48         	   12292	     22750 ns/op	 208799961 entries/s	         4.789 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48        	    2330	    122685 ns/op	 210593205 entries/s	         4.748 iter_ns/key	     25837 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48        	    2310	    121928 ns/op	 212113086 entries/s	         4.714 iter_ns/key	     25862 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48        	    2318	    121750 ns/op	 212326385 entries/s	         4.710 iter_ns/key	     25851 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48        	    2296	    122250 ns/op	 211506202 entries/s	         4.728 iter_ns/key	     25857 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48        	    2463	    110390 ns/op	 233311913 entries/s	         4.286 iter_ns/key	     25755 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48           	    2096	    184135 ns/op	 355913209 entries/s	         2.810 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48           	    2042	    184876 ns/op	 354486276 entries/s	         2.821 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48           	    2120	    183799 ns/op	 356563689 entries/s	         2.805 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48           	    1836	    185378 ns/op	 353526637 entries/s	         2.829 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48           	    2101	    138251 ns/op	 474034779 entries/s	         2.110 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48           	   12313	     22337 ns/op	 212633012 entries/s	         4.703 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48           	   12778	     21563 ns/op	 220302189 entries/s	         4.539 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48           	   12064	     22689 ns/op	 209191882 entries/s	         4.780 iter_ns/key	      4746 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48           	   12261	     22076 ns/op	 215160880 entries/s	         4.648 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48           	   12349	     22639 ns/op	 209808660 entries/s	         4.766 iter_ns/key	      4750 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48          	    2298	    123873 ns/op	 208602849 entries/s	         4.794 iter_ns/key	     25840 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48          	    2295	    111262 ns/op	 232444386 entries/s	         4.302 iter_ns/key	     25862 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48          	    2353	    122596 ns/op	 210973181 entries/s	         4.740 iter_ns/key	     25864 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48          	    2466	    121569 ns/op	 211856535 entries/s	         4.720 iter_ns/key	     25755 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48          	    2619	    118476 ns/op	 216612088 entries/s	         4.617 iter_ns/key	     25663 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate
+BenchmarkCompareIteration/Dict/Hash/Iterate-48             	    1567	    193031 ns/op	 339509600 entries/s	         2.945 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate-48             	    1896	    134386 ns/op	 487670777 entries/s	         2.051 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate-48             	    1508	    192062 ns/op	 341222468 entries/s	         2.931 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate-48             	    2169	    140169 ns/op	 467549739 entries/s	         2.139 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate-48             	    1504	    171217 ns/op	 382766470 entries/s	         2.613 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	83.437s

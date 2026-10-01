@@ -1,0 +1,79 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkYCSB
+BenchmarkYCSB/BP/h32-b32/Uniform/A
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	  956313	       276.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	 1191184	       274.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	  996442	       282.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	  978332	       274.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	 1078194	       270.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48         	 1719736	       157.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48         	 1681306	       161.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48         	 1696581	       162.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48         	 1702964	       159.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48         	 1733173	       158.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48         	 1804122	       153.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48         	 1782434	       151.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48         	 1791766	       157.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48         	 1769222	       150.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48         	 1766446	       152.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	  291054	      1086 ns/op	  43859805 entries/s	      10 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	  286699	      1006 ns/op	  47306703 entries/s	      10 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	  285964	      1039 ns/op	  45833332 entries/s	      10 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	  304422	       969.9 ns/op	  49087638 entries/s	       9 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	  301016	      1062 ns/op	  44830274 entries/s	       9 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	    4104	     69943 ns/op	  68216082 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	    4069	     70305 ns/op	  67874961 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	    3637	     69140 ns/op	  69056923 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	    4321	     63367 ns/op	  75126167 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	    4148	     68620 ns/op	  69575512 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	    1642	    162982 ns/op	  29012589 entries/s	   66939 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	    3354	    168515 ns/op	  28281835 entries/s	   67062 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	    2299	    164513 ns/op	  28737456 entries/s	   67040 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	    2264	    157114 ns/op	  30189253 entries/s	   67081 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	    2325	    162371 ns/op	  29131756 entries/s	   67025 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48          	 1780444	       147.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48          	 1840695	       152.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48          	 1755586	       148.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48          	 1858246	       145.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48          	 1818448	       148.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48          	 2162380	       121.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48          	 2211087	       123.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48          	 2171082	       122.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48          	 2210745	       124.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48          	 2237130	       124.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48          	 2161965	       129.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48          	 2141722	       124.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48          	 2157614	       127.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48          	 2184986	       133.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48          	 2108001	       126.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48          	  315603	       918.6 ns/op	  51662720 entries/s	       9 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48          	  323773	       871.7 ns/op	  54441397 entries/s	       9 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48          	  311082	       915.9 ns/op	  51800474 entries/s	       9 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48          	  289015	       922.9 ns/op	  51421263 entries/s	      10 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48          	  277554	       911.7 ns/op	  52039403 entries/s	      10 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48          	    4178	     69133 ns/op	  69071431 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48          	    4254	     69091 ns/op	  69108644 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48          	    4434	     68218 ns/op	  70063148 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48          	    4225	     70162 ns/op	  67991943 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48          	    4177	     69096 ns/op	  69105904 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48          	    3409	    167999 ns/op	  28254924 entries/s	   67159 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48          	    3607	    169397 ns/op	  28057132 entries/s	   67260 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48          	    1778	    167357 ns/op	  27995352 entries/s	   66940 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48          	    2385	    169863 ns/op	  27756377 entries/s	   67045 B/op	      11 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48          	    1794	    150562 ns/op	  31087076 entries/s	   66905 B/op	      11 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	67.269s

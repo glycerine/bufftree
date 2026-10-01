@@ -1,0 +1,107 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkReferencePoints
+BenchmarkReferencePoints/Tree/Get
+BenchmarkReferencePoints/Tree/Get-48         	 8972217	        25.16 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get-48         	 9388263	        25.11 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get-48         	 8686039	        25.49 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get2
+BenchmarkReferencePoints/Tree/Get2-48        	 8888187	        25.86 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get2-48        	 8411599	        26.03 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get2-48        	 9055296	        26.14 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/GetMiss
+BenchmarkReferencePoints/Tree/GetMiss-48     	 6953629	        35.14 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/GetMiss-48     	 6891160	        33.90 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/GetMiss-48     	 7113374	        33.78 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Update
+BenchmarkReferencePoints/Tree/Update-48      	  951818	       211.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Update-48      	 1151324	       211.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Update-48      	 1136702	       210.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Insert
+BenchmarkReferencePoints/Tree/Insert-48      	  162172	      1257 ns/op	     269 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Insert-48      	  177970	      1244 ns/op	     268 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Insert-48      	  153698	      1345 ns/op	     282 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get
+BenchmarkReferencePoints/TreeOnly/Get-48     	  845294	       263.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get-48     	  843500	       261.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get-48     	  975744	       250.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get2
+BenchmarkReferencePoints/TreeOnly/Get2-48    	  801156	       263.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get2-48    	 1060093	       262.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Get2-48    	  857044	       262.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/GetMiss
+BenchmarkReferencePoints/TreeOnly/GetMiss-48 	 1078501	       204.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/GetMiss-48 	 1086192	       206.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/GetMiss-48 	 1079061	       187.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Update
+BenchmarkReferencePoints/TreeOnly/Update-48  	  647806	       402.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Update-48  	  527846	       415.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Update-48  	  531840	       413.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Insert
+BenchmarkReferencePoints/TreeOnly/Insert-48  	  146430	      1693 ns/op	     210 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Insert-48  	  160083	      1677 ns/op	     205 B/op	       0 allocs/op
+BenchmarkReferencePoints/TreeOnly/Insert-48  	  158764	      1684 ns/op	     207 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get
+BenchmarkReferencePoints/Dict/Get-48         	 7058542	        31.42 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get-48         	 7338950	        30.72 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get-48         	 8775186	        29.99 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get2
+BenchmarkReferencePoints/Dict/Get2-48        	 8438100	        29.74 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get2-48        	 7195656	        30.37 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get2-48        	 7306969	        30.32 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/GetMiss
+BenchmarkReferencePoints/Dict/GetMiss-48     	 5924996	        39.87 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/GetMiss-48     	 6254930	        39.58 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/GetMiss-48     	 6684164	        38.88 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Update
+BenchmarkReferencePoints/Dict/Update-48      	 7889924	        33.41 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Update-48      	 6713824	        31.17 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Update-48      	 6464200	        34.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Insert
+BenchmarkReferencePoints/Dict/Insert-48      	  165363	      1568 ns/op	     337 B/op	       1 allocs/op
+BenchmarkReferencePoints/Dict/Insert-48      	  141739	      1523 ns/op	     336 B/op	       1 allocs/op
+BenchmarkReferencePoints/Dict/Insert-48      	  322153	      1373 ns/op	     284 B/op	       1 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get
+BenchmarkReferencePoints/KeyStableHash/Get-48         	11542846	        19.00 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get-48         	12502276	        19.27 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get-48         	11482245	        19.33 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get2
+BenchmarkReferencePoints/KeyStableHash/Get2-48        	12056478	        18.59 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get2-48        	12267139	        18.61 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Get2-48        	12061922	        18.42 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/GetMiss
+BenchmarkReferencePoints/KeyStableHash/GetMiss-48     	11821185	        19.68 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/GetMiss-48     	11657313	        19.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/GetMiss-48     	11518902	        19.09 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Update
+BenchmarkReferencePoints/KeyStableHash/Update-48      	 9862077	        22.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Update-48      	10708497	        19.57 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Update-48      	10138308	        22.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Insert
+BenchmarkReferencePoints/KeyStableHash/Insert-48      	10502830	        20.66 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Insert-48      	10836962	        20.94 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/KeyStableHash/Insert-48      	10904539	        20.92 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get
+BenchmarkReferencePoints/GoMap/Get-48                 	10802961	        20.93 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get-48                 	11106729	        20.87 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get-48                 	10726710	        21.32 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get2
+BenchmarkReferencePoints/GoMap/Get2-48                	10377464	        21.97 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get2-48                	10747758	        21.73 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get2-48                	10427958	        21.71 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/GetMiss
+BenchmarkReferencePoints/GoMap/GetMiss-48             	10728559	        20.67 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/GetMiss-48             	11009583	        20.71 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/GetMiss-48             	10814683	        20.61 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Update
+BenchmarkReferencePoints/GoMap/Update-48              	 5722570	        36.20 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Update-48              	 6536293	        40.02 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Update-48              	 5607816	        40.63 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Insert
+BenchmarkReferencePoints/GoMap/Insert-48              	 5937757	        38.09 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Insert-48              	 5664319	        38.62 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Insert-48              	 5807870	        38.25 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	50.550s

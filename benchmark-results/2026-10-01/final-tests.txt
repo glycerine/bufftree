@@ -1,0 +1,96 @@
+=== RUN   TestBenchmarkWorkloadsAgainstBaseline
+--- PASS: TestBenchmarkWorkloadsAgainstBaseline (0.05s)
+=== RUN   TestBenchmarkBaselineSplits
+--- PASS: TestBenchmarkBaselineSplits (0.00s)
+=== RUN   TestBPALogFlushAndRedistribute
+--- PASS: TestBPALogFlushAndRedistribute (0.00s)
+=== RUN   TestBPARandom
+--- PASS: TestBPARandom (0.03s)
+=== RUN   TestGetAndGet2
+--- PASS: TestGetAndGet2 (0.00s)
+=== RUN   TestTreeRandomAgainstMap
+=== RUN   TestTreeRandomAgainstMap/A
+=== RUN   TestTreeRandomAgainstMap/B
+=== RUN   TestTreeRandomAgainstMap/C
+=== RUN   TestTreeRandomAgainstMap/D
+=== RUN   TestTreeRandomAgainstMap/E
+--- PASS: TestTreeRandomAgainstMap (0.11s)
+    --- PASS: TestTreeRandomAgainstMap/A (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/B (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/C (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/D (0.02s)
+    --- PASS: TestTreeRandomAgainstMap/E (0.02s)
+=== RUN   TestTreeDeleteDuringIteration
+--- PASS: TestTreeDeleteDuringIteration (0.00s)
+=== RUN   TestTreeRangeAndMutation
+--- PASS: TestTreeRangeAndMutation (0.00s)
+=== RUN   TestTreeZeroValueAndOrderedTypes
+--- PASS: TestTreeZeroValueAndOrderedTypes (0.00s)
+=== RUN   TestNaNKeysSortLast
+--- PASS: TestNaNKeysSortLast (0.00s)
+=== RUN   TestConfigValidation
+--- PASS: TestConfigValidation (0.00s)
+=== RUN   TestTreeBulkSplitAndCollapse
+--- PASS: TestTreeBulkSplitAndCollapse (0.44s)
+=== RUN   TestTreeIteratorsAndEarlyStop
+--- PASS: TestTreeIteratorsAndEarlyStop (0.00s)
+=== RUN   TestDictInsertionOrderAndDeletion
+--- PASS: TestDictInsertionOrderAndDeletion (0.00s)
+=== RUN   TestDictRandomAgainstModel
+--- PASS: TestDictRandomAgainstModel (0.01s)
+=== RUN   TestDictIteratorDeletesAheadAndSeesNewInsertions
+--- PASS: TestDictIteratorDeletesAheadAndSeesNewInsertions (0.00s)
+=== RUN   TestDictIterationSeesAppendsAfterDeletingTail
+--- PASS: TestDictIterationSeesAppendsAfterDeletingTail (0.00s)
+=== RUN   TestDictAllVisitsInsertsDuringRange
+--- PASS: TestDictAllVisitsInsertsDuringRange (0.00s)
+=== RUN   TestMapRangeDeletionAndLogShadowing
+--- PASS: TestMapRangeDeletionAndLogShadowing (0.01s)
+=== RUN   TestLazyBlockSorting
+--- PASS: TestLazyBlockSorting (0.00s)
+=== RUN   TestQueriesDoNotAllocate
+=== RUN   TestQueriesDoNotAllocate/Tree/GetHit
+=== RUN   TestQueriesDoNotAllocate/Tree/GetMiss
+=== RUN   TestQueriesDoNotAllocate/Tree/Get2
+=== RUN   TestQueriesDoNotAllocate/Tree/Scan
+=== RUN   TestQueriesDoNotAllocate/Tree/Range
+=== RUN   TestQueriesDoNotAllocate/Tree/MapRange
+=== RUN   TestQueriesDoNotAllocate/Tree/All
+=== RUN   TestQueriesDoNotAllocate/Dict/GetHit
+=== RUN   TestQueriesDoNotAllocate/Dict/GetMiss
+=== RUN   TestQueriesDoNotAllocate/Dict/Get2
+=== RUN   TestQueriesDoNotAllocate/Dict/All
+--- PASS: TestQueriesDoNotAllocate (0.02s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/GetHit (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/GetMiss (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/Get2 (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/Scan (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/Range (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/MapRange (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Tree/All (0.01s)
+    --- PASS: TestQueriesDoNotAllocate/Dict/GetHit (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Dict/GetMiss (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Dict/Get2 (0.00s)
+    --- PASS: TestQueriesDoNotAllocate/Dict/All (0.00s)
+=== RUN   TestMapRangeReentrant
+--- PASS: TestMapRangeReentrant (0.00s)
+=== RUN   TestScansAgainstSortedModel
+--- PASS: TestScansAgainstSortedModel (0.05s)
+=== RUN   TestScanMutationWithinBlock
+--- PASS: TestScanMutationWithinBlock (0.00s)
+=== RUN   TestDel2OnContainersAndIterators
+--- PASS: TestDel2OnContainersAndIterators (0.00s)
+=== RUN   TestPointIndexRandomAndCollisions
+--- PASS: TestPointIndexRandomAndCollisions (0.04s)
+=== RUN   TestPointIndexFloatingKeys
+--- PASS: TestPointIndexFloatingKeys (0.00s)
+=== RUN   TestReferenceStringPointQueries
+--- PASS: TestReferenceStringPointQueries (0.00s)
+=== RUN   ExampleTree
+--- PASS: ExampleTree (0.00s)
+=== RUN   ExampleDict
+--- PASS: ExampleDict (0.00s)
+=== RUN   ExampleTree_Range
+--- PASS: ExampleTree_Range (0.00s)
+PASS
+ok  	github.com/glycerine/bufftree	0.772s

@@ -1,0 +1,86 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTree
+BenchmarkTree/BP/h32-b32
+BenchmarkTree/BP/h32-b32/FindHit
+BenchmarkTree/BP/h32-b32/FindHit-48 	 1868470	       151.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	 1859511	       151.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	 1788532	       152.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	 1856809	       152.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit-48 	 1842952	       155.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2
+BenchmarkTree/BP/h32-b32/FindHit2-48         	 1794444	       148.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	 1748386	       150.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	 1869524	       138.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	 1842865	       149.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2-48         	 1803562	       150.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 1582701	       176.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 1568976	       180.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 1571173	       176.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 1569050	       175.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss-48         	 1550803	       178.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 1630758	       170.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 1656925	       168.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 1654836	       168.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 1659499	       174.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2-48        	 1614145	       168.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update
+BenchmarkTree/BP/h32-b32/Update-48           	  686533	       402.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	  692294	       387.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	  699652	       396.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	  689334	       386.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update-48           	  705626	       398.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  254661	      1089 ns/op	     159 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  260816	      1126 ns/op	     168 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  244902	      1167 ns/op	     153 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  263095	      1085 ns/op	     174 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom-48     	  248356	      1088 ns/op	     153 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  260102	      1029 ns/op	     718 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  262021	      1067 ns/op	     718 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  269100	      1018 ns/op	     718 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  267883	      1048 ns/op	     718 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential-48 	  541034	      1056 ns/op	     718 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100
+BenchmarkTree/BP/h32-b32/Scan100-48          	  292333	       946.5 ns/op	  53116898 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  292198	       943.8 ns/op	  53269801 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  295048	       940.5 ns/op	  53456341 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  315626	       952.2 ns/op	  52793249 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100-48          	  303943	       941.1 ns/op	  53420772 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000
+BenchmarkTree/BP/h32-b32/Scan10000-48        	    3981	     70014 ns/op	  68007928 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	    4008	     68228 ns/op	  69859501 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	    4185	     70058 ns/op	  68075256 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	    4018	     69455 ns/op	  68623273 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000-48        	    4058	     69550 ns/op	  68601994 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000
+BenchmarkTree/BP/h32-b32/Scan100000-48       	     795	    353379 ns/op	  70629351 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	     777	    363457 ns/op	  68275003 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	     784	    330875 ns/op	  75448479 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	     814	    357271 ns/op	  69825627 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000-48       	     768	    355648 ns/op	  69608018 entries/s	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100
+BenchmarkTree/BP/h32-b32/Map100-48           	   69825	      4008 ns/op	  12537947 entries/s	    3395 B/op	       6 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	   70528	      3982 ns/op	  12622175 entries/s	    3396 B/op	       6 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	   76101	      4044 ns/op	  12431088 entries/s	    3396 B/op	       6 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	   72542	      3992 ns/op	  12589567 entries/s	    3395 B/op	       6 allocs/op
+BenchmarkTree/BP/h32-b32/Map100-48           	   70741	      4053 ns/op	  12404339 entries/s	    3397 B/op	       6 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000
+BenchmarkTree/BP/h32-b32/Map10000-48         	    3380	    163689 ns/op	  29122475 entries/s	   67077 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	    2384	    168721 ns/op	  28073375 entries/s	   66997 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	    3332	    167073 ns/op	  28517828 entries/s	   67042 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	    2343	    169550 ns/op	  27874571 entries/s	   66975 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000-48         	    2098	    165682 ns/op	  28472729 entries/s	   67124 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000
+BenchmarkTree/BP/h32-b32/Map100000-48        	     601	    709859 ns/op	  35339904 entries/s	   75230 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	     420	    665205 ns/op	  38379156 entries/s	   75580 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	     421	    723685 ns/op	  35372659 entries/s	   75585 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	     418	    695493 ns/op	  36696865 entries/s	   75567 B/op	      11 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000-48        	     463	    751638 ns/op	  33476910 entries/s	   75414 B/op	      11 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	104.259s

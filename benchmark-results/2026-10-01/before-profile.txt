@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkYCSB
+BenchmarkYCSB/BP/h32-b32/Uniform/A
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48         	 8716792	       250.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48         	 2511086	       959.7 ns/op	  49613913 entries/s	      14 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48         	   36638	     63388 ns/op	  74800491 entries/s	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48         	   14245	    168404 ns/op	  28139733 entries/s	   66690 B/op	      11 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	16.829s
