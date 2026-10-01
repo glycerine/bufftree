@@ -28,7 +28,7 @@ func benchmarkFreshPut(b *testing.B, layout benchPointLayout, n int, keys []uint
 	background := context.Background()
 	var inserting context.Context
 	if profile {
-		inserting = pprof.WithLabels(background, pprof.Labels("phase", "fresh-put"))
+		inserting = pprof.WithLabels(background, pprof.Labels("phase", "fresh-put", "container", layout.name))
 		pprof.SetGoroutineLabels(inserting)
 		defer pprof.SetGoroutineLabels(background)
 	}

@@ -1,0 +1,161 @@
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/TreeHash
+=== RUN   TestComparisonFreshPuts/TreeHashNoCache
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/DictHash
+=== RUN   TestComparisonFreshPuts/DictHashNoCache
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/TreeHash
+=== RUN   TestComparisonFreshPuts/TreeHashNoCache
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/DictHash
+=== RUN   TestComparisonFreshPuts/DictHashNoCache
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/TreeHash
+=== RUN   TestComparisonFreshPuts/TreeHashNoCache
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/DictHash
+=== RUN   TestComparisonFreshPuts/DictHashNoCache
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/TreeHash
+=== RUN   TestComparisonFreshPuts/TreeHashNoCache
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/DictHash
+=== RUN   TestComparisonFreshPuts/DictHashNoCache
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/TreeHash
+=== RUN   TestComparisonFreshPuts/TreeHashNoCache
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/DictHash
+=== RUN   TestComparisonFreshPuts/DictHashNoCache
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/TreeHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHash (0.00s)
+    --- PASS: TestComparisonFreshPuts/DictHashNoCache (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkFreshPut
+BenchmarkFreshPut/Tree
+BenchmarkFreshPut/Tree-48         	  639355	       656.8 ns/op	     164 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  740450	       755.6 ns/op	     171 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  371682	       711.1 ns/op	     160 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  367746	       710.5 ns/op	     161 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  450883	       662.7 ns/op	     164 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash
+BenchmarkFreshPut/TreeHash-48     	  330327	       919.1 ns/op	     327 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  336541	       967.2 ns/op	     325 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  326649	       834.4 ns/op	     297 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  325696	       905.2 ns/op	     297 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  381310	       899.7 ns/op	     292 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache
+BenchmarkFreshPut/TreeHashNoCache-48         	  348172	       868.7 ns/op	     283 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache-48         	  366267	       822.0 ns/op	     269 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache-48         	  418136	       835.9 ns/op	     278 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache-48         	  416400	       861.4 ns/op	     279 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache-48         	  328686	       877.0 ns/op	     293 B/op	       0 allocs/op
+BenchmarkFreshPut/Dict
+BenchmarkFreshPut/Dict-48                    	  271119	      1052 ns/op	     233 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48                    	  290841	      1071 ns/op	     220 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48                    	  264078	      1049 ns/op	     232 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48                    	  251062	      1075 ns/op	     209 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48                    	  243308	      1073 ns/op	     208 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash
+BenchmarkFreshPut/DictHash-48                	  319701	      1092 ns/op	     347 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48                	  301047	       946.6 ns/op	     354 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48                	  270475	      1111 ns/op	     388 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48                	  270153	      1082 ns/op	     389 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48                	  250365	      1064 ns/op	     343 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache
+BenchmarkFreshPut/DictHashNoCache-48         	  287091	      1002 ns/op	     337 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache-48         	  304636	       975.4 ns/op	     321 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache-48         	  329137	      1108 ns/op	     350 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache-48         	  302350	       952.7 ns/op	     323 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache-48         	  282082	      1063 ns/op	     342 B/op	       1 allocs/op
+BenchmarkFreshPut/GoMap
+BenchmarkFreshPut/GoMap-48                   	 1618654	       185.5 ns/op	      70 B/op	       0 allocs/op
+BenchmarkFreshPut/GoMap-48                   	 1621186	       179.6 ns/op	      71 B/op	       0 allocs/op
+BenchmarkFreshPut/GoMap-48                   	 1753983	       173.1 ns/op	      71 B/op	       0 allocs/op
+BenchmarkFreshPut/GoMap-48                   	 1717774	       174.3 ns/op	      71 B/op	       0 allocs/op
+BenchmarkFreshPut/GoMap-48                   	 1621352	       176.4 ns/op	      71 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall
+BenchmarkFreshPut/Tidwall-48                 	 1000000	       289.0 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall-48                 	 1000000	       318.6 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall-48                 	 1000000	       313.0 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall-48                 	 1000000	       314.4 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall-48                 	 1000000	       308.2 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPut/RBTree
+BenchmarkFreshPut/RBTree-48                  	  535464	       581.6 ns/op	      64 B/op	       2 allocs/op
+BenchmarkFreshPut/RBTree-48                  	  543075	       579.5 ns/op	      64 B/op	       2 allocs/op
+BenchmarkFreshPut/RBTree-48                  	  516733	       542.0 ns/op	      64 B/op	       2 allocs/op
+BenchmarkFreshPut/RBTree-48                  	  502700	       600.6 ns/op	      64 B/op	       2 allocs/op
+BenchmarkFreshPut/RBTree-48                  	  536828	       598.1 ns/op	      64 B/op	       2 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree/bench	46.446s

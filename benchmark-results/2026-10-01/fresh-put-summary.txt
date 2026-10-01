@@ -1,0 +1,54 @@
+Fresh-Put optimization, 2026-10-01
+AMD Ryzen Threadripper 3960X; Linux/amd64; Go 1.26.4.
+Five 250ms samples per case; medians shown below. Initial load: 65,536
+uint64 keys and values. Each timed batch inserts 65,536 unique odd keys
+into the initial even-key dataset; initial loading/reset is untimed.
+The default hash index caches full hashes.
+
+Retained optimization: share one cleared redistribution buffer per Tree.
+Only bpa.go and tree.go changed in the production insertion path. Dictionary
+and hash-index implementations remain unchanged. The buffer has one leaf's
+capacity; entries are cleared after each redistribution to release references.
+Independent copies are still used for splits and deletion rebalancing.
+
+Container      Before ns/key   Shared buffer ns/key   Change    Before B/op   After B/op
+Tree                  710.5                  685.5    -3.5%            164           75
+TreeHash              905.2                  753.8   -16.7%            297          219
+Dict                 1071.0                  930.5   -13.1%            220          124
+DictHash             1082.0                  976.1    -9.8%            354          272
+
+Raw samples: fresh-put-before.txt and fresh-put-shared-buffer.txt.
+B/op measures allocation traffic during insertion, rather than retained heap.
+Hash-table growth and partially completed batches can affect amortized B/op.
+Use memory-shared-buffer.txt for retained heap at 100,000 keys.
+
+Rejected experiment: reuse the known block partition when applying a log.
+Results were mixed, including a Tree regression, and the implementation was
+reverted before testing buffer reuse. Only its raw trial data is retained in
+fresh-put-rejected-routing.txt; no rejected implementation remains in source.
+
+Reproduce timing:
+  go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(Tree|TreeHash|Dict|DictHash)$' -benchmem -benchtime=250ms -count=5
+
+Reproduce CPU/allocation profiles:
+  go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(TreeHash|DictHash)$' -benchmem -benchtime=3s -cpuprofile=/tmp/bufftree-fresh.cpu -memprofile=/tmp/bufftree-fresh.mem -o=/tmp/bufftree-fresh.test
+  go tool pprof -top -relative_percentages -tagfocus=container=TreeHash -cum /tmp/bufftree-fresh.test /tmp/bufftree-fresh.cpu
+  go tool pprof -top -relative_percentages -tagfocus=container=DictHash -cum /tmp/bufftree-fresh.test /tmp/bufftree-fresh.cpu
+  go tool pprof -top -alloc_space -ignore=loadComparisonPoints /tmp/bufftree-fresh.test /tmp/bufftree-fresh.mem
+
+CPU labels exclude fixture loading even though the profiler runs during it.
+Allocation profiles require stack filtering to exclude fixture loading.
+Saved before-buffer profiles: fresh-put-before.cpu and fresh-put-before.mem.
+Profiling used three seconds for each hash-index container, and the timing
+output is saved in fresh-put-profile.txt.
+
+Final validation:
+  go test -v
+  go -C bench test -v -count=1
+  BUFFTREE_BENCH_N=128 go -C bench test -v -run '^$' -bench '^Benchmark(FreshPut|ComparePoints|CompareIteration)$' -benchmem -benchtime=257x
+  make bench BENCH_TIME=250ms BENCH_COUNT=5
+  make memory
+
+Tests and benchmark smoke output: shared-buffer-*-tests.txt and
+shared-buffer-benchmark-smoke.txt. Current README tables are regenerated in
+readme-shared-buffer.txt; the memory target runs separately afterward.

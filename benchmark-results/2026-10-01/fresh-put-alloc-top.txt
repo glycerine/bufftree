@@ -1,0 +1,30 @@
+File: baseline.test
+Build ID: ddfcca8939e3e21bcb70348d1c5a10ffd0184f37
+Type: alloc_space
+Time: 2026-10-01 18:35:58 CDT
+Active filters:
+   ignore=loadComparisonPoints
+Showing nodes accounting for 3005.35MB, 42.73% of 7032.72MB total
+Dropped 47 nodes (cum <= 35.16MB)
+Showing top 20 nodes out of 22
+      flat  flat%   sum%        cum   cum%
+  663.03MB  9.43%  9.43%   663.03MB  9.43%  github.com/glycerine/bufftree.(*pointIndex[go.shape.uint64,go.shape.uint64]).grow
+  622.31MB  8.85% 18.28%   622.31MB  8.85%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).collect
+  572.48MB  8.14% 26.42%   572.48MB  8.14%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).collect
+  568.61MB  8.09% 34.50%   568.61MB  8.09%  github.com/glycerine/bufftree.(*pointIndex[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).grow
+  203.51MB  2.89% 37.40%     1519MB 21.60%  github.com/glycerine/bufftree.(*Dict[go.shape.uint64,go.shape.uint64]).Put
+  200.01MB  2.84% 40.24%   200.01MB  2.84%  github.com/glycerine/bufftree.newBPA[go.shape.uint64,go.shape.uint64]
+  173.39MB  2.47% 42.71%   173.39MB  2.47%  github.com/glycerine/bufftree.newBPA[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]
+       1MB 0.014% 42.72%   337.05MB  4.79%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).splitLeaf
+       1MB 0.014% 42.73%   388.81MB  5.53%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).splitLeaf
+         0     0% 42.73%  1315.49MB 18.71%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).Put
+         0     0% 42.73%  1487.85MB 21.16%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Put
+         0     0% 42.73%   409.83MB  5.83%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).flush
+         0     0% 42.73%   409.83MB  5.83%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).writeLog
+         0     0% 42.73%   436.01MB  6.20%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+         0     0% 42.73%   436.01MB  6.20%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).writeLog
+         0     0% 42.73%   568.61MB  8.09%  github.com/glycerine/bufftree.(*pointIndex[go.shape.uint64,*github.com/glycerine/bufftree.dictItem[go.shape.uint64,go.shape.uint64]]).put
+         0     0% 42.73%   663.03MB  9.43%  github.com/glycerine/bufftree.(*pointIndex[go.shape.uint64,go.shape.uint64]).put
+         0     0% 42.73%  3006.85MB 42.76%  github.com/glycerine/bufftree/bench.BenchmarkFreshPut.func1
+         0     0% 42.73%  3006.85MB 42.76%  github.com/glycerine/bufftree/bench.benchmarkFreshPut
+         0     0% 42.73%  2990.77MB 42.53%  testing.(*B).launch

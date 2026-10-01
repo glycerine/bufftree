@@ -1,0 +1,131 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints
+BenchmarkComparePoints/Tree/GetHit
+BenchmarkComparePoints/Tree/GetHit-48         	     257	        75.72 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss
+BenchmarkComparePoints/Tree/GetMiss-48        	     257	        73.77 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update
+BenchmarkComparePoints/Tree/Update-48         	     257	        74.90 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/FreshPut
+BenchmarkComparePoints/Tree/FreshPut-48       	     257	       224.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetHit
+BenchmarkComparePoints/TreeHash/GetHit-48     	     257	        18.25 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/GetMiss
+BenchmarkComparePoints/TreeHash/GetMiss-48    	     257	        53.07 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/Update
+BenchmarkComparePoints/TreeHash/Update-48     	     257	       118.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHash/FreshPut
+BenchmarkComparePoints/TreeHash/FreshPut-48   	     257	       263.3 ns/op	     206 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHashNoCache/GetHit
+BenchmarkComparePoints/TreeHashNoCache/GetHit-48         	     257	        35.44 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHashNoCache/GetMiss
+BenchmarkComparePoints/TreeHashNoCache/GetMiss-48        	     257	        48.01 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHashNoCache/Update
+BenchmarkComparePoints/TreeHashNoCache/Update-48         	     257	       117.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/TreeHashNoCache/FreshPut
+BenchmarkComparePoints/TreeHashNoCache/FreshPut-48       	     257	       471.1 ns/op	     164 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit
+BenchmarkComparePoints/Dict/GetHit-48                    	     257	        86.03 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss
+BenchmarkComparePoints/Dict/GetMiss-48                   	     257	        37.39 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update
+BenchmarkComparePoints/Dict/Update-48                    	     257	        80.39 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/FreshPut
+BenchmarkComparePoints/Dict/FreshPut-48                  	     257	       359.8 ns/op	      48 B/op	       1 allocs/op
+BenchmarkComparePoints/DictHash/GetHit
+BenchmarkComparePoints/DictHash/GetHit-48                	     257	        35.72 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/GetMiss
+BenchmarkComparePoints/DictHash/GetMiss-48               	     257	        48.05 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/Update
+BenchmarkComparePoints/DictHash/Update-48                	     257	        40.00 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHash/FreshPut
+BenchmarkComparePoints/DictHash/FreshPut-48              	     257	       575.4 ns/op	     254 B/op	       1 allocs/op
+BenchmarkComparePoints/DictHashNoCache/GetHit
+BenchmarkComparePoints/DictHashNoCache/GetHit-48         	     257	        19.18 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHashNoCache/GetMiss
+BenchmarkComparePoints/DictHashNoCache/GetMiss-48        	     257	        49.92 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHashNoCache/Update
+BenchmarkComparePoints/DictHashNoCache/Update-48         	     257	        38.44 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/DictHashNoCache/FreshPut
+BenchmarkComparePoints/DictHashNoCache/FreshPut-48       	     257	       604.7 ns/op	     212 B/op	       1 allocs/op
+BenchmarkComparePoints/GoMap/GetHit
+BenchmarkComparePoints/GoMap/GetHit-48                   	     257	        22.72 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/GetMiss
+BenchmarkComparePoints/GoMap/GetMiss-48                  	     257	        23.27 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/Update
+BenchmarkComparePoints/GoMap/Update-48                   	     257	        39.03 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/GoMap/FreshPut
+BenchmarkComparePoints/GoMap/FreshPut-48                 	     257	       138.3 ns/op	      73 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/GetHit
+BenchmarkComparePoints/Tidwall/GetHit-48                 	     257	        82.96 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/GetMiss
+BenchmarkComparePoints/Tidwall/GetMiss-48                	     257	       113.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/Update
+BenchmarkComparePoints/Tidwall/Update-48                 	     257	        93.00 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut
+BenchmarkComparePoints/Tidwall/FreshPut-48               	     257	       239.6 ns/op	      50 B/op	       0 allocs/op
+BenchmarkComparePoints/RBTree/GetHit
+BenchmarkComparePoints/RBTree/GetHit-48                  	     257	        98.71 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/RBTree/GetMiss
+BenchmarkComparePoints/RBTree/GetMiss-48                 	     257	       139.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/RBTree/Update
+BenchmarkComparePoints/RBTree/Update-48                  	     257	       119.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/RBTree/FreshPut
+BenchmarkComparePoints/RBTree/FreshPut-48                	     257	       306.1 ns/op	      64 B/op	       2 allocs/op
+BenchmarkCompareIteration
+BenchmarkCompareIteration/Tree/NoHash/Scan10000
+BenchmarkCompareIteration/Tree/NoHash/Scan10000-48       	     257	       881.1 ns/op	  77618755 entries/s	        12.88 iter_ns/key	        68.39 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/NoHash/Scan100000
+BenchmarkCompareIteration/Tree/NoHash/Scan100000-48      	     257	      1145 ns/op	  60062347 entries/s	        16.65 iter_ns/key	        68.75 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan10000
+BenchmarkCompareIteration/Tree/Hash/Scan10000-48         	     257	       916.6 ns/op	  74613814 entries/s	        13.40 iter_ns/key	        68.39 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Hash/Scan100000
+BenchmarkCompareIteration/Tree/Hash/Scan100000-48        	     257	       829.0 ns/op	  82927722 entries/s	        12.06 iter_ns/key	        68.75 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/HashNoCache/Scan10000
+BenchmarkCompareIteration/Tree/HashNoCache/Scan10000-48  	     257	       818.3 ns/op	  83582984 entries/s	        11.96 iter_ns/key	        68.39 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/HashNoCache/Scan100000
+BenchmarkCompareIteration/Tree/HashNoCache/Scan100000-48 	     257	       830.0 ns/op	  82830139 entries/s	        12.07 iter_ns/key	        68.75 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000
+BenchmarkCompareIteration/Tidwall/Scan10000-48           	     257	       645.4 ns/op	 105971724 entries/s	         9.436 iter_ns/key	        68.39 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000
+BenchmarkCompareIteration/Tidwall/Scan100000-48          	     257	       607.0 ns/op	 113252780 entries/s	         8.830 iter_ns/key	        68.75 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/RBTree/Scan10000
+BenchmarkCompareIteration/RBTree/Scan10000-48            	     257	       687.0 ns/op	  99555943 entries/s	        10.04 iter_ns/key	        68.39 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/RBTree/Scan100000
+BenchmarkCompareIteration/RBTree/Scan100000-48           	     257	       733.3 ns/op	  93746850 entries/s	        10.67 iter_ns/key	        68.75 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/NoHash/Iterate
+BenchmarkCompareIteration/Dict/NoHash/Iterate-48         	     257	       570.0 ns/op	 224567535 entries/s	         4.453 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Hash/Iterate
+BenchmarkCompareIteration/Dict/Hash/Iterate-48           	     257	       509.6 ns/op	 251160518 entries/s	         3.982 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/HashNoCache/Iterate
+BenchmarkCompareIteration/Dict/HashNoCache/Iterate-48    	     257	       598.9 ns/op	 213714471 entries/s	         4.679 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/GoMap/Iterate
+BenchmarkCompareIteration/GoMap/Iterate-48               	     257	      2312 ns/op	  55370870 entries/s	        18.06 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Iterate
+BenchmarkCompareIteration/Tidwall/Iterate-48             	     257	       598.5 ns/op	 213879823 entries/s	         4.676 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/RBTree/Iterate
+BenchmarkCompareIteration/RBTree/Iterate-48              	     257	       828.7 ns/op	 154467422 entries/s	         6.474 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkFreshPut
+BenchmarkFreshPut/Tree
+BenchmarkFreshPut/Tree-48                                	     257	       424.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash
+BenchmarkFreshPut/TreeHash-48                            	     257	       439.1 ns/op	     206 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHashNoCache
+BenchmarkFreshPut/TreeHashNoCache-48                     	     257	       427.5 ns/op	     164 B/op	       0 allocs/op
+BenchmarkFreshPut/Dict
+BenchmarkFreshPut/Dict-48                                	     257	       643.3 ns/op	      48 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash
+BenchmarkFreshPut/DictHash-48                            	     257	       570.2 ns/op	     254 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHashNoCache
+BenchmarkFreshPut/DictHashNoCache-48                     	     257	       706.1 ns/op	     212 B/op	       1 allocs/op
+BenchmarkFreshPut/GoMap
+BenchmarkFreshPut/GoMap-48                               	     257	       140.7 ns/op	      73 B/op	       0 allocs/op
+BenchmarkFreshPut/Tidwall
+BenchmarkFreshPut/Tidwall-48                             	     257	       196.7 ns/op	      50 B/op	       0 allocs/op
+BenchmarkFreshPut/RBTree
+BenchmarkFreshPut/RBTree-48                              	     257	       287.0 ns/op	      64 B/op	       2 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree/bench	0.113s

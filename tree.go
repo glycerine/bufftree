@@ -10,12 +10,13 @@ import (
 // another and sort after all other keys. The zero value is ready
 // for use. Do not copy a Tree after its first use.
 type Tree[K cmp.Ordered, V any] struct {
-	root       *node[K, V]
-	cfg        Config
-	length     int
-	version    uint64
-	points     pointIndex[K, V]
-	mapBuffers [][]entry[K, V]
+	root          *node[K, V]
+	cfg           Config
+	length        int
+	version       uint64
+	points        pointIndex[K, V]
+	mapBuffers    [][]entry[K, V]
+	rebuildBuffer []entry[K, V]
 }
 type node[K cmp.Ordered, V any] struct {
 	min        K
@@ -86,7 +87,7 @@ func (t *Tree[K, V]) Get2(k K) (V, bool) {
 func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 	if t.root == nil {
 		t.cfg = t.cfg.normalized()
-		t.root = &node[K, V]{min: k, leaf: newBPA[K, V](t.cfg)}
+		t.root = &node[K, V]{min: k, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer)}
 		if len(t.mapBuffers) == 0 {
 			t.mapBuffers = [][]entry[K, V]{make([]entry[K, V], 0, t.root.leaf.capacity())}
 		}
@@ -172,7 +173,7 @@ func childIndex[K cmp.Ordered, V any](p, n *node[K, V]) int {
 func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	es := n.leaf.collect()
 	mid := len(es) / 2
-	right := &node[K, V]{min: es[mid].key, leaf: newBPA[K, V](t.cfg), prev: n, next: n.next}
+	right := &node[K, V]{min: es[mid].key, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer), prev: n, next: n.next}
 	n.leaf.load(es[:mid])
 	n.min = es[0].key
 	right.leaf.load(es[mid:])

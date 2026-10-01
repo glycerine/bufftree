@@ -1,0 +1,31 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkFreshPut
+BenchmarkFreshPut/Tree
+BenchmarkFreshPut/Tree-48         	  376125	       719.7 ns/op	     160 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  364273	       713.4 ns/op	     163 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  417435	       723.5 ns/op	     168 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  386654	       719.9 ns/op	     164 B/op	       0 allocs/op
+BenchmarkFreshPut/Tree-48         	  377502	       702.4 ns/op	     159 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash
+BenchmarkFreshPut/TreeHash-48     	  350622	       885.0 ns/op	     312 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  360210	       870.5 ns/op	     304 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  337299	       931.1 ns/op	     324 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  348154	       872.0 ns/op	     314 B/op	       0 allocs/op
+BenchmarkFreshPut/TreeHash-48     	  350982	       902.6 ns/op	     312 B/op	       0 allocs/op
+BenchmarkFreshPut/Dict
+BenchmarkFreshPut/Dict-48         	  294054	      1040 ns/op	     219 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48         	  254008	      1034 ns/op	     213 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48         	  274857	      1061 ns/op	     230 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48         	  294116	      1050 ns/op	     219 B/op	       1 allocs/op
+BenchmarkFreshPut/Dict-48         	  260764	      1060 ns/op	     224 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash
+BenchmarkFreshPut/DictHash-48     	  273328	      1061 ns/op	     385 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48     	  272448	       957.2 ns/op	     386 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48     	  276064	      1051 ns/op	     381 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48     	  278876	      1016 ns/op	     378 B/op	       1 allocs/op
+BenchmarkFreshPut/DictHash-48     	  285754	      1055 ns/op	     370 B/op	       1 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree/bench	23.215s

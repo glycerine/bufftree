@@ -6,6 +6,31 @@ import (
 	"testing"
 )
 
+func TestRedistributionBufferDoesNotRetainValues(t *testing.T) {
+	tr := NewBPTree[int, *int](nil)
+	for i := 0; i < 4096; i++ {
+		v := i
+		tr.Put(int(benchKey(i)>>1), &v)
+	}
+	if cap(tr.rebuildBuffer) == 0 {
+		t.Fatal("fixture did not exercise pooled redistribution")
+	}
+	check := func() {
+		t.Helper()
+		if len(tr.rebuildBuffer) != 0 {
+			t.Fatal("completed redistribution retained records")
+		}
+		for _, e := range tr.rebuildBuffer[:cap(tr.rebuildBuffer)] {
+			if e.value != nil {
+				t.Fatal("redistribution scratch retains a value pointer")
+			}
+		}
+	}
+	check()
+	tr.Clear()
+	check()
+}
+
 func TestQueriesDoNotAllocate(t *testing.T) {
 	for _, mode := range []struct {
 		name string

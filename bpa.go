@@ -20,11 +20,16 @@ type bpa[K cmp.Ordered, V any] struct {
 	counts              []int
 	sorted              []bool
 	logSorted           bool
+	rebuildBuffer       *[]entry[K, V]
 }
 
-func newBPA[K cmp.Ordered, V any](cfg Config) *bpa[K, V] {
+func newBPA[K cmp.Ordered, V any](cfg Config, shared ...*[]entry[K, V]) *bpa[K, V] {
 	cfg = cfg.normalized()
-	return &bpa[K, V]{cfg: cfg, data: make([]entry[K, V], cfg.LogSize+cfg.NumBlocks+cfg.NumBlocks*cfg.BlockSize), counts: make([]int, cfg.NumBlocks), sorted: make([]bool, cfg.NumBlocks), logSorted: true}
+	p := &bpa[K, V]{cfg: cfg, data: make([]entry[K, V], cfg.LogSize+cfg.NumBlocks+cfg.NumBlocks*cfg.BlockSize), counts: make([]int, cfg.NumBlocks), sorted: make([]bool, cfg.NumBlocks), logSorted: true}
+	if len(shared) != 0 {
+		p.rebuildBuffer = shared[0]
+	}
+	return p
 }
 func (p *bpa[K, V]) capacity() int             { return p.cfg.NumBlocks * p.cfg.BlockSize }
 func (p *bpa[K, V]) log() []entry[K, V]        { return p.data[:p.logN] }
@@ -186,7 +191,20 @@ func (p *bpa[K, V]) flush() {
 		}
 	}
 	if rebuild {
-		p.load(p.collect())
+		if p.rebuildBuffer == nil {
+			p.load(p.collect())
+		} else {
+			// Rebuilds are synchronous and have no callbacks. Leaves of a tree
+			// can share one buffer without retaining a spare array per leaf.
+			buf := *p.rebuildBuffer
+			if cap(buf) < p.size {
+				buf = make([]entry[K, V], 0, p.capacity())
+			}
+			es := p.collectInto(buf[:0])
+			p.load(es)
+			clear(es)
+			*p.rebuildBuffer = es[:0]
+		}
 		return
 	}
 	// Apply deletions first so a temporarily full block cannot overrun storage.
@@ -249,7 +267,9 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	}
 }
 func (p *bpa[K, V]) collect() []entry[K, V] {
-	es := make([]entry[K, V], 0, p.size)
+	return p.collectInto(make([]entry[K, V], 0, p.size))
+}
+func (p *bpa[K, V]) collectInto(es []entry[K, V]) []entry[K, V] {
 	c := p.cursor(*new(K), false, false)
 	for e, ok := c.next(); ok; e, ok = c.next() {
 		es = append(es, e)

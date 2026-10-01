@@ -1,3 +1,5 @@
+github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
+github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/glycerine/rbtree v0.2.2 h1:Xp8mUtk2+7Tzcp+as08yFS1/MBm/MeZqE5cFvEUT27k=
 github.com/glycerine/rbtree v0.2.2/go.mod h1:skpUtSrm1HHyLo+HayukOvAmXtE/F6tsVW0uCpaBGWE=
 github.com/tidwall/btree v1.8.1 h1:27ehoXvm5AG/g+1VxLS1SD3vRhp/H7LuEfwNvddEdmA=
