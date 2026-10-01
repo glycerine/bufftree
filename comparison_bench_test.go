@@ -94,7 +94,18 @@ func (m *benchRBTree) Scan(start uint64, length int, visit func(uint64, uint64) 
 // traces. All point operations use the same interface dispatch. Map updates
 // also read the previous value, matching Put's return-value contract.
 func BenchmarkComparePoints(b *testing.B) {
-	n := benchLoadSize()
+	for _, bc := range comparisonPointCases(benchLoadSize()) {
+		b.Run(bc.name, bc.run)
+	}
+}
+
+type comparisonBenchmark struct {
+	name string
+	run  func(*testing.B)
+}
+
+func comparisonPointCases(n int) []comparisonBenchmark {
+	var cases []comparisonBenchmark
 	ops := benchTrace(n, 8192, 1, false)
 	for _, layout := range []struct {
 		name string
@@ -119,7 +130,7 @@ func BenchmarkComparePoints(b *testing.B) {
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
 	} {
 		for _, op := range []string{"GetHit", "GetMiss", "Update"} {
-			b.Run(layout.name+"/"+op, func(b *testing.B) {
+			cases = append(cases, comparisonBenchmark{layout.name + "/" + op, func(b *testing.B) {
 				idx := layout.make()
 				for i := 0; i < n; i++ {
 					idx.Put(benchKey(i), uint64(i))
@@ -140,9 +151,10 @@ func BenchmarkComparePoints(b *testing.B) {
 				}
 				b.StopTimer()
 				benchSink = sum
-			})
+			}})
 		}
 	}
+	return cases
 }
 
 type benchOrderedScan interface {
@@ -159,7 +171,13 @@ type benchScanLayout struct {
 // every value: Dict uses insertion order, Go map uses unspecified order, and
 // tidwall/btree and rbtree use key order. All include the same sum and key counter.
 func BenchmarkCompareIteration(b *testing.B) {
-	n := benchLoadSize()
+	for _, bc := range comparisonIterationCases(benchLoadSize()) {
+		b.Run(bc.name, bc.run)
+	}
+}
+
+func comparisonIterationCases(n int) []comparisonBenchmark {
+	var cases []comparisonBenchmark
 	modes := []struct {
 		name string
 		cfg  Config
@@ -180,7 +198,7 @@ func BenchmarkCompareIteration(b *testing.B) {
 	)
 	for _, layout := range layouts {
 		for _, maximum := range []int{10000, 100000} {
-			b.Run(fmt.Sprintf("%s/Scan%d", layout.name, maximum), func(b *testing.B) {
+			cases = append(cases, comparisonBenchmark{fmt.Sprintf("%s/Scan%d", layout.name, maximum), func(b *testing.B) {
 				tr := layout.make()
 				for i := 0; i < n; i++ {
 					tr.Put(benchKey(i), uint64(i))
@@ -197,11 +215,11 @@ func BenchmarkCompareIteration(b *testing.B) {
 				b.StopTimer()
 				benchSink = sum
 				reportIteration(b, visited)
-			})
+			}})
 		}
 	}
 	for _, mode := range modes {
-		b.Run("Dict/"+mode.name+"/Iterate", func(b *testing.B) {
+		cases = append(cases, comparisonBenchmark{"Dict/" + mode.name + "/Iterate", func(b *testing.B) {
 			d := NewDictWithConfig[uint64, uint64](mode.cfg)
 			for i := 0; i < n; i++ {
 				d.Put(benchKey(i), uint64(i))
@@ -218,9 +236,9 @@ func BenchmarkCompareIteration(b *testing.B) {
 			b.StopTimer()
 			benchSink = sum
 			reportIteration(b, visited)
-		})
+		}})
 	}
-	b.Run("GoMap/Iterate", func(b *testing.B) {
+	cases = append(cases, comparisonBenchmark{"GoMap/Iterate", func(b *testing.B) {
 		m := make(benchUint64Map, n)
 		for i := 0; i < n; i++ {
 			m[benchKey(i)] = uint64(i)
@@ -237,8 +255,8 @@ func BenchmarkCompareIteration(b *testing.B) {
 		b.StopTimer()
 		benchSink = sum
 		reportIteration(b, visited)
-	})
-	b.Run("Tidwall/Iterate", func(b *testing.B) {
+	}})
+	cases = append(cases, comparisonBenchmark{"Tidwall/Iterate", func(b *testing.B) {
 		var m btree.Map[uint64, uint64]
 		for i := 0; i < n; i++ {
 			m.Set(benchKey(i), uint64(i))
@@ -253,8 +271,8 @@ func BenchmarkCompareIteration(b *testing.B) {
 		b.StopTimer()
 		benchSink = sum
 		reportIteration(b, visited)
-	})
-	b.Run("RBTree/Iterate", func(b *testing.B) {
+	}})
+	cases = append(cases, comparisonBenchmark{"RBTree/Iterate", func(b *testing.B) {
 		m := newBenchRBTree()
 		for i := 0; i < n; i++ {
 			m.Put(benchKey(i), uint64(i))
@@ -271,7 +289,8 @@ func BenchmarkCompareIteration(b *testing.B) {
 		b.StopTimer()
 		benchSink = sum
 		reportIteration(b, visited)
-	})
+	}})
+	return cases
 }
 
 func TestComparisonOrderedScans(t *testing.T) {

@@ -12,7 +12,7 @@ import (
 )
 
 // Benchmarks adapt sections 4 and 6 of the paper to a single goroutine, using
-// uint64 keys/values, deterministic traces, and an untimed load phase. There
+// uint64 keys/values, deterministic traces, and an untimed load phase.
 // BUFFTREE_BENCH_N controls load size. External comparisons are separate.
 var benchSink uint64
 

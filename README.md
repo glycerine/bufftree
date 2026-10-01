@@ -24,12 +24,15 @@ From their abstract:
 
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
-| Operation (showing ns/key) | bufftree    | builtin Go map | tidwall/btree | red-black tree |
-| ---                        | ---:        | ---:           | ---:          | ---:           |
-| Get                        |  22.6       | 16.7           | 118.3         | 205.9          |
-| Put                        | 108.6       | 29.0           | 123.0         | 202.6          |
-| Ordered scan               |   4.71      | not supported  | 4.09          | 15.89          |
-| Dict traversal             |   2.84      | 10.14          | 2.49          | 15.56          |
+Run `make bench` to rerun the measurements and print this simplified table
+and the detailed table below, with columns aligned for plain-text reading.
+
+| Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
+| -------------------------- | -------: | -------------: | ------------: | -------------: |
+| Get                        |     22.6 |           16.7 |         118.3 |          205.9 |
+| Put                        |    108.6 |           29.0 |         123.0 |          202.6 |
+| Ordered scan               |     4.71 |  not supported |          4.09 |          15.89 |
+| Dict traversal             |     2.84 |          10.14 |          2.49 |          15.56 |
 
 ~~~
 This compares:
@@ -280,6 +283,8 @@ The benchmark-only B+ tree provides a sorted-leaf baseline with the same
 For timing, these optional commands stay in the top-level package:
 
 ```sh
+make bench
+make bench BENCH_TIME=250ms BENCH_COUNT=5
 go test -v -run '^$' -bench '^BenchmarkYCSB/BP/h32-b32/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkTree/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkLeafCopies/' -benchmem
@@ -288,6 +293,15 @@ go test -v -run '^$' -bench '^BenchmarkReferencePoints/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5
 BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem -count=5
 ```
+
+`make bench` runs `TestReadmeBenchmarkTable`, using three 100ms samples per
+benchmark by default and reporting their median. It measures only the 32
+distinct cases needed for the two README tables and reuses shared results.
+The longer Make command above uses the five 250ms samples used in the saved
+measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
+Normal `go test -v` skips the measurement test; its formatting and timing
+regression tests still run. The generated tables are printed for copying into
+the README; the test does not overwrite documentation.
 
 These are single-goroutine experiments, including the leaf copies. They do not
 reproduce the paper's 100M-entry, 48-hyperthread setup or compare against Masstree
@@ -307,16 +321,16 @@ published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.
 there are no local module replacements. All measured operations below report
 `0 B/op` and `0 allocs/op`.
 
-| Operation (showing ns/key) | bufftree | bufftree(2) | builtin Go map | tidwall/btree | red-black tree |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Tree `Get`, hit | 109.4 | 22.6 | 16.7 | 118.3 | 205.9 |
-| Tree `Get`, miss | 106.8 | 28.8 | 16.2 | 116.1 | 223.7 |
-| Tree `Put`, existing key | 163.9 | 108.6 | 29.0 | 123.0 | 202.6 |
-| Dict `Get`, hit | 112.3 | 28.3 | 16.7 | 118.3 | 205.9 |
-| Dict `Put`, existing key | 112.6 | 29.6 | 29.0 | 123.0 | 202.6 |
-| Ordered scan, maximum 10,000 | 4.75 | 4.81 | not supported | 4.12 | 15.92 |
-| Ordered scan, maximum 100,000 | 4.67 | 4.71 | not supported | 4.09 | 15.89 |
-| Dict traversal | 2.28 | 2.84 | 10.14 | 2.49 | 15.56 |
+| Operation (showing ns/key)    | bufftree | bufftree(2) | builtin Go map | tidwall/btree | red-black tree |
+| ----------------------------- | -------: | ----------: | -------------: | ------------: | -------------: |
+| Tree `Get`, hit               |    109.4 |        22.6 |           16.7 |         118.3 |          205.9 |
+| Tree `Get`, miss              |    106.8 |        28.8 |           16.2 |         116.1 |          223.7 |
+| Tree `Put`, existing key      |    163.9 |       108.6 |           29.0 |         123.0 |          202.6 |
+| Dict `Get`, hit               |    112.3 |        28.3 |           16.7 |         118.3 |          205.9 |
+| Dict `Put`, existing key      |    112.6 |        29.6 |           29.0 |         123.0 |          202.6 |
+| Ordered scan, maximum 10,000  |     4.75 |        4.81 |  not supported |          4.12 |          15.92 |
+| Ordered scan, maximum 100,000 |     4.67 |        4.71 |  not supported |          4.09 |          15.89 |
+| Dict traversal                |     2.28 |        2.84 |          10.14 |          2.49 |          15.56 |
 
 buftree(2) means with hash index (faster, uses more memory). This is the default.
 
