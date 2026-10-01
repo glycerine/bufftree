@@ -39,7 +39,7 @@ c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
 ~~~
 
-## Conlusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
+## Conclusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
 
 We support either insertion-ordered iteration using bufftree.Dict, or sorted key-order iteration using bufftree.BPTree.
 
