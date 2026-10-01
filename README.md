@@ -66,7 +66,8 @@ Ordered scans sort blocks as needed and merge in buffered entries.
 When blocks fill unevenly, the BPA redistributes entries across them,
 combining inexpensive writes with efficient sequential scans.
 This does mean that a full table scan will re-write your data, which
-has locking and concurrency implications.
+has locking and concurrency implications. See the notes on concurrency
+section at the end of this README.
 
 `Tree[K,V]` iterates in key order and supports range queries. `Dict[K,V]`
 iterates in insertion order. Both maintain a BP-tree and, by default, an
@@ -387,6 +388,24 @@ Raw benchmark runs, tests, profiles, and reproduction commands are saved in
 The table uses [comparison-extended.txt](benchmark-results/2026-10-01/comparison-extended.txt),
 with medians saved in
 [comparison-extended-medians.csv](benchmark-results/2026-10-01/comparison-extended-medians.csv).
+
+## notes on concurrency
+
+Be aware: we do no locking at present. The paper discusses approaches,
+but they have pretty severe sounding trade offs. This is because
+**an ordered scan can rearrange stored records in memory**, 
+while preserving their logical key/value contents. 
+
+The paper's locking approach tracks whether each block and the 
+log are sorted, so subsequent scans reuse that ordering until writes disturb it. 
+[Section 3](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=6).
+
+Section 5 explicitly addresses the locking implications. A scan first acquires a leaf’s read lock and checks sortedness. If everything it needs is sorted, it proceeds under that shared lock; otherwise, it releases the read lock and acquires the leaf’s write lock to sort. This temporarily blocks other readers and writers accessing that leaf. [Section 5](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=8).
+
+Traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4).
+
+Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock. Dict’s insertion-ordered traversal follows its linked sequence and does not sort BPA blocks.
+
 
 ------------------
 Copyright (C) 2026, Jason E. Aten, Ph.D.
