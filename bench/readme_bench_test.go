@@ -1,4 +1,4 @@
-package bufftree
+package bench
 
 import (
 	"flag"

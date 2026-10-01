@@ -1,10 +1,12 @@
-package bufftree
+package bench
 
 import (
+	"cmp"
 	"fmt"
 	"slices"
 	"testing"
 
+	"github.com/glycerine/bufftree"
 	"github.com/glycerine/rbtree"
 	"github.com/tidwall/btree"
 )
@@ -42,6 +44,8 @@ func (m *benchTidwallMap) Scan(start uint64, length int, visit func(uint64, uint
 	})
 }
 
+type benchKV struct{ key, value uint64 }
+
 // Reuse a pointer-shaped query for rbtree's interface API, avoiding boxing
 // allocations on reads and updates. An inserted item gets its own pointer.
 type benchRBTree struct {
@@ -52,7 +56,7 @@ type benchRBTree struct {
 func newBenchRBTree() *benchRBTree {
 	return &benchRBTree{
 		tree: rbtree.NewTree(func(a, b rbtree.Item) int {
-			return compareKey(a.(*benchKV).key, b.(*benchKV).key)
+			return cmp.Compare(a.(*benchKV).key, b.(*benchKV).key)
 		}),
 		probe: &benchKV{},
 	}
@@ -106,24 +110,24 @@ type comparisonBenchmark struct {
 
 func comparisonPointCases(n int) []comparisonBenchmark {
 	var cases []comparisonBenchmark
-	ops := benchTrace(n, 8192, 1, false)
+	ops := benchTrace(n, 8192, 1)
 	for _, layout := range []struct {
 		name string
 		make func() benchUint64Points
 	}{
 		{"Tree", func() benchUint64Points {
-			return NewBPTree[uint64, uint64](&Config{DisablePointIndex: true})
+			return bufftree.NewBPTree[uint64, uint64](&bufftree.Config{DisablePointIndex: true})
 		}},
-		{"TreeHash", func() benchUint64Points { return NewBPTree[uint64, uint64](nil) }},
+		{"TreeHash", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
 		{"TreeHashNoCache", func() benchUint64Points {
-			return NewBPTree[uint64, uint64](&Config{HashNoCache: true})
+			return bufftree.NewBPTree[uint64, uint64](&bufftree.Config{HashNoCache: true})
 		}},
 		{"Dict", func() benchUint64Points {
-			return NewDictWithConfig[uint64, uint64](Config{DisablePointIndex: true})
+			return bufftree.NewDictWithConfig[uint64, uint64](bufftree.Config{DisablePointIndex: true})
 		}},
-		{"DictHash", func() benchUint64Points { return NewDict[uint64, uint64]() }},
+		{"DictHash", func() benchUint64Points { return bufftree.NewDict[uint64, uint64]() }},
 		{"DictHashNoCache", func() benchUint64Points {
-			return NewDictWithConfig[uint64, uint64](Config{HashNoCache: true})
+			return bufftree.NewDictWithConfig[uint64, uint64](bufftree.Config{HashNoCache: true})
 		}},
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
@@ -180,16 +184,16 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 	var cases []comparisonBenchmark
 	modes := []struct {
 		name string
-		cfg  Config
+		cfg  bufftree.Config
 	}{
-		{"NoHash", Config{DisablePointIndex: true}},
-		{"Hash", Config{}},
-		{"HashNoCache", Config{HashNoCache: true}},
+		{"NoHash", bufftree.Config{DisablePointIndex: true}},
+		{"Hash", bufftree.Config{}},
+		{"HashNoCache", bufftree.Config{HashNoCache: true}},
 	}
 	var layouts []benchScanLayout
 	for _, mode := range modes {
 		layouts = append(layouts, benchScanLayout{"Tree/" + mode.name, func() benchOrderedScan {
-			return NewBPTree[uint64, uint64](&mode.cfg)
+			return bufftree.NewBPTree[uint64, uint64](&mode.cfg)
 		}})
 	}
 	layouts = append(layouts,
@@ -203,7 +207,7 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 				for i := 0; i < n; i++ {
 					tr.Put(benchKey(i), uint64(i))
 				}
-				ops := benchTrace(n, 8192, maximum, false)
+				ops := benchTrace(n, 8192, maximum)
 				var sum, visited uint64
 				visit := func(k, v uint64) bool { sum += v; visited++; return true }
 				b.ReportAllocs()
@@ -220,7 +224,7 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 	}
 	for _, mode := range modes {
 		cases = append(cases, comparisonBenchmark{"Dict/" + mode.name + "/Iterate", func(b *testing.B) {
-			d := NewDictWithConfig[uint64, uint64](mode.cfg)
+			d := bufftree.NewDictWithConfig[uint64, uint64](mode.cfg)
 			for i := 0; i < n; i++ {
 				d.Put(benchKey(i), uint64(i))
 			}
@@ -310,7 +314,7 @@ func TestComparisonOrderedScans(t *testing.T) {
 			}
 			slices.Sort(keys)
 			for _, maximum := range []int{0, 1, 100, 10000} {
-				for _, o := range benchTrace(len(keys), 100, max(1, maximum), false) {
+				for _, o := range benchTrace(len(keys), 100, max(1, maximum)) {
 					length := o.length
 					if maximum == 0 {
 						length = 0

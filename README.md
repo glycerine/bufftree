@@ -5,7 +5,7 @@ Helen Xu, Amanda Li, Brian Wheatman, Manoj Marneni, and Prashant Pandey.
 PVLDB, 16(11): 2976–2989, 2023.
 [Paper](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf).
 
-[Xu et al.'s BP-tree](bptree-vldb-23.pdf) claims to solve the
+The [Xu et al. 2023 BP-tree](bptree-vldb-23.pdf) claims to solve the
 read-versus-write performance trade off that in memory B-trees
 have always had to contend with. Here with implement the BP-tree
 in Go and benchmark it against common alternatives.
@@ -24,9 +24,6 @@ From their abstract:
 
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
-Run `make bench` to rerun the measurements and print this simplified table
-and the detailed table below, with columns aligned for plain-text reading.
-
 | Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
 | Get                        |     22.6 |           16.7 |         118.3 |          205.9 |
@@ -41,10 +38,12 @@ b) The built-in Go map; `m := make(map[uint64]uint64)`
 c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
 ~~~
+Use `make bench` to re-run on your machine.
 
 ## Conclusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
 
-We support either insertion-ordered iteration using bufftree.Dict, or sorted key-order iteration using bufftree.BPTree.
+We support either insertion-ordered iteration using bufftree.Dict, 
+or sorted key-order iteration using bufftree.BPTree.
 
 The built in Go map is deliberately randomized and so unusable when 
 determinism, sorted keys, or range queries are required. It wins 
@@ -54,12 +53,20 @@ for full table scans.
 
 ----------------------------
 
-The BP-tree uses small internal nodes and large leaves containing buffered
+How it works: the BP-tree uses small internal nodes and large leaves containing buffered
 partitioned arrays (BPAs).
 
-Our bufftree.Tree and bufftree.Dict containers use only the standard library;
-comparison benchmarks also use `github.com/tidwall/btree` and
-`github.com/glycerine/rbtree`.
+The BPA organizes a leaf into three parts: a) a small insert buffer; 
+b) a sorted header of boundary keys; and c) contiguous data blocks. 
+
+New entries accumulate in the insert buffer and move into blocks in batches.
+This avoids the cost of keeping the entire leaf sorted after every insertion. 
+Point lookups check the buffer and use the header to select a block.
+Ordered scans sort blocks as needed and merge in buffered entries. 
+When blocks fill unevenly, the BPA redistributes entries across them,
+combining inexpensive writes with efficient sequential scans.
+This does mean that a full table scan will re-write your data, which
+has locking and concurrency implications.
 
 `Tree[K,V]` iterates in key order and supports range queries. `Dict[K,V]`
 iterates in insertion order. Both maintain a BP-tree and, by default, an
@@ -229,7 +236,7 @@ live iteration extend the paper's brief discussion of tombstones.
 
 ## Tests and benchmarks
 
-Run tests only from this directory:
+Run the main package's tests from this directory:
 
 ```sh
 go test -v
@@ -244,6 +251,14 @@ queries, iteration, and named string/float keys. Benchmark operation traces
 are also checked against an independent sorted-leaf B+ tree. The `reference/`
 material is not part of the top-level package.
 
+The separate benchmark module has its own adapter and table-formatting tests:
+
+```sh
+go -C bench test -v
+```
+
+Use these nonrecursive commands; `reference/` contains unbuildable material.
+
 The benchmark families adapt the paper's experiments to Go:
 
 | Benchmark | Experiment |
@@ -253,8 +268,8 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkYCSB` | Section 6.2: uniform and Zipfian A/B/C/E/X/Y workloads |
 | `BenchmarkDict` | Dictionary reads, updates, insertion-order traversal, and deleting current during traversal |
 | `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree, Tree without hashing, Dict, a port of the reference's stable-slot hash layout, and Go map |
-| `BenchmarkComparePoints` | Identical uint64 lookup/update workloads for Tree and Dict in all index/cache modes, Go map, tidwall/btree, and rbtree |
-| `BenchmarkCompareIteration` | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
+| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update workloads for Tree and Dict in all index/cache modes, Go map, tidwall/btree, and rbtree |
+| `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 
 YCSB A uses 50% reads/50% updates, B uses 95% reads/5% updates, and C is all
 reads. E uses 95% scans/5% new insertions with maximum scan length 100. X is all
@@ -280,7 +295,9 @@ length; use `keys/op` when comparing different maximum lengths or load sizes.
 The benchmark-only B+ tree provides a sorted-leaf baseline with the same
 64-child internal fanout. Its correctness is tested independently.
 
-For timing, these optional commands stay in the top-level package:
+Run these timing commands from the repository root. `make bench` and
+`go -C bench` use the benchmark module; the paper benchmarks run in the main
+package:
 
 ```sh
 make bench
@@ -290,18 +307,22 @@ go test -v -run '^$' -bench '^BenchmarkTree/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkLeafCopies/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkDict/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkReferencePoints/' -benchmem
-go test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5
+go -C bench test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5
 BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem -count=5
 ```
 
-`make bench` runs `TestReadmeBenchmarkTable`, using three 100ms samples per
+`make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
 benchmark by default and reporting their median. It measures only the 32
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
-Normal `go test -v` skips the measurement test; its formatting and timing
-regression tests still run. The generated tables are printed for copying into
-the README; the test does not overwrite documentation.
+Normal `go -C bench test -v` skips the measurement test; its formatting and
+timing regression tests still run. The generated tables are printed for copying
+into the README; the test does not overwrite documentation.
+
+[`bench/go.mod`](bench/go.mod) pins the published competitor versions and
+replaces only `github.com/glycerine/bufftree` with `..`, so comparisons measure
+the local library code. Maintain its dependencies with `go -C bench mod tidy`.
 
 These are single-goroutine experiments, including the leaf copies. They do not
 reproduce the paper's 100M-entry, 48-hyperthread setup or compare against Masstree
@@ -318,8 +339,8 @@ The `bufftree` column uses `Config.DisablePointIndex: true`; the hash-index
 column uses the default configuration, retaining full hashes
 (`HashNoCache: false`). Both use the current implementation. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
-there are no local module replacements. All measured operations below report
-`0 B/op` and `0 allocs/op`.
+neither competitor has a local module replacement. All measured operations
+below report `0 B/op` and `0 allocs/op`.
 
 | Operation (showing ns/key)    | bufftree | bufftree(2) | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -------: | ----------: | -------------: | ------------: | -------------: |
