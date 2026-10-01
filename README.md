@@ -20,6 +20,8 @@ From their abstract:
 > We present the BP-tree, a variant of the B-tree, that overcomes
 > the decades-old point-range operation tradeoff in traditional B-trees.
 
+## benchmarks up front
+
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 | Operation (showing ns/key) | bufftree    | builtin Go map | tidwall/btree | red-black tree |
@@ -37,7 +39,7 @@ c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
 ~~~
 
-# Conlusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
+## Conlusion: our bufftree is the in-memory map of choice when deterministic iteration or frequent full scans are required.
 
 We support either insertion-ordered iteration using bufftree.Dict, or sorted key-order iteration using bufftree.BPTree.
 
@@ -45,8 +47,7 @@ The built in Go map is deliberately randomized and so unusable when
 determinism, sorted keys, or range queries are required. It wins 
 for write heavy workloads,
 but these are uncommon. The built-in Go map looses very badly (3x slower) 
-for full table scans since its randomized iteration
-order destroys your L1 cache hit ratio.
+for full table scans.
 
 ----------------------------
 
