@@ -140,6 +140,14 @@ func comparisonPointLayouts(n int) []benchPointLayout {
 	}
 }
 
+func loadComparisonPoints(layout benchPointLayout, n int) benchUint64Points {
+	idx := layout.make()
+	for i := 0; i < n; i++ {
+		idx.Put(benchKey(i), uint64(i))
+	}
+	return idx
+}
+
 func comparisonPointCases(n int) []comparisonBenchmark {
 	var cases []comparisonBenchmark
 	ops := benchTrace(n, 8192, 1)
@@ -148,16 +156,9 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 		freshKeys[i] = benchKey(i) | 1
 	}
 	for _, layout := range comparisonPointLayouts(n) {
-		load := func() benchUint64Points {
-			idx := layout.make()
-			for i := 0; i < n; i++ {
-				idx.Put(benchKey(i), uint64(i))
-			}
-			return idx
-		}
 		for _, op := range []string{"GetHit", "GetMiss", "Update"} {
 			cases = append(cases, comparisonBenchmark{layout.name + "/" + op, func(b *testing.B) {
-				idx := load()
+				idx := loadComparisonPoints(layout, n)
 				var sum uint64
 				b.ReportAllocs()
 				b.ResetTimer()
@@ -177,24 +178,7 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 			}})
 		}
 		cases = append(cases, comparisonBenchmark{layout.name + "/FreshPut", func(b *testing.B) {
-			idx := load()
-			inserted := 0
-			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				if inserted == n {
-					b.StopTimer()
-					idx = load()
-					inserted = 0
-					b.StartTimer()
-				}
-				// Each odd key is unique within this batch and absent from the
-				// initial even-key load. Time insertion and growth from n to 2*n
-				// records, then reload outside the timer to bound memory use.
-				idx.Put(freshKeys[inserted], uint64(i))
-				inserted++
-			}
-			b.StopTimer()
+			benchmarkFreshPut(b, layout, n, freshKeys, false)
 		}})
 	}
 	return cases
