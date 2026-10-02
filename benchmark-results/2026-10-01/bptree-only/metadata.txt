@@ -10,6 +10,10 @@ leaf layout, and medians of five 250ms samples. Fresh Put grows each container
 from 65,536 to 131,072 entries, resetting the initial load outside the timer.
 Traversal timing is reported in nanoseconds per actual key visited.
 
+The simplified README Put row now uses fresh insertion from the detailed table.
+readme.txt preserves the original benchmark output, whose simplified Put row
+used existing-key updates. The underlying measured values are unchanged.
+
 make bench BENCH_TIME=250ms BENCH_COUNT=5
 make memory
 

@@ -24,10 +24,12 @@ From their abstract:
 
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
+The Put row measures insertion of a fresh key.
+
 | Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
 | Get                        |    109.2 |           16.7 |         116.2 |          201.1 |
-| Put                        |    172.1 |           28.7 |         123.8 |          202.9 |
+| Put                        |    682.4 |          178.7 |         307.4 |          599.8 |
 | Ordered scan               |     5.08 |  not supported |          4.14 |          15.62 |
 | Dict traversal             |     2.56 |          10.08 |          2.59 |          15.37 |
 
@@ -384,7 +386,7 @@ Fresh Put rows insert unique odd keys into the initial even-key dataset, using
 the same scrambled keys for every container. Each batch grows from 65,536 to
 131,072 entries; loading a new initial dataset between batches is outside the
 timer. This includes allocations, leaf splits, and BPA redistribution during
-insertion. The simplified table's Put row measures an existing-key update.
+insertion. The simplified table's Put row uses these fresh-insertion measurements.
 
 Fresh-Put profiling identified repeated temporary allocations during BPA
 redistribution. Leaves now reuse one buffer owned by their tree, reducing
@@ -406,7 +408,7 @@ shared redistribution buffer.
 
 Current benchmark runs and validation logs are saved in
 [benchmark-results/2026-10-01/bptree-only](benchmark-results/2026-10-01/bptree-only).
-The tables use
+The tables use measured values from
 [readme.txt](benchmark-results/2026-10-01/bptree-only/readme.txt).
 Older reports in the parent directory describe earlier implementations.
 

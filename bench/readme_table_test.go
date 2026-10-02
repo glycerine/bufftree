@@ -48,7 +48,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	short := strings.Split(strings.TrimSpace(simple), "\n")
 	full := strings.Split(strings.TrimSpace(detailed), "\n")
-	for i, selected := range []int{0, 2, 8, 9} {
+	for i, selected := range []int{0, 3, 8, 9} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 5; col++ {
@@ -57,7 +57,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 			}
 		}
 	}
-	for i, want := range []string{"22.6", "108.6", "4.71", "2.84"} {
+	for i, want := range []string{"22.6", "456.7", "4.71", "2.84"} {
 		if got := strings.TrimSpace(strings.Split(short[i+2], "|")[2]); got != want {
 			t.Fatalf("simplified value %q, want %q", got, want)
 		}
