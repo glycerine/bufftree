@@ -26,14 +26,14 @@ Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 | Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |     20.8 |           16.7 |         114.3 |          201.9 |
-| Put                        |    100.8 |           28.9 |         126.8 |          204.4 |
-| Ordered scan               |     4.49 |  not supported |          4.12 |          15.87 |
-| Dict traversal             |     2.60 |          10.02 |          2.54 |          15.42 |
+| Get                        |    109.2 |           16.7 |         116.2 |          201.1 |
+| Put                        |    172.1 |           28.7 |         123.8 |          202.9 |
+| Ordered scan               |     5.08 |  not supported |          4.14 |          15.62 |
+| Dict traversal             |     2.56 |          10.08 |          2.59 |          15.37 |
 
 ~~~
 This compares:
-a) buftree.NewBPTree(nil) defaults.
+a) bufftree.NewBPTree(nil) defaults.
 b) The built-in Go map; `m := make(map[uint64]uint64)`
 c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
@@ -67,8 +67,8 @@ has locking and concurrency implications. See the
 end of this README.
 
 `Tree[K,V]` iterates in key order and supports range queries. `Dict[K,V]`
-iterates in insertion order. Both maintain a BP-tree and, by default, an
-additional hash index for fast point lookups. Keys may be any
+iterates in insertion order. Both use the BP-tree for point lookups,
+updates, and deletion. Keys may be any
 `cmp.Ordered` type, including named types; values may be any type. Both zero
 values are usable. Do not copy either container after its first use.
 The Config struct can be used to tune memory use.
@@ -179,12 +179,9 @@ Unordered maps filter the block stream against the log without sorting blocks.
 Ordered scans process contiguous block segments directly when no log entry can
 shadow them, while checking for callback mutations to preserve live traversal.
 
-The hash index uses linear probing, at most 50% occupancy, and backward-shift
-deletion. By default it retains full 64-bit hashes and checks them before key
-equality. It uses the standard library's `maphash` and handles
-NaNs as a single canonical key. Cached leaf pointers avoid a tree descent for
-updates and deletions; splits and merges repair those pointers. Hashing is
-maintained during writes, so queries never build an index or allocate lazily.
+Point lookups descend through the internal separators, check the leaf's
+insertion log, and use its sorted header to select a block. Updates and deletion
+use the same BP-tree path. Queries allocate no memory.
 The insertion-order chain uses an end marker that becomes the next appended
 entry, preserving iterator progress even when its previous tail was deleted.
 
@@ -214,23 +211,10 @@ in entries, so byte sizes depend on the generic types and Go struct padding.
 The default leaf allocates 1,088 record slots and holds up to 1,024 live keys,
 leaving at least one spare slot in each block and in the log after an operation.
 
-Set `Config.DisablePointIndex` to true to use only the BP-tree for point
-operations and save the hash index's extra storage. Ordered operations use the
-same BP-tree in both modes. The hash index stores a second copy of values;
-dictionary entries are referenced by pointer.
-
-`Config.HashNoCache` defaults to false: indexed entries retain their full
-hashes, also reused during growth and backward-shift deletion. Each lookup
-still hashes its requested key once. Setting `HashNoCache: true` uses one-byte
-fingerprints instead, saving seven bytes per allocated hash-table slot; growth
-and deletion then recompute hashes of moved entries. Both modes compare keys
-to confirm matches and allocate no memory on queries. `HashNoCache` has no
-effect when `DisablePointIndex` is true.
-
-Adaptations to the paper include an exact `Len` and returning previous values,
-the additional point index, in-place overwrites, and a conservative leaf capacity
-that can be fully redistributed into header/blocks. Deletion rebalancing and
-live iteration extend the paper's brief discussion of tombstones.
+Adaptations to the paper include an exact `Len`, returning previous values,
+in-place overwrites, and a conservative leaf capacity that can be fully
+redistributed into header/blocks. Deletion rebalancing and live iteration extend
+the paper's brief discussion of tombstones.
 
 ## Tests and benchmarks
 
@@ -242,9 +226,8 @@ go test -v
 
 Tests cover BPA invariants, randomized operations against map/order models,
 balanced tree structure, 65,536-entry bulk splitting and deletion, iterator
-mutation and later appends, NaNs sorting last, zero values, hash collision chains
-and growth/deletion with and without cached hashes,
-and public API examples. Allocation tests cover reads, ordered and unordered
+mutation and later appends, NaNs sorting last, zero values, and public API
+examples. Allocation tests cover reads, ordered and unordered
 queries, iteration, and named string/float keys. Benchmark operation traces
 are also checked against an independent sorted-leaf B+ tree. The `reference/`
 material is not part of the top-level package.
@@ -265,19 +248,17 @@ make memory
 go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 ```
 
-It reports retained heap bytes, MiB, and bytes per key for Dict and BPTree with
-and without their hash index, the built-in Go map, tidwall's generic Map, and
-rbtree. It shares the timing benchmarks' constructors, uint64 key/value data,
-and insertion order; the Go map uses the same capacity hint. Each container is
+It reports retained heap bytes, MiB, and bytes per key for Dict, BPTree,
+the built-in Go map, tidwall's generic Map, and rbtree. It shares the timing
+benchmarks' constructors, uint64 key/value data, and insertion order; the Go map uses the same capacity hint. Each container is
 measured in a fresh test process with `GOMAXPROCS=1`, with forced GC before and
 after loading, and kept alive through the final heap measurement. Results subtract
 the initial `runtime.MemStats.HeapAlloc` baseline and exclude discarded
 temporary allocations; they measure live Go heap, rather than process RSS or
-heap reserved by the runtime. The test also prints the added cost of each
-hash index, using the default cached hashes. `make memory` and `make bench`
-run separately, and the memory test never invokes `testing.Benchmark`.
+heap reserved by the runtime. `make memory` and `make bench` run separately,
+and the memory test never invokes `testing.Benchmark`.
 An example report is saved in
-[memory-shared-buffer.txt](benchmark-results/2026-10-01/memory-shared-buffer.txt).
+[memory.txt](benchmark-results/2026-10-01/bptree-only/memory.txt).
 
 The benchmark families adapt the paper's experiments to Go:
 
@@ -287,8 +268,8 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkTree` | Section 6.1: node-size sweeps; random/sequential insertions, updates, hits/misses, scans/maps up to 100,000 entries |
 | `BenchmarkYCSB` | Section 6.2: uniform and Zipfian A/B/C/E/X/Y workloads |
 | `BenchmarkDict` | Dictionary reads, updates, insertion-order traversal, and deleting current during traversal |
-| `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree, Tree without hashing, Dict, a port of the reference's stable-slot hash layout, and Go map |
-| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree and Dict in all index/cache modes, Go map, tidwall/btree, and rbtree |
+| `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree, Dict, and Go map |
+| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Dict, Go map, tidwall/btree, and rbtree |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 | `BenchmarkFreshPut` (in `bench/`) | The same fresh-insert workload, with CPU-profile labels separating insertion from untimed fixture loading |
 
@@ -333,7 +314,7 @@ BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 39
+benchmark by default and reporting their median. It measures only the 29
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
@@ -344,17 +325,17 @@ into the README; the test does not overwrite documentation.
 Profile fresh insertion independently with:
 
 ```sh
-go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(TreeHash|DictHash)$' \
+go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(Tree|Dict)$' \
     -benchmem -benchtime=3s -cpuprofile=/tmp/bufftree-fresh.cpu \
     -memprofile=/tmp/bufftree-fresh.mem -o=/tmp/bufftree-fresh.test
-go tool pprof -top -relative_percentages -tagfocus=container=TreeHash \
+go tool pprof -top -relative_percentages -tagfocus=container=Tree \
     /tmp/bufftree-fresh.test /tmp/bufftree-fresh.cpu
 go tool pprof -top -alloc_space -ignore=loadComparisonPoints \
     /tmp/bufftree-fresh.test /tmp/bufftree-fresh.mem
 ```
 
 CPU profiles include fixture loading even though the benchmark timer excludes
-it. The container label selects the insertion phase; use `container=DictHash`
+it. The container label selects the insertion phase; use `container=Dict`
 for Dict. Heap profiles use stack filtering to exclude fixture loading.
 
 [`bench/go.mod`](bench/go.mod) pins the published competitor versions and
@@ -363,37 +344,33 @@ the local library code. Maintain its dependencies with `go -C bench mod tidy`.
 
 These are single-goroutine experiments, including the leaf copies. They do not
 reproduce the paper's 100M-entry, 48-hyperthread setup or compare against Masstree
-and OpenBw-tree. The reference-style hash port uses `maphash` instead of xxhash,
-uint64 values, and no internal locking, so its numbers compare the layouts on
-the same dataset rather than reproducing every detail of the reference comments.
+and OpenBw-tree. Comparisons use the same key/value data and workloads on this
+machine.
 
 ## Measured performance
 
 Measured on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
 65,536 uint64 keys/values and the default leaf layout. These are medians of
 five 250ms runs using identical data and uniform point-operation traces.
-The `bufftree` column uses `Config.DisablePointIndex: true`; the hash-index
-column uses the default configuration, retaining full hashes
-(`HashNoCache: false`). Both use the current implementation. Baselines are
+The `bufftree` column uses the current implementation with its default
+configuration; Tree and Dict both use BP-tree point lookups. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
 neither competitor has a local module replacement. Reads, existing-key updates,
 and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
 and growth costs.
 
-| Operation (showing ns/key)    | bufftree | bufftree(2) | builtin Go map | tidwall/btree | red-black tree |
-| ----------------------------- | -------: | ----------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    105.6 |        20.8 |           16.7 |         114.3 |          201.9 |
-| Tree `Get`, miss              |    104.2 |        27.0 |           15.9 |         116.5 |          220.1 |
-| Tree `Put`, existing key      |    164.4 |       100.8 |           28.9 |         126.8 |          204.4 |
-| Tree `Put`, fresh key         |    637.1 |       758.0 |          180.1 |         319.2 |          598.6 |
-| Dict `Get`, hit               |    101.9 |        26.6 |           16.7 |         114.3 |          201.9 |
-| Dict `Put`, existing key      |    102.6 |        27.4 |           28.9 |         126.8 |          204.4 |
-| Dict `Put`, fresh key         |    938.1 |       967.5 |          180.1 |         319.2 |          598.6 |
-| Ordered scan, maximum 10,000  |     4.75 |        4.54 |  not supported |          4.16 |          15.94 |
-| Ordered scan, maximum 100,000 |     4.73 |        4.49 |  not supported |          4.12 |          15.87 |
-| Dict traversal                |     2.34 |        2.60 |          10.02 |          2.54 |          15.42 |
-
-buftree(2) means with hash index (faster, uses more memory). This is the default.
+| Operation (showing ns/key)    | bufftree | builtin Go map | tidwall/btree | red-black tree |
+| ----------------------------- | -------: | -------------: | ------------: | -------------: |
+| Tree `Get`, hit               |    109.2 |           16.7 |         116.2 |          201.1 |
+| Tree `Get`, miss              |    111.5 |           15.6 |         117.8 |          221.8 |
+| Tree `Put`, existing key      |    172.1 |           28.7 |         123.8 |          202.9 |
+| Tree `Put`, fresh key         |    682.4 |          178.7 |         307.4 |          599.8 |
+| Dict `Get`, hit               |    103.5 |           16.7 |         116.2 |          201.1 |
+| Dict `Put`, existing key      |    103.3 |           28.7 |         123.8 |          202.9 |
+| Dict `Put`, fresh key         |    919.2 |          178.7 |         307.4 |          599.8 |
+| Ordered scan, maximum 10,000  |     5.19 |  not supported |          4.13 |          15.64 |
+| Ordered scan, maximum 100,000 |     5.08 |  not supported |          4.14 |          15.62 |
+| Dict traversal                |     2.56 |          10.08 |          2.59 |          15.37 |
 
 Go map updates include reading the old value before assignment, matching
 `Put`'s return-value contract. Point benchmarks use the same interface dispatch
@@ -406,17 +383,14 @@ existing item's value, returning its old value with one search.
 Fresh Put rows insert unique odd keys into the initial even-key dataset, using
 the same scrambled keys for every container. Each batch grows from 65,536 to
 131,072 entries; loading a new initial dataset between batches is outside the
-timer. This includes allocations, leaf splits, and hash-table growth during
+timer. This includes allocations, leaf splits, and BPA redistribution during
 insertion. The simplified table's Put row measures an existing-key update.
 
 Fresh-Put profiling identified repeated temporary allocations during BPA
 redistribution. Leaves now reuse one buffer owned by their tree, reducing
-temporary allocation bytes. Matched five-run trials improved fresh Put by
-about 17% for Tree and 10% for Dict with the default hash index. The buffer adds
-one leaf's capacity per tree (24 KiB with the default uint64 layout), and its
-entries are cleared after use so it does not retain old keys or values.
-The trial results and profiling commands are saved in
-[fresh-put-summary.txt](benchmark-results/2026-10-01/fresh-put-summary.txt).
+temporary allocation bytes. The buffer adds one leaf's capacity per tree
+(24 KiB with the default uint64 layout), and its entries are cleared after use
+so it does not retain old keys or values.
 
 The final row measures visiting all 65,536 values and summing them. Dict visits
 in insertion order, Go map in unspecified order, and tidwall/btree and rbtree
@@ -424,28 +398,17 @@ in key order. Native Go maps do not provide ordered scans. Traversal figures
 report `iter_ns/key` using actual visited keys; scan lengths vary up to the
 named maximum and stop at the tree's end.
 
-The hash-cache benefit depends on the workload. With `HashNoCache: true`,
-these uint64 hit lookups measured 21.0 ns for Tree and 26.8 ns for Dict;
-results for all cache modes are included in the saved comparison data.
-Separate reference-style benchmarks cover 16-byte string keys, new insertions,
-and the stable-slot hash layout. New entries maintain the BP-tree as well as
-any enabled hash index; their costs and allocation behavior differ from reads
-and updates to existing keys.
+Separate reference-style benchmarks cover 16-byte string keys and new
+insertions. Fresh insertions allocate storage and redistribute BPA records;
+reads and updates to existing keys have different costs. CPU profiling guided
+in-place overwrites, bulk block traversal, cheaper log-shadow checks, and the
+shared redistribution buffer.
 
-CPU profiling guided cached leaf pointers, direct value overwrites, bulk block
-traversal, cheaper log-shadow checks, and the shared redistribution buffer.
-The fresh-Put allocation profile before buffer reuse identified redistribution,
-hash growth, and leaf creation as major costs; stack filtering excludes fixture
-loading from that report.
-
-Raw benchmark runs, tests, profiles, and reproduction commands are saved in
-[benchmark-results/2026-10-01](benchmark-results/2026-10-01).
+Current benchmark runs and validation logs are saved in
+[benchmark-results/2026-10-01/bptree-only](benchmark-results/2026-10-01/bptree-only).
 The tables use
-[readme-shared-buffer.txt](benchmark-results/2026-10-01/readme-shared-buffer.txt).
-Earlier comparison runs and cache-mode results are saved in
-[comparison-extended.txt](benchmark-results/2026-10-01/comparison-extended.txt),
-with those medians in
-[comparison-extended-medians.csv](benchmark-results/2026-10-01/comparison-extended-medians.csv).
+[readme.txt](benchmark-results/2026-10-01/bptree-only/readme.txt).
+Older reports in the parent directory describe earlier implementations.
 
 ## notes on concurrency
 

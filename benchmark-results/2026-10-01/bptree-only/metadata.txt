@@ -1,0 +1,30 @@
+BP-tree-only measurements, 2026-10-01
+AMD Ryzen Threadripper 3960X; Linux/amd64; Go 1.26.4.
+
+Tree and Dict use the BP-tree for every point lookup, update, and deletion.
+The auxiliary hash index, its storage, leaf-pointer maintenance, and Config
+options were removed. The shared redistribution buffer is retained.
+
+Both README timing tables use 65,536 uint64 key/value pairs, the default
+leaf layout, and medians of five 250ms samples. Fresh Put grows each container
+from 65,536 to 131,072 entries, resetting the initial load outside the timer.
+Traversal timing is reported in nanoseconds per actual key visited.
+
+make bench BENCH_TIME=250ms BENCH_COUNT=5
+make memory
+
+Memory measurements run separately in fresh child processes, with forced GC
+before and after loading 100,000 entries. Each row subtracts the initial
+HeapAlloc baseline and keeps its container alive through the final snapshot.
+The five rows are Dict, BPTree, Go map, tidwall/btree.Map, and glycerine/rbtree.
+Competitor versions are published tidwall/btree v1.8.1 and rbtree v0.2.2.
+Only the local bufftree module is replaced in bench/go.mod.
+
+Validation logs:
+  root-tests.txt: go test -v
+  bench-tests.txt: go -C bench test -v -count=1
+  benchmark-smoke.txt: BUFFTREE_BENCH_N=128 go -C bench test -v -run '^$' -bench '^Benchmark(FreshPut|ComparePoints|CompareIteration)$' -benchmem -benchtime=257x
+  paper-benchmark-smoke.txt: BUFFTREE_BENCH_N=128 go test -v -run '^$' -bench '^Benchmark(Tree|YCSB|Dict|ReferencePoints)$' -benchmem -benchtime=3x
+
+Older reports in the parent directory measure earlier implementations.
+Reference material is unchanged. No recursive test command or git was used.

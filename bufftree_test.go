@@ -17,13 +17,13 @@ func TestNewBPTreeNilConfig(t *testing.T) {
 		tr.Put(k, v)
 	}
 	checkTree(t, tr, model)
-	if tr.cfg.Fanout != 64 || tr.cfg.LogSize != 32 || tr.cfg.NumBlocks != 32 || tr.cfg.BlockSize != 32 || tr.cfg.DisablePointIndex || tr.cfg.HashNoCache {
+	if tr.cfg.Fanout != 64 || tr.cfg.LogSize != 32 || tr.cfg.NumBlocks != 32 || tr.cfg.BlockSize != 32 {
 		t.Fatal("nil config must use the defaults")
 	}
 }
 
 func TestNewBPTreeCopiesConfig(t *testing.T) {
-	for _, cfg := range []Config{{}, tinyConfig, {HashNoCache: true}, {DisablePointIndex: true}} {
+	for _, cfg := range []Config{{}, tinyConfig} {
 		original := cfg
 		tr := NewBPTree[int, int](&cfg)
 		if cfg != original {
@@ -31,8 +31,7 @@ func TestNewBPTreeCopiesConfig(t *testing.T) {
 		}
 		// An invalid replacement would fail on first insertion if the tree
 		// retained the caller's pointer instead of its own config snapshot.
-		cfg = Config{Fanout: 1, LogSize: 1, NumBlocks: 1, BlockSize: 1,
-			DisablePointIndex: !original.DisablePointIndex, HashNoCache: !original.HashNoCache}
+		cfg = Config{Fanout: 1, LogSize: 1, NumBlocks: 1, BlockSize: 1}
 		model := make(map[int]int)
 		for i := 0; i < 128; i++ {
 			tr.Put(i, i)
@@ -103,7 +102,6 @@ func TestTreeRandomAgainstMap(t *testing.T) {
 	for seed := int64(0); seed < 5; seed++ {
 		t.Run(string(rune('A'+seed)), func(t *testing.T) {
 			cfg := tinyConfig
-			cfg.HashNoCache = seed%2 != 0
 			tr := NewBPTree[int, int](&cfg)
 			model := map[int]int{}
 			rng := rand.New(rand.NewSource(seed))
@@ -180,13 +178,7 @@ func checkTree(t *testing.T, tr *Tree[int, int], model map[int]int) {
 			es := n.leaf.collect()
 			for _, e := range es {
 				if v, ok := n.leaf.get(e.key); !ok || v != model[e.key] {
-					t.Fatal("BPA differs from point index")
-				}
-				if !tr.cfg.DisablePointIndex {
-					pos, ok := tr.points.find(e.key, tr.points.hash(e.key))
-					if !ok || tr.points.slots[pos].leaf != n {
-						t.Fatal("stale point-index leaf")
-					}
+					t.Fatal("BPA value differs from map model")
 				}
 			}
 			if len(es) == 0 {
@@ -339,11 +331,7 @@ func TestTreeZeroValueAndOrderedTypes(t *testing.T) {
 }
 
 func TestNaNKeysSortLast(t *testing.T) {
-	noHash := tinyConfig
-	noHash.DisablePointIndex = true
-	noCache := tinyConfig
-	noCache.HashNoCache = true
-	for _, cfg := range []Config{tinyConfig, {}, noHash, noCache} {
+	for _, cfg := range []Config{tinyConfig, {}} {
 		tr := NewBPTree[float64, int](&cfg)
 		tr.Put(math.NaN(), 1)
 		tr.Put(math.Inf(-1), -100)
@@ -437,8 +425,7 @@ func TestTreeBulkSplitAndCollapse(t *testing.T) {
 		{Fanout: 4, LogSize: 2, NumBlocks: 2, BlockSize: 2},
 		{Fanout: 5, LogSize: 16, NumBlocks: 3, BlockSize: 5},
 		{Fanout: 6, LogSize: 3, NumBlocks: 5, BlockSize: 7},
-		{Fanout: 4, LogSize: 4, NumBlocks: 4, BlockSize: 4, DisablePointIndex: true},
-		{HashNoCache: true},
+		{Fanout: 4, LogSize: 4, NumBlocks: 4, BlockSize: 4},
 		{},
 	} {
 		n := 5000

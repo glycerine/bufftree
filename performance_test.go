@@ -32,15 +32,7 @@ func TestRedistributionBufferDoesNotRetainValues(t *testing.T) {
 }
 
 func TestQueriesDoNotAllocate(t *testing.T) {
-	for _, mode := range []struct {
-		name string
-		cfg  Config
-	}{
-		{"CachedHashes", Config{}},
-		{"HashNoCache", Config{HashNoCache: true}},
-	} {
-		t.Run(mode.name, func(t *testing.T) { testQueriesDoNotAllocate(t, mode.cfg) })
-	}
+	testQueriesDoNotAllocate(t, Config{})
 }
 
 func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
@@ -118,9 +110,7 @@ func TestMapRangeReentrant(t *testing.T) {
 }
 
 func TestScansAgainstSortedModel(t *testing.T) {
-	for _, disabled := range []bool{false, true} {
-		cfg := tinyConfig
-		cfg.DisablePointIndex = disabled
+	for _, cfg := range []Config{tinyConfig, {}} {
 		tr := NewBPTree[int, int](&cfg)
 		model := map[int]int{}
 		rng := rand.New(rand.NewSource(44))

@@ -1,0 +1,19 @@
+go -C bench test -v -run '^TestMemoryUsage100K$' -count=1 -timeout=5m
+=== RUN   TestMemoryUsage100K
+
+go1.26.4 linux/amd64; 100,000 entries; uint64 keys and values
+Retained heap: post-GC HeapAlloc minus pre-load baseline; each row uses a fresh process with GOMAXPROCS=1.
+Go map is pre-sized to 100,000 entries.
+
+| Container         | Heap bytes | MiB  | B/key |
+| ----------------- | ---------: | ---: | ----: |
+| bufftree.Dict     |    8415256 | 8.03 | 84.15 |
+| bufftree.BPTree   |    3609800 | 3.44 | 36.10 |
+| builtin Go map    |    2364576 | 2.26 | 23.65 |
+| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+
+
+--- PASS: TestMemoryUsage100K (0.27s)
+PASS
+ok  	github.com/glycerine/bufftree/bench	0.273s

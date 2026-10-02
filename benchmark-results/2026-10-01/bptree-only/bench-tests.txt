@@ -1,0 +1,45 @@
+=== RUN   TestComparisonOrderedScans
+=== RUN   TestComparisonOrderedScans/Tidwall
+=== RUN   TestComparisonOrderedScans/RBTree
+--- PASS: TestComparisonOrderedScans (0.01s)
+    --- PASS: TestComparisonOrderedScans/Tidwall (0.00s)
+    --- PASS: TestComparisonOrderedScans/RBTree (0.00s)
+=== RUN   TestComparisonPointAdapters
+--- PASS: TestComparisonPointAdapters (0.00s)
+=== RUN   TestComparisonFreshPuts
+=== RUN   TestComparisonFreshPuts/Tree
+=== RUN   TestComparisonFreshPuts/Dict
+=== RUN   TestComparisonFreshPuts/GoMap
+=== RUN   TestComparisonFreshPuts/Tidwall
+=== RUN   TestComparisonFreshPuts/RBTree
+--- PASS: TestComparisonFreshPuts (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tree (0.00s)
+    --- PASS: TestComparisonFreshPuts/Dict (0.00s)
+    --- PASS: TestComparisonFreshPuts/GoMap (0.00s)
+    --- PASS: TestComparisonFreshPuts/Tidwall (0.00s)
+    --- PASS: TestComparisonFreshPuts/RBTree (0.00s)
+=== RUN   TestMemoryUsage100K
+
+go1.26.4 linux/amd64; 100,000 entries; uint64 keys and values
+Retained heap: post-GC HeapAlloc minus pre-load baseline; each row uses a fresh process with GOMAXPROCS=1.
+Go map is pre-sized to 100,000 entries.
+
+| Container         | Heap bytes | MiB  | B/key |
+| ----------------- | ---------: | ---: | ----: |
+| bufftree.Dict     |    8415256 | 8.03 | 84.15 |
+| bufftree.BPTree   |    3609800 | 3.44 | 36.10 |
+| builtin Go map    |    2364576 | 2.26 | 23.65 |
+| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+
+
+--- PASS: TestMemoryUsage100K (0.27s)
+=== RUN   TestReadmeBenchmarkTable
+    readme_bench_test.go:53: run make bench to regenerate the README tables
+--- SKIP: TestReadmeBenchmarkTable (0.00s)
+=== RUN   TestReadmeBenchmarkTables
+--- PASS: TestReadmeBenchmarkTables (0.00s)
+=== RUN   TestReadmeBenchmarkTiming
+--- PASS: TestReadmeBenchmarkTiming (0.00s)
+PASS
+ok  	github.com/glycerine/bufftree/bench	0.282s

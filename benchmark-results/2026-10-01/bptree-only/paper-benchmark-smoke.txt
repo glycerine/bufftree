@@ -1,0 +1,662 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTree
+BenchmarkTree/BP/h4-b4
+BenchmarkTree/BP/h4-b4/FindHit
+BenchmarkTree/BP/h4-b4/FindHit-48         	       3	       180.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/FindHit2
+BenchmarkTree/BP/h4-b4/FindHit2-48        	       3	       230.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/FindMiss
+BenchmarkTree/BP/h4-b4/FindMiss-48        	       3	       240.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/FindMiss2
+BenchmarkTree/BP/h4-b4/FindMiss2-48       	       3	       250.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Update
+BenchmarkTree/BP/h4-b4/Update-48          	       3	       183.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/InsertRandom
+BenchmarkTree/BP/h4-b4/InsertRandom-48    	       3	       220.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/InsertSequential
+BenchmarkTree/BP/h4-b4/InsertSequential-48         	       3	      1387 ns/op	     458 B/op	       2 allocs/op
+BenchmarkTree/BP/h4-b4/Scan100
+BenchmarkTree/BP/h4-b4/Scan100-48                  	       3	      1840 ns/op	  20652174 entries/s	        48.42 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Scan10000
+BenchmarkTree/BP/h4-b4/Scan10000-48                	       3	      3050 ns/op	  17704918 entries/s	        56.48 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Scan100000
+BenchmarkTree/BP/h4-b4/Scan100000-48               	       3	      1347 ns/op	  40099010 entries/s	        24.94 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Map100
+BenchmarkTree/BP/h4-b4/Map100-48                   	       3	      2826 ns/op	  13444982 entries/s	        74.38 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Map10000
+BenchmarkTree/BP/h4-b4/Map10000-48                 	       3	      2667 ns/op	  20250000 entries/s	        49.38 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h4-b4/Map100000
+BenchmarkTree/BP/h4-b4/Map100000-48                	       3	      2663 ns/op	  20275344 entries/s	        49.32 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8
+BenchmarkTree/BP/h8-b8/FindHit
+BenchmarkTree/BP/h8-b8/FindHit-48                  	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/FindHit2
+BenchmarkTree/BP/h8-b8/FindHit2-48                 	       3	       306.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/FindMiss
+BenchmarkTree/BP/h8-b8/FindMiss-48                 	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/FindMiss2
+BenchmarkTree/BP/h8-b8/FindMiss2-48                	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Update
+BenchmarkTree/BP/h8-b8/Update-48                   	       3	       333.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/InsertRandom
+BenchmarkTree/BP/h8-b8/InsertRandom-48             	       3	       270.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/InsertSequential
+BenchmarkTree/BP/h8-b8/InsertSequential-48         	       3	      1997 ns/op	    1309 B/op	       2 allocs/op
+BenchmarkTree/BP/h8-b8/Scan100
+BenchmarkTree/BP/h8-b8/Scan100-48                  	       3	      1557 ns/op	  24411135 entries/s	        40.96 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Scan10000
+BenchmarkTree/BP/h8-b8/Scan10000-48                	       3	      1517 ns/op	  35604396 entries/s	        28.09 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Scan100000
+BenchmarkTree/BP/h8-b8/Scan100000-48               	       3	      1903 ns/op	  28371278 entries/s	        35.25 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Map100
+BenchmarkTree/BP/h8-b8/Map100-48                   	       3	       963.3 ns/op	  39446367 entries/s	        25.35 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Map10000
+BenchmarkTree/BP/h8-b8/Map10000-48                 	       3	      2000 ns/op	  27000000 entries/s	        37.04 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h8-b8/Map100000
+BenchmarkTree/BP/h8-b8/Map100000-48                	       3	      2257 ns/op	  23929099 entries/s	        41.79 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16
+BenchmarkTree/BP/h16-b16/FindHit
+BenchmarkTree/BP/h16-b16/FindHit-48                	       3	       220.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/FindHit2
+BenchmarkTree/BP/h16-b16/FindHit2-48               	       3	       230.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/FindMiss
+BenchmarkTree/BP/h16-b16/FindMiss-48               	       3	       216.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/FindMiss2
+BenchmarkTree/BP/h16-b16/FindMiss2-48              	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Update
+BenchmarkTree/BP/h16-b16/Update-48                 	       3	       290.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/InsertRandom
+BenchmarkTree/BP/h16-b16/InsertRandom-48           	       3	       326.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/InsertSequential
+BenchmarkTree/BP/h16-b16/InsertSequential-48       	       3	       190.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Scan100
+BenchmarkTree/BP/h16-b16/Scan100-48                	       3	      1447 ns/op	  26267281 entries/s	        38.07 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Scan10000
+BenchmarkTree/BP/h16-b16/Scan10000-48              	       3	      1490 ns/op	  36241611 entries/s	        27.59 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Scan100000
+BenchmarkTree/BP/h16-b16/Scan100000-48             	       3	      1333 ns/op	  40500000 entries/s	        24.69 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Map100
+BenchmarkTree/BP/h16-b16/Map100-48                 	       3	      1123 ns/op	  33827893 entries/s	        29.56 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Map10000
+BenchmarkTree/BP/h16-b16/Map10000-48               	       3	      2373 ns/op	  22752809 entries/s	        43.95 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h16-b16/Map100000
+BenchmarkTree/BP/h16-b16/Map100000-48              	       3	      1203 ns/op	  44875346 entries/s	        22.28 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32
+BenchmarkTree/BP/h32-b32/FindHit
+BenchmarkTree/BP/h32-b32/FindHit-48                	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindHit2
+BenchmarkTree/BP/h32-b32/FindHit2-48               	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss
+BenchmarkTree/BP/h32-b32/FindMiss-48               	       3	       183.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/FindMiss2
+BenchmarkTree/BP/h32-b32/FindMiss2-48              	       3	       183.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Update
+BenchmarkTree/BP/h32-b32/Update-48                 	       3	       350.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertRandom
+BenchmarkTree/BP/h32-b32/InsertRandom-48           	       3	       250.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/InsertSequential
+BenchmarkTree/BP/h32-b32/InsertSequential-48       	       3	       223.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100
+BenchmarkTree/BP/h32-b32/Scan100-48                	       3	      2410 ns/op	  15769816 entries/s	        63.41 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan10000
+BenchmarkTree/BP/h32-b32/Scan10000-48              	       3	      2350 ns/op	  22978723 entries/s	        43.52 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Scan100000
+BenchmarkTree/BP/h32-b32/Scan100000-48             	       3	      2373 ns/op	  22756005 entries/s	        43.94 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100
+BenchmarkTree/BP/h32-b32/Map100-48                 	       3	      1197 ns/op	  31754875 entries/s	        31.49 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map10000
+BenchmarkTree/BP/h32-b32/Map10000-48               	       3	      1377 ns/op	  39225182 entries/s	        25.49 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b32/Map100000
+BenchmarkTree/BP/h32-b32/Map100000-48              	       3	      1270 ns/op	  42530848 entries/s	        23.51 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64
+BenchmarkTree/BP/h32-b64/FindHit
+BenchmarkTree/BP/h32-b64/FindHit-48                	       3	       229.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/FindHit2
+BenchmarkTree/BP/h32-b64/FindHit2-48               	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/FindMiss
+BenchmarkTree/BP/h32-b64/FindMiss-48               	       3	       176.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/FindMiss2
+BenchmarkTree/BP/h32-b64/FindMiss2-48              	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Update
+BenchmarkTree/BP/h32-b64/Update-48                 	       3	       303.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/InsertRandom
+BenchmarkTree/BP/h32-b64/InsertRandom-48           	       3	       276.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/InsertSequential
+BenchmarkTree/BP/h32-b64/InsertSequential-48       	       3	       230.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Scan100
+BenchmarkTree/BP/h32-b64/Scan100-48                	       3	      2390 ns/op	  15899582 entries/s	        62.89 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Scan10000
+BenchmarkTree/BP/h32-b64/Scan10000-48              	       3	      3123 ns/op	  17289221 entries/s	        57.84 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Scan100000
+BenchmarkTree/BP/h32-b64/Scan100000-48             	       3	      2330 ns/op	  23175966 entries/s	        43.15 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Map100
+BenchmarkTree/BP/h32-b64/Map100-48                 	       3	      1187 ns/op	  32022472 entries/s	        31.23 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Map10000
+BenchmarkTree/BP/h32-b64/Map10000-48               	       3	      1247 ns/op	  43315508 entries/s	        23.09 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h32-b64/Map100000
+BenchmarkTree/BP/h32-b64/Map100000-48              	       3	      1357 ns/op	  39803440 entries/s	        25.12 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64
+BenchmarkTree/BP/h64-b64/FindHit
+BenchmarkTree/BP/h64-b64/FindHit-48                	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/FindHit2
+BenchmarkTree/BP/h64-b64/FindHit2-48               	       3	       253.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/FindMiss
+BenchmarkTree/BP/h64-b64/FindMiss-48               	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/FindMiss2
+BenchmarkTree/BP/h64-b64/FindMiss2-48              	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Update
+BenchmarkTree/BP/h64-b64/Update-48                 	       3	       300.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/InsertRandom
+BenchmarkTree/BP/h64-b64/InsertRandom-48           	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/InsertSequential
+BenchmarkTree/BP/h64-b64/InsertSequential-48       	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Scan100
+BenchmarkTree/BP/h64-b64/Scan100-48                	       3	      5156 ns/op	   7369578 entries/s	       135.7 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Scan10000
+BenchmarkTree/BP/h64-b64/Scan10000-48              	       3	      1846 ns/op	  29247157 entries/s	        34.19 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Scan100000
+BenchmarkTree/BP/h64-b64/Scan100000-48             	       3	      1840 ns/op	  29347826 entries/s	        34.07 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Map100
+BenchmarkTree/BP/h64-b64/Map100-48                 	       3	      1457 ns/op	  26086957 entries/s	        38.33 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Map10000
+BenchmarkTree/BP/h64-b64/Map10000-48               	       3	      1693 ns/op	  31889764 entries/s	        31.36 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BP/h64-b64/Map100000
+BenchmarkTree/BP/h64-b64/Map100000-48              	       3	      1740 ns/op	  31040429 entries/s	        32.22 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16
+BenchmarkTree/BPlus/slots16/FindHit
+BenchmarkTree/BPlus/slots16/FindHit-48             	       3	       380.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/FindHit2
+BenchmarkTree/BPlus/slots16/FindHit2-48            	       3	       280.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/FindMiss
+BenchmarkTree/BPlus/slots16/FindMiss-48            	       3	       350.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/FindMiss2
+BenchmarkTree/BPlus/slots16/FindMiss2-48           	       3	       203.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Update
+BenchmarkTree/BPlus/slots16/Update-48              	       3	       250.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/InsertRandom
+BenchmarkTree/BPlus/slots16/InsertRandom-48        	       3	       293.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/InsertSequential
+BenchmarkTree/BPlus/slots16/InsertSequential-48    	       3	       670.0 ns/op	     170 B/op	       1 allocs/op
+BenchmarkTree/BPlus/slots16/Scan100
+BenchmarkTree/BPlus/slots16/Scan100-48             	       3	       570.0 ns/op	  66666667 entries/s	        15.00 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Scan10000
+BenchmarkTree/BPlus/slots16/Scan10000-48           	       3	       650.0 ns/op	  83076923 entries/s	        12.04 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Scan100000
+BenchmarkTree/BPlus/slots16/Scan100000-48          	       3	       636.7 ns/op	  84816754 entries/s	        11.79 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Map100
+BenchmarkTree/BPlus/slots16/Map100-48              	       3	       500.0 ns/op	  76000000 entries/s	        13.16 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Map10000
+BenchmarkTree/BPlus/slots16/Map10000-48            	       3	       543.3 ns/op	  99386503 entries/s	        10.06 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots16/Map100000
+BenchmarkTree/BPlus/slots16/Map100000-48           	       3	       533.3 ns/op	 101250000 entries/s	         9.877 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32
+BenchmarkTree/BPlus/slots32/FindHit
+BenchmarkTree/BPlus/slots32/FindHit-48             	       3	       223.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/FindHit2
+BenchmarkTree/BPlus/slots32/FindHit2-48            	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/FindMiss
+BenchmarkTree/BPlus/slots32/FindMiss-48            	       3	       263.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/FindMiss2
+BenchmarkTree/BPlus/slots32/FindMiss2-48           	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Update
+BenchmarkTree/BPlus/slots32/Update-48              	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/InsertRandom
+BenchmarkTree/BPlus/slots32/InsertRandom-48        	       3	       290.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/InsertSequential
+BenchmarkTree/BPlus/slots32/InsertSequential-48    	       3	       573.3 ns/op	     245 B/op	       1 allocs/op
+BenchmarkTree/BPlus/slots32/Scan100
+BenchmarkTree/BPlus/slots32/Scan100-48             	       3	       490.0 ns/op	  77551020 entries/s	        12.89 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Scan10000
+BenchmarkTree/BPlus/slots32/Scan10000-48           	       3	       540.0 ns/op	 100000000 entries/s	        10.00 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Scan100000
+BenchmarkTree/BPlus/slots32/Scan100000-48          	       3	       680.0 ns/op	  79411765 entries/s	        12.59 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Map100
+BenchmarkTree/BPlus/slots32/Map100-48              	       3	       470.0 ns/op	  80851064 entries/s	        12.37 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Map10000
+BenchmarkTree/BPlus/slots32/Map10000-48            	       3	       493.3 ns/op	 109459459 entries/s	         9.136 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots32/Map100000
+BenchmarkTree/BPlus/slots32/Map100000-48           	       3	       480.0 ns/op	 112500000 entries/s	         8.889 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64
+BenchmarkTree/BPlus/slots64/FindHit
+BenchmarkTree/BPlus/slots64/FindHit-48             	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/FindHit2
+BenchmarkTree/BPlus/slots64/FindHit2-48            	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/FindMiss
+BenchmarkTree/BPlus/slots64/FindMiss-48            	       3	       260.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/FindMiss2
+BenchmarkTree/BPlus/slots64/FindMiss2-48           	       3	       243.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Update
+BenchmarkTree/BPlus/slots64/Update-48              	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/InsertRandom
+BenchmarkTree/BPlus/slots64/InsertRandom-48        	       3	       273.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/InsertSequential
+BenchmarkTree/BPlus/slots64/InsertSequential-48    	       3	       893.3 ns/op	     424 B/op	       1 allocs/op
+BenchmarkTree/BPlus/slots64/Scan100
+BenchmarkTree/BPlus/slots64/Scan100-48             	       3	       506.3 ns/op	  75049375 entries/s	        13.32 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Scan10000
+BenchmarkTree/BPlus/slots64/Scan10000-48           	       3	       573.3 ns/op	  94186047 entries/s	        10.62 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Scan100000
+BenchmarkTree/BPlus/slots64/Scan100000-48          	       3	       553.3 ns/op	  97590361 entries/s	        10.25 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Map100
+BenchmarkTree/BPlus/slots64/Map100-48              	       3	       456.7 ns/op	  83211679 entries/s	        12.02 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Map10000
+BenchmarkTree/BPlus/slots64/Map10000-48            	       3	       543.3 ns/op	  99386503 entries/s	        10.06 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots64/Map100000
+BenchmarkTree/BPlus/slots64/Map100000-48           	       3	       510.0 ns/op	 105882353 entries/s	         9.444 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256
+BenchmarkTree/BPlus/slots256/FindHit
+BenchmarkTree/BPlus/slots256/FindHit-48            	       3	       220.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/FindHit2
+BenchmarkTree/BPlus/slots256/FindHit2-48           	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/FindMiss
+BenchmarkTree/BPlus/slots256/FindMiss-48           	       3	       240.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/FindMiss2
+BenchmarkTree/BPlus/slots256/FindMiss2-48          	       3	       203.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Update
+BenchmarkTree/BPlus/slots256/Update-48             	       3	       196.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/InsertRandom
+BenchmarkTree/BPlus/slots256/InsertRandom-48       	       3	       306.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/InsertSequential
+BenchmarkTree/BPlus/slots256/InsertSequential-48   	       3	       133.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Scan100
+BenchmarkTree/BPlus/slots256/Scan100-48            	       3	       400.0 ns/op	  95000000 entries/s	        10.53 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Scan10000
+BenchmarkTree/BPlus/slots256/Scan10000-48          	       3	       483.3 ns/op	 111724138 entries/s	         8.951 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Scan100000
+BenchmarkTree/BPlus/slots256/Scan100000-48         	       3	       420.0 ns/op	 128571429 entries/s	         7.778 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Map100
+BenchmarkTree/BPlus/slots256/Map100-48             	       3	       430.0 ns/op	  88372093 entries/s	        11.32 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Map10000
+BenchmarkTree/BPlus/slots256/Map10000-48           	       3	       440.0 ns/op	 122727273 entries/s	         8.148 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots256/Map100000
+BenchmarkTree/BPlus/slots256/Map100000-48          	       3	       446.7 ns/op	 120895522 entries/s	         8.272 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024
+BenchmarkTree/BPlus/slots1024/FindHit
+BenchmarkTree/BPlus/slots1024/FindHit-48           	       3	       226.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/FindHit2
+BenchmarkTree/BPlus/slots1024/FindHit2-48          	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/FindMiss
+BenchmarkTree/BPlus/slots1024/FindMiss-48          	       3	       190.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/FindMiss2
+BenchmarkTree/BPlus/slots1024/FindMiss2-48         	       3	       213.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Update
+BenchmarkTree/BPlus/slots1024/Update-48            	       3	       190.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/InsertRandom
+BenchmarkTree/BPlus/slots1024/InsertRandom-48      	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/InsertSequential
+BenchmarkTree/BPlus/slots1024/InsertSequential-48  	       3	       140.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Scan100
+BenchmarkTree/BPlus/slots1024/Scan100-48           	       3	       426.7 ns/op	  89062500 entries/s	        11.23 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Scan10000
+BenchmarkTree/BPlus/slots1024/Scan10000-48         	       3	       493.3 ns/op	 109459459 entries/s	         9.136 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Scan100000
+BenchmarkTree/BPlus/slots1024/Scan100000-48        	       3	       500.0 ns/op	 108000000 entries/s	         9.259 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Map100
+BenchmarkTree/BPlus/slots1024/Map100-48            	       3	       416.7 ns/op	  91200000 entries/s	        10.96 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Map10000
+BenchmarkTree/BPlus/slots1024/Map10000-48          	       3	       490.0 ns/op	 110204082 entries/s	         9.074 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots1024/Map100000
+BenchmarkTree/BPlus/slots1024/Map100000-48         	       3	       466.7 ns/op	 115714286 entries/s	         8.642 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096
+BenchmarkTree/BPlus/slots4096/FindHit
+BenchmarkTree/BPlus/slots4096/FindHit-48           	       3	       196.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/FindHit2
+BenchmarkTree/BPlus/slots4096/FindHit2-48          	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/FindMiss
+BenchmarkTree/BPlus/slots4096/FindMiss-48          	       3	       226.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/FindMiss2
+BenchmarkTree/BPlus/slots4096/FindMiss2-48         	       3	       193.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Update
+BenchmarkTree/BPlus/slots4096/Update-48            	       3	       226.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/InsertRandom
+BenchmarkTree/BPlus/slots4096/InsertRandom-48      	       3	       296.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/InsertSequential
+BenchmarkTree/BPlus/slots4096/InsertSequential-48  	       3	       216.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Scan100
+BenchmarkTree/BPlus/slots4096/Scan100-48           	       3	       403.3 ns/op	  94214876 entries/s	        10.61 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Scan10000
+BenchmarkTree/BPlus/slots4096/Scan10000-48         	       3	       466.7 ns/op	 115714286 entries/s	         8.642 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Scan100000
+BenchmarkTree/BPlus/slots4096/Scan100000-48        	       3	       476.7 ns/op	 113286713 entries/s	         8.827 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Map100
+BenchmarkTree/BPlus/slots4096/Map100-48            	       3	       416.7 ns/op	  91200000 entries/s	        10.96 iter_ns/key	        38.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Map10000
+BenchmarkTree/BPlus/slots4096/Map10000-48          	       3	       503.3 ns/op	 107284768 entries/s	         9.321 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkTree/BPlus/slots4096/Map100000
+BenchmarkTree/BPlus/slots4096/Map100000-48         	       3	       473.3 ns/op	 114084507 entries/s	         8.765 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB
+BenchmarkYCSB/BP/h4-b4/Uniform/A
+BenchmarkYCSB/BP/h4-b4/Uniform/A-48                	       3	       306.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Uniform/B
+BenchmarkYCSB/BP/h4-b4/Uniform/B-48                	       3	       326.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Uniform/C
+BenchmarkYCSB/BP/h4-b4/Uniform/C-48                	       3	       223.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Uniform/E
+BenchmarkYCSB/BP/h4-b4/Uniform/E-48                	       3	      1877 ns/op	  15985790 entries/s	        62.56 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Uniform/X
+BenchmarkYCSB/BP/h4-b4/Uniform/X-48                	       3	      2100 ns/op	  25714286 entries/s	        38.89 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Uniform/Y
+BenchmarkYCSB/BP/h4-b4/Uniform/Y-48                	       3	      2520 ns/op	  21428571 entries/s	        46.67 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/A
+BenchmarkYCSB/BP/h4-b4/Zipf99/A-48                 	       3	       353.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/B
+BenchmarkYCSB/BP/h4-b4/Zipf99/B-48                 	       3	       293.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/C
+BenchmarkYCSB/BP/h4-b4/Zipf99/C-48                 	       3	       273.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/E
+BenchmarkYCSB/BP/h4-b4/Zipf99/E-48                 	       3	      2593 ns/op	  19668338 entries/s	        50.84 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/X
+BenchmarkYCSB/BP/h4-b4/Zipf99/X-48                 	       3	      2870 ns/op	  28455285 entries/s	        35.14 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h4-b4/Zipf99/Y
+BenchmarkYCSB/BP/h4-b4/Zipf99/Y-48                 	       3	      3553 ns/op	  22985271 entries/s	        43.51 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/A
+BenchmarkYCSB/BP/h8-b8/Uniform/A-48                	       3	       323.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/B
+BenchmarkYCSB/BP/h8-b8/Uniform/B-48                	       3	       313.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/C
+BenchmarkYCSB/BP/h8-b8/Uniform/C-48                	       3	       320.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/E
+BenchmarkYCSB/BP/h8-b8/Uniform/E-48                	       3	      1343 ns/op	  22332506 entries/s	        44.78 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/X
+BenchmarkYCSB/BP/h8-b8/Uniform/X-48                	       3	      1693 ns/op	  31889764 entries/s	        31.36 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Uniform/Y
+BenchmarkYCSB/BP/h8-b8/Uniform/Y-48                	       3	      2173 ns/op	  24846626 entries/s	        40.25 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/A
+BenchmarkYCSB/BP/h8-b8/Zipf99/A-48                 	       3	       326.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/B
+BenchmarkYCSB/BP/h8-b8/Zipf99/B-48                 	       3	       230.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/C
+BenchmarkYCSB/BP/h8-b8/Zipf99/C-48                 	       3	       243.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/E
+BenchmarkYCSB/BP/h8-b8/Zipf99/E-48                 	       3	      4723 ns/op	  10798221 entries/s	        92.61 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/X
+BenchmarkYCSB/BP/h8-b8/Zipf99/X-48                 	       3	      2213 ns/op	  36897590 entries/s	        27.10 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h8-b8/Zipf99/Y
+BenchmarkYCSB/BP/h8-b8/Zipf99/Y-48                 	       3	      2627 ns/op	  31091371 entries/s	        32.16 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/A
+BenchmarkYCSB/BP/h16-b16/Uniform/A-48              	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/B
+BenchmarkYCSB/BP/h16-b16/Uniform/B-48              	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/C
+BenchmarkYCSB/BP/h16-b16/Uniform/C-48              	       3	       216.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/E
+BenchmarkYCSB/BP/h16-b16/Uniform/E-48              	       3	      1307 ns/op	  22959184 entries/s	        43.56 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/X
+BenchmarkYCSB/BP/h16-b16/Uniform/X-48              	       3	      1506 ns/op	  35848639 entries/s	        27.90 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Uniform/Y
+BenchmarkYCSB/BP/h16-b16/Uniform/Y-48              	       3	      1223 ns/op	  44141689 entries/s	        22.65 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/A
+BenchmarkYCSB/BP/h16-b16/Zipf99/A-48               	       3	       310.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/B
+BenchmarkYCSB/BP/h16-b16/Zipf99/B-48               	       3	       209.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/C
+BenchmarkYCSB/BP/h16-b16/Zipf99/C-48               	       3	       216.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/E
+BenchmarkYCSB/BP/h16-b16/Zipf99/E-48               	       3	      1660 ns/op	  30722892 entries/s	        32.55 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/X
+BenchmarkYCSB/BP/h16-b16/Zipf99/X-48               	       3	      1920 ns/op	  42534722 entries/s	        23.51 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h16-b16/Zipf99/Y
+BenchmarkYCSB/BP/h16-b16/Zipf99/Y-48               	       3	      1370 ns/op	  59625213 entries/s	        16.77 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/A
+BenchmarkYCSB/BP/h32-b32/Uniform/A-48              	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/B
+BenchmarkYCSB/BP/h32-b32/Uniform/B-48              	       3	       270.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/C
+BenchmarkYCSB/BP/h32-b32/Uniform/C-48              	       3	       240.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/E
+BenchmarkYCSB/BP/h32-b32/Uniform/E-48              	       3	      1923 ns/op	  15597920 entries/s	        64.11 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/X
+BenchmarkYCSB/BP/h32-b32/Uniform/X-48              	       3	      1193 ns/op	  45251397 entries/s	        22.10 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Uniform/Y
+BenchmarkYCSB/BP/h32-b32/Uniform/Y-48              	       3	      1383 ns/op	  39045553 entries/s	        25.61 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/A
+BenchmarkYCSB/BP/h32-b32/Zipf99/A-48               	       3	       360.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/B
+BenchmarkYCSB/BP/h32-b32/Zipf99/B-48               	       3	       230.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/C
+BenchmarkYCSB/BP/h32-b32/Zipf99/C-48               	       3	       253.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/E
+BenchmarkYCSB/BP/h32-b32/Zipf99/E-48               	       3	      2310 ns/op	  22077922 entries/s	        45.29 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/X
+BenchmarkYCSB/BP/h32-b32/Zipf99/X-48               	       3	      2723 ns/op	  29987760 entries/s	        33.35 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y
+BenchmarkYCSB/BP/h32-b32/Zipf99/Y-48               	       3	      1613 ns/op	  50630296 entries/s	        19.75 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/A
+BenchmarkYCSB/BP/h32-b64/Uniform/A-48              	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/B
+BenchmarkYCSB/BP/h32-b64/Uniform/B-48              	       3	       303.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/C
+BenchmarkYCSB/BP/h32-b64/Uniform/C-48              	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/E
+BenchmarkYCSB/BP/h32-b64/Uniform/E-48              	       3	      2030 ns/op	  14778325 entries/s	        67.67 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/X
+BenchmarkYCSB/BP/h32-b64/Uniform/X-48              	       3	      2340 ns/op	  23076923 entries/s	        43.33 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Uniform/Y
+BenchmarkYCSB/BP/h32-b64/Uniform/Y-48              	       3	      1287 ns/op	  41968912 entries/s	        23.83 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/A
+BenchmarkYCSB/BP/h32-b64/Zipf99/A-48               	       3	       353.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/B
+BenchmarkYCSB/BP/h32-b64/Zipf99/B-48               	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/C
+BenchmarkYCSB/BP/h32-b64/Zipf99/C-48               	       3	       273.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/E
+BenchmarkYCSB/BP/h32-b64/Zipf99/E-48               	       3	      2340 ns/op	  21794872 entries/s	        45.88 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/X
+BenchmarkYCSB/BP/h32-b64/Zipf99/X-48               	       3	      2697 ns/op	  30284302 entries/s	        33.02 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h32-b64/Zipf99/Y
+BenchmarkYCSB/BP/h32-b64/Zipf99/Y-48               	       3	      1633 ns/op	  50000000 entries/s	        20.00 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/A
+BenchmarkYCSB/BP/h64-b64/Uniform/A-48              	       3	       333.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/B
+BenchmarkYCSB/BP/h64-b64/Uniform/B-48              	       3	       330.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/C
+BenchmarkYCSB/BP/h64-b64/Uniform/C-48              	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/E
+BenchmarkYCSB/BP/h64-b64/Uniform/E-48              	       3	      1360 ns/op	  22058824 entries/s	        45.33 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/X
+BenchmarkYCSB/BP/h64-b64/Uniform/X-48              	       3	      1897 ns/op	  28471002 entries/s	        35.12 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Uniform/Y
+BenchmarkYCSB/BP/h64-b64/Uniform/Y-48              	       3	      1740 ns/op	  31034483 entries/s	        32.22 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/A
+BenchmarkYCSB/BP/h64-b64/Zipf99/A-48               	       3	       293.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/B
+BenchmarkYCSB/BP/h64-b64/Zipf99/B-48               	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/C
+BenchmarkYCSB/BP/h64-b64/Zipf99/C-48               	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/E
+BenchmarkYCSB/BP/h64-b64/Zipf99/E-48               	       3	      1840 ns/op	  27722413 entries/s	        36.07 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/X
+BenchmarkYCSB/BP/h64-b64/Zipf99/X-48               	       3	      2310 ns/op	  35353535 entries/s	        28.29 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BP/h64-b64/Zipf99/Y
+BenchmarkYCSB/BP/h64-b64/Zipf99/Y-48               	       3	      2157 ns/op	  37867079 entries/s	        26.41 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/A
+BenchmarkYCSB/BPlus/slots16/Uniform/A-48           	       3	       313.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/B
+BenchmarkYCSB/BPlus/slots16/Uniform/B-48           	       3	       296.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/C
+BenchmarkYCSB/BPlus/slots16/Uniform/C-48           	       3	       276.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/E
+BenchmarkYCSB/BPlus/slots16/Uniform/E-48           	       3	       563.3 ns/op	  53254438 entries/s	        18.78 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/X
+BenchmarkYCSB/BPlus/slots16/Uniform/X-48           	       3	       603.3 ns/op	  89502762 entries/s	        11.17 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Uniform/Y
+BenchmarkYCSB/BPlus/slots16/Uniform/Y-48           	       3	       526.7 ns/op	 102531646 entries/s	         9.753 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/A
+BenchmarkYCSB/BPlus/slots16/Zipf99/A-48            	       3	       390.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/B
+BenchmarkYCSB/BPlus/slots16/Zipf99/B-48            	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/C
+BenchmarkYCSB/BPlus/slots16/Zipf99/C-48            	       3	       253.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/E
+BenchmarkYCSB/BPlus/slots16/Zipf99/E-48            	       3	       630.0 ns/op	  80952381 entries/s	        12.35 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/X
+BenchmarkYCSB/BPlus/slots16/Zipf99/X-48            	       3	       726.7 ns/op	 112385321 entries/s	         8.898 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots16/Zipf99/Y
+BenchmarkYCSB/BPlus/slots16/Zipf99/Y-48            	       3	       749.7 ns/op	 108937305 entries/s	         9.180 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/A
+BenchmarkYCSB/BPlus/slots32/Uniform/A-48           	       3	       286.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/B
+BenchmarkYCSB/BPlus/slots32/Uniform/B-48           	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/C
+BenchmarkYCSB/BPlus/slots32/Uniform/C-48           	       3	       243.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/E
+BenchmarkYCSB/BPlus/slots32/Uniform/E-48           	       3	       510.0 ns/op	  58823529 entries/s	        17.00 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/X
+BenchmarkYCSB/BPlus/slots32/Uniform/X-48           	       3	       540.0 ns/op	 100000000 entries/s	        10.00 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Uniform/Y
+BenchmarkYCSB/BPlus/slots32/Uniform/Y-48           	       3	       510.0 ns/op	 105882353 entries/s	         9.444 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/A
+BenchmarkYCSB/BPlus/slots32/Zipf99/A-48            	       3	       313.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/B
+BenchmarkYCSB/BPlus/slots32/Zipf99/B-48            	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/C
+BenchmarkYCSB/BPlus/slots32/Zipf99/C-48            	       3	       239.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/E
+BenchmarkYCSB/BPlus/slots32/Zipf99/E-48            	       3	       586.7 ns/op	  86931818 entries/s	        11.50 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/X
+BenchmarkYCSB/BPlus/slots32/Zipf99/X-48            	       3	       650.0 ns/op	 125641026 entries/s	         7.959 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots32/Zipf99/Y
+BenchmarkYCSB/BPlus/slots32/Zipf99/Y-48            	       3	       643.3 ns/op	 126943005 entries/s	         7.878 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/A
+BenchmarkYCSB/BPlus/slots64/Uniform/A-48           	       3	       356.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/B
+BenchmarkYCSB/BPlus/slots64/Uniform/B-48           	       3	       300.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/C
+BenchmarkYCSB/BPlus/slots64/Uniform/C-48           	       3	       280.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/E
+BenchmarkYCSB/BPlus/slots64/Uniform/E-48           	       3	       553.0 ns/op	  54249548 entries/s	        18.43 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/X
+BenchmarkYCSB/BPlus/slots64/Uniform/X-48           	       3	       580.0 ns/op	  93103448 entries/s	        10.74 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Uniform/Y
+BenchmarkYCSB/BPlus/slots64/Uniform/Y-48           	       3	       546.7 ns/op	  98780488 entries/s	        10.12 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/A
+BenchmarkYCSB/BPlus/slots64/Zipf99/A-48            	       3	       290.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/B
+BenchmarkYCSB/BPlus/slots64/Zipf99/B-48            	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/C
+BenchmarkYCSB/BPlus/slots64/Zipf99/C-48            	       3	       236.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/E
+BenchmarkYCSB/BPlus/slots64/Zipf99/E-48            	       3	       513.3 ns/op	  99350649 entries/s	        10.07 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/X
+BenchmarkYCSB/BPlus/slots64/Zipf99/X-48            	       3	       676.3 ns/op	 120749138 entries/s	         8.282 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots64/Zipf99/Y
+BenchmarkYCSB/BPlus/slots64/Zipf99/Y-48            	       3	       626.7 ns/op	 130319149 entries/s	         7.673 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/A
+BenchmarkYCSB/BPlus/slots256/Uniform/A-48          	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/B
+BenchmarkYCSB/BPlus/slots256/Uniform/B-48          	       3	       203.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/C
+BenchmarkYCSB/BPlus/slots256/Uniform/C-48          	       3	       250.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/E
+BenchmarkYCSB/BPlus/slots256/Uniform/E-48          	       3	       470.0 ns/op	  63829787 entries/s	        15.67 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/X
+BenchmarkYCSB/BPlus/slots256/Uniform/X-48          	       3	       493.3 ns/op	 109459459 entries/s	         9.136 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Uniform/Y
+BenchmarkYCSB/BPlus/slots256/Uniform/Y-48          	       3	       456.7 ns/op	 118248175 entries/s	         8.457 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/A
+BenchmarkYCSB/BPlus/slots256/Zipf99/A-48           	       3	       280.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/B
+BenchmarkYCSB/BPlus/slots256/Zipf99/B-48           	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/C
+BenchmarkYCSB/BPlus/slots256/Zipf99/C-48           	       3	       170.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/E
+BenchmarkYCSB/BPlus/slots256/Zipf99/E-48           	       3	       480.0 ns/op	 106250000 entries/s	         9.412 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/X
+BenchmarkYCSB/BPlus/slots256/Zipf99/X-48           	       3	       583.3 ns/op	 140000000 entries/s	         7.143 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots256/Zipf99/Y
+BenchmarkYCSB/BPlus/slots256/Zipf99/Y-48           	       3	       586.7 ns/op	 139204545 entries/s	         7.184 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/A
+BenchmarkYCSB/BPlus/slots1024/Uniform/A-48         	       3	       253.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/B
+BenchmarkYCSB/BPlus/slots1024/Uniform/B-48         	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/C
+BenchmarkYCSB/BPlus/slots1024/Uniform/C-48         	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/E
+BenchmarkYCSB/BPlus/slots1024/Uniform/E-48         	       3	       443.3 ns/op	  67669173 entries/s	        14.78 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/X
+BenchmarkYCSB/BPlus/slots1024/Uniform/X-48         	       3	       506.7 ns/op	 106578947 entries/s	         9.383 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Uniform/Y
+BenchmarkYCSB/BPlus/slots1024/Uniform/Y-48         	       3	       456.7 ns/op	 118248175 entries/s	         8.457 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/A
+BenchmarkYCSB/BPlus/slots1024/Zipf99/A-48          	       3	       260.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/B
+BenchmarkYCSB/BPlus/slots1024/Zipf99/B-48          	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/C
+BenchmarkYCSB/BPlus/slots1024/Zipf99/C-48          	       3	       213.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/E
+BenchmarkYCSB/BPlus/slots1024/Zipf99/E-48          	       3	       480.0 ns/op	 106250000 entries/s	         9.412 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/X
+BenchmarkYCSB/BPlus/slots1024/Zipf99/X-48          	       3	       603.3 ns/op	 135359116 entries/s	         7.388 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots1024/Zipf99/Y
+BenchmarkYCSB/BPlus/slots1024/Zipf99/Y-48          	       3	       543.3 ns/op	 150306748 entries/s	         6.653 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/A
+BenchmarkYCSB/BPlus/slots4096/Uniform/A-48         	       3	       273.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/B
+BenchmarkYCSB/BPlus/slots4096/Uniform/B-48         	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/C
+BenchmarkYCSB/BPlus/slots4096/Uniform/C-48         	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/E
+BenchmarkYCSB/BPlus/slots4096/Uniform/E-48         	       3	       463.3 ns/op	  64748201 entries/s	        15.44 iter_ns/key	        30.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/X
+BenchmarkYCSB/BPlus/slots4096/Uniform/X-48         	       3	       476.7 ns/op	 113286713 entries/s	         8.827 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Uniform/Y
+BenchmarkYCSB/BPlus/slots4096/Uniform/Y-48         	       3	       466.7 ns/op	 115714286 entries/s	         8.642 iter_ns/key	        54.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/A
+BenchmarkYCSB/BPlus/slots4096/Zipf99/A-48          	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/B
+BenchmarkYCSB/BPlus/slots4096/Zipf99/B-48          	       3	       210.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/C
+BenchmarkYCSB/BPlus/slots4096/Zipf99/C-48          	       3	       206.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/E
+BenchmarkYCSB/BPlus/slots4096/Zipf99/E-48          	       3	       433.3 ns/op	 117692308 entries/s	         8.497 iter_ns/key	        51.00 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/X
+BenchmarkYCSB/BPlus/slots4096/Zipf99/X-48          	       3	       613.3 ns/op	 133152174 entries/s	         7.510 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkYCSB/BPlus/slots4096/Zipf99/Y
+BenchmarkYCSB/BPlus/slots4096/Zipf99/Y-48          	       3	       506.7 ns/op	 161184211 entries/s	         6.204 iter_ns/key	        81.67 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict
+BenchmarkDict/Get
+BenchmarkDict/Get-48                               	       3	       246.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Get2
+BenchmarkDict/Get2-48                              	       3	       233.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Update
+BenchmarkDict/Update-48                            	       3	       250.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkDict/Iterate
+BenchmarkDict/Iterate-48                           	       3	       666.7 ns/op	 192000000 entries/s	         5.208 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkDict/DeleteCurrent
+BenchmarkDict/DeleteCurrent-48                     	       3	     57175 ns/op	   2238728 entries/s	       446.7 iter_ns/key	       128.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints
+BenchmarkReferencePoints/Tree/Get
+BenchmarkReferencePoints/Tree/Get-48               	       3	       256.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Get2
+BenchmarkReferencePoints/Tree/Get2-48              	       3	       243.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/GetMiss
+BenchmarkReferencePoints/Tree/GetMiss-48           	       3	       370.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Update
+BenchmarkReferencePoints/Tree/Update-48            	       3	       363.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Tree/Insert
+BenchmarkReferencePoints/Tree/Insert-48            	       3	      8276 ns/op	   24760 B/op	       2 allocs/op
+BenchmarkReferencePoints/Dict/Get
+BenchmarkReferencePoints/Dict/Get-48               	       3	       290.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Get2
+BenchmarkReferencePoints/Dict/Get2-48              	       3	       283.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/GetMiss
+BenchmarkReferencePoints/Dict/GetMiss-48           	       3	       400.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Update
+BenchmarkReferencePoints/Dict/Update-48            	       3	       266.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/Dict/Insert
+BenchmarkReferencePoints/Dict/Insert-48            	       3	      8166 ns/op	   24824 B/op	       3 allocs/op
+BenchmarkReferencePoints/GoMap/Get
+BenchmarkReferencePoints/GoMap/Get-48              	       3	       170.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Get2
+BenchmarkReferencePoints/GoMap/Get2-48             	       3	       163.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/GetMiss
+BenchmarkReferencePoints/GoMap/GetMiss-48          	       3	       253.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Update
+BenchmarkReferencePoints/GoMap/Update-48           	       3	       196.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkReferencePoints/GoMap/Insert
+BenchmarkReferencePoints/GoMap/Insert-48           	       3	       276.7 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	1.401s

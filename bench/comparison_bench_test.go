@@ -120,20 +120,8 @@ type benchPointLayout struct {
 // the same configurations, capacity hints, and adapters as the benchmarks.
 func comparisonPointLayouts(n int) []benchPointLayout {
 	return []benchPointLayout{
-		{"Tree", func() benchUint64Points {
-			return bufftree.NewBPTree[uint64, uint64](&bufftree.Config{DisablePointIndex: true})
-		}},
-		{"TreeHash", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
-		{"TreeHashNoCache", func() benchUint64Points {
-			return bufftree.NewBPTree[uint64, uint64](&bufftree.Config{HashNoCache: true})
-		}},
-		{"Dict", func() benchUint64Points {
-			return bufftree.NewDictWithConfig[uint64, uint64](bufftree.Config{DisablePointIndex: true})
-		}},
-		{"DictHash", func() benchUint64Points { return bufftree.NewDict[uint64, uint64]() }},
-		{"DictHashNoCache", func() benchUint64Points {
-			return bufftree.NewDictWithConfig[uint64, uint64](bufftree.Config{HashNoCache: true})
-		}},
+		{"Tree", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
+		{"Dict", func() benchUint64Points { return bufftree.NewDict[uint64, uint64]() }},
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
@@ -205,24 +193,11 @@ func BenchmarkCompareIteration(b *testing.B) {
 
 func comparisonIterationCases(n int) []comparisonBenchmark {
 	var cases []comparisonBenchmark
-	modes := []struct {
-		name string
-		cfg  bufftree.Config
-	}{
-		{"NoHash", bufftree.Config{DisablePointIndex: true}},
-		{"Hash", bufftree.Config{}},
-		{"HashNoCache", bufftree.Config{HashNoCache: true}},
+	layouts := []benchScanLayout{
+		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
+		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
+		{"RBTree", func() benchOrderedScan { return newBenchRBTree() }},
 	}
-	var layouts []benchScanLayout
-	for _, mode := range modes {
-		layouts = append(layouts, benchScanLayout{"Tree/" + mode.name, func() benchOrderedScan {
-			return bufftree.NewBPTree[uint64, uint64](&mode.cfg)
-		}})
-	}
-	layouts = append(layouts,
-		benchScanLayout{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
-		benchScanLayout{"RBTree", func() benchOrderedScan { return newBenchRBTree() }},
-	)
 	for _, layout := range layouts {
 		for _, maximum := range []int{10000, 100000} {
 			cases = append(cases, comparisonBenchmark{fmt.Sprintf("%s/Scan%d", layout.name, maximum), func(b *testing.B) {
@@ -245,26 +220,24 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 			}})
 		}
 	}
-	for _, mode := range modes {
-		cases = append(cases, comparisonBenchmark{"Dict/" + mode.name + "/Iterate", func(b *testing.B) {
-			d := bufftree.NewDictWithConfig[uint64, uint64](mode.cfg)
-			for i := 0; i < n; i++ {
-				d.Put(benchKey(i), uint64(i))
+	cases = append(cases, comparisonBenchmark{"Dict/Iterate", func(b *testing.B) {
+		d := bufftree.NewDict[uint64, uint64]()
+		for i := 0; i < n; i++ {
+			d.Put(benchKey(i), uint64(i))
+		}
+		var sum, visited uint64
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			for _, v := range d.All() {
+				sum += v
+				visited++
 			}
-			var sum, visited uint64
-			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				for _, v := range d.All() {
-					sum += v
-					visited++
-				}
-			}
-			b.StopTimer()
-			benchSink = sum
-			reportIteration(b, visited)
-		}})
-	}
+		}
+		b.StopTimer()
+		benchSink = sum
+		reportIteration(b, visited)
+	}})
 	cases = append(cases, comparisonBenchmark{"GoMap/Iterate", func(b *testing.B) {
 		m := make(benchUint64Map, n)
 		for i := 0; i < n; i++ {

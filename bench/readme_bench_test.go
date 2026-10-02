@@ -15,20 +15,20 @@ var readmeBenchCount = flag.Int("bench-table-count", 3, "number of samples per R
 
 type readmeBenchmarkRow struct {
 	label string
-	cases [5]string
+	cases [4]string
 }
 
 var readmeBenchmarkRows = []readmeBenchmarkRow{
-	{"Tree `Get`, hit", [5]string{"Points/Tree/GetHit", "Points/TreeHash/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
-	{"Tree `Get`, miss", [5]string{"Points/Tree/GetMiss", "Points/TreeHash/GetMiss", "Points/GoMap/GetMiss", "Points/Tidwall/GetMiss", "Points/RBTree/GetMiss"}},
-	{"Tree `Put`, existing key", [5]string{"Points/Tree/Update", "Points/TreeHash/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
-	{"Tree `Put`, fresh key", [5]string{"Points/Tree/FreshPut", "Points/TreeHash/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
-	{"Dict `Get`, hit", [5]string{"Points/Dict/GetHit", "Points/DictHash/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
-	{"Dict `Put`, existing key", [5]string{"Points/Dict/Update", "Points/DictHash/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
-	{"Dict `Put`, fresh key", [5]string{"Points/Dict/FreshPut", "Points/DictHash/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
-	{"Ordered scan, maximum 10,000", [5]string{"Iteration/Tree/NoHash/Scan10000", "Iteration/Tree/Hash/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000"}},
-	{"Ordered scan, maximum 100,000", [5]string{"Iteration/Tree/NoHash/Scan100000", "Iteration/Tree/Hash/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000"}},
-	{"Dict traversal", [5]string{"Iteration/Dict/NoHash/Iterate", "Iteration/Dict/Hash/Iterate", "Iteration/GoMap/Iterate", "Iteration/Tidwall/Iterate", "Iteration/RBTree/Iterate"}},
+	{"Tree `Get`, hit", [4]string{"Points/Tree/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
+	{"Tree `Get`, miss", [4]string{"Points/Tree/GetMiss", "Points/GoMap/GetMiss", "Points/Tidwall/GetMiss", "Points/RBTree/GetMiss"}},
+	{"Tree `Put`, existing key", [4]string{"Points/Tree/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
+	{"Tree `Put`, fresh key", [4]string{"Points/Tree/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
+	{"Dict `Get`, hit", [4]string{"Points/Dict/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
+	{"Dict `Put`, existing key", [4]string{"Points/Dict/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
+	{"Dict `Put`, fresh key", [4]string{"Points/Dict/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
+	{"Ordered scan, maximum 10,000", [4]string{"Iteration/Tree/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000"}},
+	{"Ordered scan, maximum 100,000", [4]string{"Iteration/Tree/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000"}},
+	{"Dict traversal", [4]string{"Iteration/Dict/Iterate", "Iteration/GoMap/Iterate", "Iteration/Tidwall/Iterate", "Iteration/RBTree/Iterate"}},
 }
 
 func readmeBenchmarkNames() []string {
@@ -142,11 +142,11 @@ func formatReadmeBenchmarkTables(results map[string]float64) (simple, detailed s
 		}
 		rows[i] = cells
 	}
-	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "bufftree", "bufftree(2)", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
+	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "bufftree", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
 	var shortRows [][]string
 	for i, selected := range []int{0, 2, 8, 9} {
 		row := rows[selected]
-		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan", "Dict traversal"}[i], row[2], row[3], row[4], row[5]})
+		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan", "Dict traversal"}[i], row[1], row[2], row[3], row[4]})
 	}
 	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "bufftree", "builtin Go map", "tidwall/btree", "red-black tree"}, shortRows)
 	return simple, detailed, nil

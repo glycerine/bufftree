@@ -14,7 +14,6 @@ type Tree[K cmp.Ordered, V any] struct {
 	cfg           Config
 	length        int
 	version       uint64
-	points        pointIndex[K, V]
 	mapBuffers    [][]entry[K, V]
 	rebuildBuffer []entry[K, V]
 }
@@ -38,7 +37,7 @@ func NewBPTree[K cmp.Ordered, V any](cfg *Config) *Tree[K, V] {
 	return &Tree[K, V]{cfg: internal.normalized()}
 }
 func (t *Tree[K, V]) Len() int { return t.length }
-func (t *Tree[K, V]) Clear()   { t.root = nil; t.length = 0; t.points.clear(); t.version++ }
+func (t *Tree[K, V]) Clear()   { t.root = nil; t.length = 0; t.version++ }
 func (t *Tree[K, V]) findLeaf(k K) *node[K, V] {
 	n := t.root
 	for n != nil && n.leaf == nil {
@@ -72,9 +71,6 @@ func (t *Tree[K, V]) Get(k K) V {
 
 // Get2 returns the value for k and whether the key exists.
 func (t *Tree[K, V]) Get2(k K) (V, bool) {
-	if !t.cfg.DisablePointIndex {
-		return t.points.get(k)
-	}
 	if n := t.findLeaf(k); n != nil {
 		return n.leaf.get(k)
 	}
@@ -92,33 +88,12 @@ func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 			t.mapBuffers = [][]entry[K, V]{make([]entry[K, V], 0, t.root.leaf.capacity())}
 		}
 	}
-	var n *node[K, V]
-	var old V
-	var found bool
-	var h uint64
-	var pos int
-	if t.cfg.DisablePointIndex {
-		n = t.findLeaf(k)
-		old, found = n.leaf.get(k)
-	} else {
-		t.points.init(!t.cfg.HashNoCache)
-		h = t.points.hash(k)
-		pos, found = t.points.find(k, h)
-		if found {
-			old = t.points.slots[pos].value
-			n = t.points.slots[pos].leaf
-		}
-	}
+	n := t.findLeaf(k)
+	old, found := n.leaf.get(k)
 	if found {
 		n.leaf.overwrite(k, v)
-		if !t.cfg.DisablePointIndex {
-			t.points.slots[pos].value = v
-		}
 		t.version++
 		return old, true
-	}
-	if n == nil {
-		n = t.findLeaf(k)
 	}
 	if n.leaf.size == n.leaf.capacity() {
 		right := t.splitLeaf(n)
@@ -129,10 +104,6 @@ func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 	n.leaf.size++
 	t.length++
 	n.leaf.writeLog(entry[K, V]{key: k, value: v})
-	if !t.cfg.DisablePointIndex {
-		pos = t.points.put(k, v, h, pos, found)
-		t.points.slots[pos].leaf = n
-	}
 	if lessKey(k, n.min) {
 		n.min = k
 		refreshUp(n.parent)
@@ -177,7 +148,6 @@ func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	n.leaf.load(es[:mid])
 	n.min = es[0].key
 	right.leaf.load(es[mid:])
-	t.pointLeaves(es[mid:], right)
 	if n.next != nil {
 		n.next.prev = right
 	}
@@ -186,18 +156,6 @@ func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	return right
 }
 
-func (t *Tree[K, V]) pointLeaves(es []entry[K, V], n *node[K, V]) {
-	if t.cfg.DisablePointIndex {
-		return
-	}
-	for i := range es {
-		pos, found := t.points.find(es[i].key, t.points.hash(es[i].key))
-		if !found {
-			panic("bufftree: record is missing from point index")
-		}
-		t.points.slots[pos].leaf = n
-	}
-}
 func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
 	for {
 		p := left.parent
@@ -231,34 +189,12 @@ func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
 
 // Del2 removes a key and returns its previous value and whether it existed.
 func (t *Tree[K, V]) Del2(k K) (V, bool) {
-	var old V
-	var found bool
-	var pos int
-	var n *node[K, V]
-	if !t.cfg.DisablePointIndex {
-		if len(t.points.slots) == 0 {
-			return old, false
-		}
-		pos, found = t.points.find(k, t.points.hash(k))
-		if !found {
-			return old, false
-		}
-		old = t.points.slots[pos].value
-		n = t.points.slots[pos].leaf
-	} else {
-		n = t.findLeaf(k)
-	}
+	n := t.findLeaf(k)
 	if n == nil {
 		var zero V
 		return zero, false
 	}
-	if t.cfg.DisablePointIndex {
-		old, found = n.leaf.del(k)
-	} else {
-		n.leaf.size--
-		n.leaf.writeLog(entry[K, V]{key: k, dead: true})
-		t.points.removeAt(pos)
-	}
+	old, found := n.leaf.del(k)
 	if !found {
 		return old, false
 	}
@@ -302,12 +238,10 @@ func (t *Tree[K, V]) rebalance(n *node[K, V]) {
 		}
 		merge := false
 		if n.leaf != nil {
-			leftSize := left.leaf.size
 			es := append(left.leaf.collect(), right.leaf.collect()...)
 			merge = len(es) <= left.leaf.capacity()
 			if merge {
 				left.leaf.load(es)
-				t.pointLeaves(es[leftSize:], left)
 				left.min = es[0].key
 				left.next = right.next
 				if right.next != nil {
@@ -318,8 +252,6 @@ func (t *Tree[K, V]) rebalance(n *node[K, V]) {
 				mid := len(es) / 2
 				left.leaf.load(es[:mid])
 				right.leaf.load(es[mid:])
-				t.pointLeaves(es[:mid], left)
-				t.pointLeaves(es[mid:], right)
 				left.min, right.min = es[0].key, es[mid].key
 			}
 		} else {

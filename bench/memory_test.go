@@ -17,10 +17,8 @@ const memoryResultPrefix = "bufftree-heap-result: "
 var memoryCases = []struct {
 	layout, label string
 }{
-	{"Dict", "bufftree.Dict, no hash"},
-	{"DictHash", "bufftree.Dict, hash index"},
-	{"Tree", "bufftree.BPTree, no hash"},
-	{"TreeHash", "bufftree.BPTree, hash index"},
+	{"Dict", "bufftree.Dict"},
+	{"Tree", "bufftree.BPTree"},
 	{"GoMap", "builtin Go map"},
 	{"Tidwall", "tidwall/btree.Map"},
 	{"RBTree", "glycerine/rbtree"},
@@ -53,7 +51,6 @@ func TestMemoryUsage100K(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	results := make(map[string]memoryResult, len(memoryCases))
 	var rows [][]string
 	for _, c := range memoryCases {
 		cmd := exec.CommandContext(t.Context(), executable,
@@ -77,7 +74,6 @@ func TestMemoryUsage100K(t *testing.T) {
 		if !found || result.Layout != c.layout || result.Entries != memoryEntries || result.Bytes == 0 {
 			t.Fatalf("%s: invalid heap measurement %+v\n%s", c.label, result, output)
 		}
-		results[c.layout] = result
 		rows = append(rows, []string{c.label, fmt.Sprint(result.Bytes),
 			fmt.Sprintf("%.2f", float64(result.Bytes)/(1<<20)),
 			fmt.Sprintf("%.2f", float64(result.Bytes)/memoryEntries)})
@@ -86,13 +82,8 @@ func TestMemoryUsage100K(t *testing.T) {
 	fmt.Printf("\n%s %s/%s; 100,000 entries; uint64 keys and values\n",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	fmt.Println("Retained heap: post-GC HeapAlloc minus pre-load baseline; each row uses a fresh process with GOMAXPROCS=1.")
-	fmt.Println("Hash indexes retain full hashes (HashNoCache=false); Go map is pre-sized to 100,000 entries.")
+	fmt.Println("Go map is pre-sized to 100,000 entries.")
 	fmt.Printf("\n%s\n", alignedBenchmarkTable([]string{"Container", "Heap bytes", "MiB", "B/key"}, rows))
-	for _, pair := range [][3]string{{"Dict", "DictHash", "Dict"}, {"Tree", "TreeHash", "BPTree"}} {
-		added := int64(results[pair[1]].Bytes) - int64(results[pair[0]].Bytes)
-		fmt.Printf("%s hash index adds %d bytes (%.2f MiB; %.2f B/key).\n",
-			pair[2], added, float64(added)/(1<<20), float64(added)/memoryEntries)
-	}
 	fmt.Println()
 }
 

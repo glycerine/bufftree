@@ -12,15 +12,6 @@ type Config struct {
 	LogSize   int
 	NumBlocks int
 	BlockSize int
-	// DisablePointIndex omits the hash index used for constant-time point
-	// lookups. Ordered operations always use the BP-tree in either mode.
-	DisablePointIndex bool
-	// HashNoCache omits each indexed key's full 64-bit cached hash. The default
-	// false checks full hashes before key equality and reuses them during
-	// growth and deletion. True uses a one-byte fingerprint and recomputes
-	// hashes when moving records, saving seven bytes per hash-table slot.
-	// Ignored if DisablePointIndex is true.
-	HashNoCache bool
 }
 
 func (c Config) normalized() Config {

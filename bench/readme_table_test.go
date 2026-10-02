@@ -11,20 +11,20 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	for _, name := range readmeBenchmarkNames() {
 		values[name] = 123.456
 	}
-	values["Points/TreeHash/GetHit"] = 22.57
-	values["Points/TreeHash/Update"] = 108.6
-	values["Points/TreeHash/FreshPut"] = 456.7
-	values["Points/DictHash/FreshPut"] = 567.8
+	values["Points/Tree/GetHit"] = 22.57
+	values["Points/Tree/Update"] = 108.6
+	values["Points/Tree/FreshPut"] = 456.7
+	values["Points/Dict/FreshPut"] = 567.8
 	values["Points/GoMap/FreshPut"] = 89.1
 	values["Points/Tidwall/FreshPut"] = 201.2
 	values["Points/RBTree/FreshPut"] = 300.3
-	values["Iteration/Tree/Hash/Scan100000"] = 4.713
-	values["Iteration/Dict/Hash/Iterate"] = 2.844
+	values["Iteration/Tree/Scan100000"] = 4.713
+	values["Iteration/Dict/Iterate"] = 2.844
 	simple, detailed, err := formatReadmeBenchmarkTables(values)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 39 {
+	if len(readmeBenchmarkNames()) != 29 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -52,8 +52,8 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 5; col++ {
-			if strings.TrimSpace(shortCells[col]) != strings.TrimSpace(fullCells[col+1]) {
-				t.Fatal("simplified table must use the detailed table's default-index measurements")
+			if strings.TrimSpace(shortCells[col]) != strings.TrimSpace(fullCells[col]) {
+				t.Fatal("simplified table must use the detailed table's BP-tree measurements")
 			}
 		}
 	}
@@ -70,8 +70,8 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 		label string
 		want  []string
 	}{
-		{3, "Tree `Put`, fresh key", []string{"123.5", "456.7", "89.1", "201.2", "300.3"}},
-		{6, "Dict `Put`, fresh key", []string{"123.5", "567.8", "89.1", "201.2", "300.3"}},
+		{3, "Tree `Put`, fresh key", []string{"456.7", "89.1", "201.2", "300.3"}},
+		{6, "Dict `Put`, fresh key", []string{"567.8", "89.1", "201.2", "300.3"}},
 	} {
 		cells := strings.Split(full[fresh.row+2], "|")
 		if strings.TrimSpace(cells[1]) != fresh.label {
@@ -83,7 +83,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 			}
 		}
 	}
-	delete(values, "Points/TreeHash/GetHit")
+	delete(values, "Points/Tree/GetHit")
 	if _, _, err := formatReadmeBenchmarkTables(values); err == nil {
 		t.Fatal("missing timing must not silently become zero")
 	}

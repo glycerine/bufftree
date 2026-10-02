@@ -116,7 +116,7 @@ func (p *bpa[K, V]) overwrite(k K, v V) {
 	}
 	i := p.baseLocation(k)
 	if i < 0 || p.data[i].dead {
-		panic("bufftree: point index refers to an absent record")
+		panic("bufftree: cannot overwrite an absent record")
 	}
 	p.data[i] = entry[K, V]{key: k, value: v}
 }
