@@ -121,7 +121,7 @@ type benchPointLayout struct {
 func comparisonPointLayouts(n int) []benchPointLayout {
 	return []benchPointLayout{
 		{"Tree", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
-		{"Dict", func() benchUint64Points { return bufftree.NewDict[uint64, uint64]() }},
+		{"Dict", func() benchUint64Points { return bufftree.NewDict[uint64, uint64](nil) }},
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
@@ -221,7 +221,7 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 		}
 	}
 	cases = append(cases, comparisonBenchmark{"Dict/Iterate", func(b *testing.B) {
-		d := bufftree.NewDict[uint64, uint64]()
+		d := bufftree.NewDict[uint64, uint64](nil)
 		for i := 0; i < n; i++ {
 			d.Put(benchKey(i), uint64(i))
 		}

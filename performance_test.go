@@ -37,7 +37,7 @@ func TestQueriesDoNotAllocate(t *testing.T) {
 
 func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
 	tr := NewBPTree[int, int](&cfg)
-	d := NewDictWithConfig[int, int](cfg)
+	d := NewDict[int, int](&cfg)
 	for i := 0; i < 4096; i++ {
 		tr.Put(i, i)
 		d.Put(i, i)
@@ -190,7 +190,7 @@ func TestScanMutationWithinBlock(t *testing.T) {
 
 func TestDel2OnContainersAndIterators(t *testing.T) {
 	tr := NewBPTree[int, string](nil)
-	d := NewDict[int, string]()
+	d := NewDict[int, string](nil)
 	tr.Put(1, "one")
 	d.Put(1, "one")
 	tit, dit := tr.Iter(), d.Iter()

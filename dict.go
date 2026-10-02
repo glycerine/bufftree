@@ -22,9 +22,15 @@ type dictItem[K cmp.Ordered, V any] struct {
 	live       bool
 }
 
-func NewDict[K cmp.Ordered, V any]() *Dict[K, V] { return NewDictWithConfig[K, V](Config{}) }
-func NewDictWithConfig[K cmp.Ordered, V any](cfg Config) *Dict[K, V] {
-	return &Dict[K, V]{index: Tree[K, *dictItem[K, V]]{cfg: cfg.normalized()}}
+// NewDict creates an insertion-ordered dictionary. A nil cfg selects the defaults.
+// A non-nil cfg is copied; later changes to the caller's config do not affect
+// the dictionary. Zero numeric fields select defaults. Invalid configurations panic.
+func NewDict[K cmp.Ordered, V any](cfg *Config) *Dict[K, V] {
+	var internal Config
+	if cfg != nil {
+		internal = *cfg
+	}
+	return &Dict[K, V]{index: Tree[K, *dictItem[K, V]]{cfg: internal.normalized()}}
 }
 func (d *Dict[K, V]) Len() int { return d.index.Len() }
 

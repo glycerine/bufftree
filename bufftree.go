@@ -17,15 +17,19 @@ type Config struct {
 func (c Config) normalized() Config {
 	if c.Fanout == 0 {
 		c.Fanout = 64
+		//c.Fanout = 3
 	}
 	if c.LogSize == 0 {
 		c.LogSize = 32
+		//c.LogSize = 2
 	}
 	if c.NumBlocks == 0 {
 		c.NumBlocks = 32
+		//c.NumBlocks = 2
 	}
 	if c.BlockSize == 0 {
 		c.BlockSize = 32
+		//c.BlockSize = 2
 	}
 	if c.Fanout < 3 || c.LogSize < 2 || c.NumBlocks < 2 || c.BlockSize < 2 {
 		panic("bufftree: fanout must be >= 3; log, block count, and block size must be >= 2")

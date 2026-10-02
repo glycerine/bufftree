@@ -285,7 +285,7 @@ func BenchmarkDict(b *testing.B) {
 	for _, op := range []string{"Get", "Get2", "Update", "Iterate", "DeleteCurrent"} {
 		b.Run(op, func(b *testing.B) {
 			fill := func() *Dict[uint64, uint64] {
-				d := NewDict[uint64, uint64]()
+				d := NewDict[uint64, uint64](nil)
 				for i := 0; i < n; i++ {
 					d.Put(benchKey(i), uint64(i))
 				}

@@ -7,8 +7,63 @@ import (
 	"testing"
 )
 
+func TestNewDictNilConfig(t *testing.T) {
+	d := NewDict[int, int](nil)
+	if d.index.cfg != (Config{Fanout: 64, LogSize: 32, NumBlocks: 32, BlockSize: 32}) {
+		t.Fatal("nil config must store the defaults before returning")
+	}
+	for _, k := range []int{3, 1, 2} {
+		d.Put(k, 10*k)
+	}
+	var keys []int
+	for k, v := range d.All() {
+		keys = append(keys, k)
+		if v != 10*k {
+			t.Fatal("unexpected value")
+		}
+	}
+	if !slices.Equal(keys, []int{3, 1, 2}) || d.Len() != 3 {
+		t.Fatal("default dictionary must preserve insertion order")
+	}
+}
+
+func TestNewDictCopiesConfig(t *testing.T) {
+	for _, cfg := range []Config{{}, tinyConfig} {
+		original := cfg
+		d := NewDict[int, int](&cfg)
+		if cfg != original {
+			t.Fatal("constructor must not normalize the caller's config in place")
+		}
+		if d.index.cfg != original.normalized() {
+			t.Fatal("constructor must store its config snapshot before returning")
+		}
+		// This would panic on insertion if the constructor kept the caller's
+		// pointer, including if it consulted that pointer after Clear.
+		cfg = Config{Fanout: 1, LogSize: 1, NumBlocks: 1, BlockSize: 1}
+		for round := 0; round < 2; round++ {
+			for k := 127; k >= 0; k-- {
+				d.Put(k, k+round)
+			}
+			count := 0
+			for k, v := range d.All() {
+				if k != 127-count || v != k+round {
+					t.Fatal("configured dictionary lost insertion order or values")
+				}
+				if got, ok := d.Get2(k); !ok || got != v {
+					t.Fatal("configured dictionary lookup")
+				}
+				count++
+			}
+			if count != 128 || d.Len() != 128 {
+				t.Fatal("configured dictionary length")
+			}
+			d.Clear()
+		}
+	}
+}
+
 func TestDictInsertionOrderAndDeletion(t *testing.T) {
-	d := NewDictWithConfig[int, string](tinyConfig)
+	d := NewDict[int, string](&tinyConfig)
 	d.Put(8, "eight")
 	d.Put(2, "two")
 	d.Put(6, "six")
@@ -38,7 +93,7 @@ func TestDictInsertionOrderAndDeletion(t *testing.T) {
 }
 
 func TestDictRandomAgainstModel(t *testing.T) {
-	d := NewDictWithConfig[int, int](tinyConfig)
+	d := NewDict[int, int](&tinyConfig)
 	model := map[int]int{}
 	var order []int
 	rng := rand.New(rand.NewSource(23))

@@ -142,13 +142,13 @@ func formatReadmeBenchmarkTables(results map[string]float64) (simple, detailed s
 		}
 		rows[i] = cells
 	}
-	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "bufftree", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
+	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
 	var shortRows [][]string
 	for i, selected := range []int{0, 3, 8, 9} {
 		row := rows[selected]
 		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan", "Dict traversal"}[i], row[1], row[2], row[3], row[4]})
 	}
-	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "bufftree", "builtin Go map", "tidwall/btree", "red-black tree"}, shortRows)
+	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, shortRows)
 	return simple, detailed, nil
 }
 

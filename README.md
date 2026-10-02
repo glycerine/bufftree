@@ -26,7 +26,7 @@ Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 The Put row measures insertion of a fresh key.
 
-| Operation (showing ns/key) | bufftree | builtin Go map | tidwall/btree | red-black tree |
+| Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
 | Get                        |    109.2 |           16.7 |         116.2 |          201.1 |
 | Put                        |    682.4 |          178.7 |         307.4 |          599.8 |
@@ -86,7 +86,7 @@ for key, value := range tree.All() {
     tree.Del(key)           // Safe: iteration continues past the deleted key.
 }
 
-dict := bufftree.NewDict[string, int]()
+dict := bufftree.NewDict[string, int](nil)
 dict.Put("charlie", 3)
 dict.Put("alice", 1)
 dict.Put("bob", 2)
@@ -200,12 +200,13 @@ cfg := bufftree.Config{
     BlockSize: 32,
 }
 tree := bufftree.NewBPTree[int, string](&cfg)
-dict := bufftree.NewDictWithConfig[int, string](cfg)
+dict := bufftree.NewDict[int, string](&cfg)
 ```
 
-`NewBPTree[K,V](nil)` uses the default configuration. Passing `&cfg` copies
-the configuration into the tree; constructing a tree never modifies your
-config, and changing it later does not affect that tree.
+`NewBPTree[K,V](nil)` and `NewDict[K,V](nil)` use the default configuration.
+Passing `&cfg` copies and stores the configuration before the constructor
+returns. Neither constructor modifies your config; changing it later does not
+affect the constructed container.
 
 Those are the defaults; zero numeric fields select defaults. Fanout must be at least 3;
 other fields must be at least 2. Invalid configurations panic. Sizes are measured
@@ -370,7 +371,7 @@ neither competitor has a local module replacement. Reads, existing-key updates,
 and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
 and growth costs.
 
-| Operation (showing ns/key)    | bufftree | builtin Go map | tidwall/btree | red-black tree |
+| Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -------: | -------------: | ------------: | -------------: |
 | Tree `Get`, hit               |    109.2 |           16.7 |         116.2 |          201.1 |
 | Tree `Get`, miss              |    111.5 |           15.6 |         117.8 |          221.8 |

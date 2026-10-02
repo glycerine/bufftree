@@ -24,7 +24,7 @@ func ExampleTree() {
 }
 
 func ExampleDict() {
-	dict := bufftree.NewDict[string, int]()
+	dict := bufftree.NewDict[string, int](nil)
 	dict.Put("charlie", 3)
 	dict.Put("alice", 1)
 	dict.Put("bob", 2)
