@@ -248,6 +248,15 @@ Run the standalone 100,000-entry memory comparison with:
 make memory
 # Or directly:
 go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
+
+| Container         | Heap bytes | MiB  | B/key |
+| ----------------- | ---------: | ---: | ----: |
+| bufftree.Dict     |    8415256 | 8.03 | 84.15 |
+| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+| bufftree.BPTree   |    3609800 | 3.44 | 36.10 |
+| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| builtin Go map    |    2364576 | 2.26 | 23.65 |
+
 ```
 
 It reports retained heap bytes, MiB, and bytes per key for Dict, BPTree,
