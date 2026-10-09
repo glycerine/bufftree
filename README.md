@@ -52,17 +52,21 @@ The big caveat here is concurrency. The bufftree.Tree here only allows
 one goroutine access (one reader, or one writer) at a time. There can be no support
 for multiple readers concurrently (like tidwall.BTree allows) because the reader must modify the
 tree data to answer its queries. If we add transactions to support
-multiple readers, the advantage over tidwall reverses and we lose badly.
+multiple readers, the advantage over tidwall reverses and we lose badly
+on point Get and Put (both ~ 3x slower). While amortizing a batch of Puts does do
+a little better than tidwall, we are still 25% slower than our own 
+non-transactional Puts.
+
 See branch tx for that experiment.
 
 With read and write transactions to support controlled concurrency (see branch tx):
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -----: | -------------: | ------------: | -------------: |
-| Get                        |  322.1 |           19.9 |         133.2 |          229.7 |
-| Put                        | 1117.4 |          167.3 |         317.0 |          629.9 |
-| Put batch (amortized 1024) |  705.7 |          166.8 |         313.3 |          648.3 |
-| Ordered scan               |   5.91 |  not supported |          4.88 |          17.77 |
+| Get                        |  325.1 |           20.0 |         135.1 |          206.2 |
+| Put                        |  652.7 |          164.7 |         309.7 |          628.1 |
+| Put batch (amortized)      |  268.6 |          166.4 |         303.7 |          638.8 |
+| Ordered scan               |   6.16 |  not supported |          5.02 |          18.56 |
 
 Details about the current mutations that a Scan (in key order, full table read) does:
 
