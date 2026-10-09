@@ -15,16 +15,16 @@ var readmeBenchCount = flag.Int("bench-table-count", 3, "number of samples per R
 
 type readmeBenchmarkRow struct {
 	label string
-	cases [4]string
+	cases [5]string
 }
 
 var readmeBenchmarkRows = []readmeBenchmarkRow{
-	{"Tree `Get`, hit", [4]string{"Points/Tree/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
-	{"Tree `Get`, miss", [4]string{"Points/Tree/GetMiss", "Points/GoMap/GetMiss", "Points/Tidwall/GetMiss", "Points/RBTree/GetMiss"}},
-	{"Tree `Put`, existing key", [4]string{"Points/Tree/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
-	{"Tree `Put`, fresh key", [4]string{"Points/Tree/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
-	{"Ordered scan, maximum 10,000", [4]string{"Iteration/Tree/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000"}},
-	{"Ordered scan, maximum 100,000", [4]string{"Iteration/Tree/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000"}},
+	{"Tree `Get`, hit", [5]string{"Points/Tree/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit", "Points/Insdict/GetHit"}},
+	{"Tree `Get`, miss", [5]string{"Points/Tree/GetMiss", "Points/GoMap/GetMiss", "Points/Tidwall/GetMiss", "Points/RBTree/GetMiss", "Points/Insdict/GetMiss"}},
+	{"Tree `Put`, existing key", [5]string{"Points/Tree/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update", "Points/Insdict/Update"}},
+	{"Tree `Put`, fresh key", [5]string{"Points/Tree/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut", "Points/Insdict/FreshPut"}},
+	{"Ordered scan, maximum 10,000", [5]string{"Iteration/Tree/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000", "Iteration/Insdict/Scan10000"}},
+	{"Ordered scan, maximum 100,000", [5]string{"Iteration/Tree/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000", "Iteration/Insdict/Scan100000"}},
 }
 
 func readmeBenchmarkNames() []string {
@@ -138,13 +138,13 @@ func formatReadmeBenchmarkTables(results map[string]float64) (simple, detailed s
 		}
 		rows[i] = cells
 	}
-	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
+	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree", "insdict.Dict"}, rows)
 	var shortRows [][]string
 	for i, selected := range []int{0, 3, 5} {
 		row := rows[selected]
-		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan"}[i], row[1], row[2], row[3], row[4]})
+		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan"}[i], row[1], row[2], row[3], row[4], row[5]})
 	}
-	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, shortRows)
+	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree", "insdict.Dict"}, shortRows)
 	return simple, detailed, nil
 }
 

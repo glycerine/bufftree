@@ -8,10 +8,11 @@ import (
 	"github.com/tidwall/btree"
 )
 
-func scanComparisonLayouts() []benchScanLayout {
+func scanComparisonLayouts(n int) []benchScanLayout {
 	return []benchScanLayout{
 		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
+		{"Insdict", func() benchOrderedScan { return newBenchInsdict(n) }},
 	}
 }
 
@@ -52,13 +53,33 @@ func BenchmarkOrderedAll(b *testing.B) {
 		benchSink = sum
 		reportIteration(b, visited)
 	})
+	b.Run("Insdict", func(b *testing.B) { benchmarkInsdictIteration(b, n) })
+}
+
+func benchmarkInsdictIteration(b *testing.B, n int) {
+	m := newBenchInsdict(n)
+	for i := 0; i < n; i++ {
+		m.Put(benchKey(i), uint64(i))
+	}
+	var sum, visited uint64
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, v := range m.Ascend() {
+			sum += v
+			visited++
+		}
+	}
+	b.StopTimer()
+	benchSink = sum
+	reportIteration(b, visited)
 }
 
 // Include lazy sorting/scan preparation in the first query after loading.
-// Fresh fixtures are constructed outside the timer for both containers.
+// Fresh fixtures are constructed outside the timer for all containers.
 func BenchmarkScanFirst(b *testing.B) {
 	n := benchLoadSize()
-	for _, layout := range scanComparisonLayouts() {
+	for _, layout := range scanComparisonLayouts(n) {
 		for _, length := range []int{100, 10000, n} {
 			b.Run(fmt.Sprintf("%s/Scan%d", layout.name, length), func(b *testing.B) {
 				var sum, visited uint64
@@ -85,7 +106,7 @@ func BenchmarkScanFirst(b *testing.B) {
 // Time both writes and scans, so settling the log cannot hide costs in setup.
 func BenchmarkScanMixed(b *testing.B) {
 	n := benchLoadSize()
-	for _, layout := range scanComparisonLayouts() {
+	for _, layout := range scanComparisonLayouts(n) {
 		for _, length := range []int{100, 10000, n} {
 			b.Run(fmt.Sprintf("%s/Write32Scan%d", layout.name, length), func(b *testing.B) {
 				tr := layout.make()

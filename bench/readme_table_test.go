@@ -22,7 +22,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 22 {
+	if len(readmeBenchmarkNames()) != 28 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -49,7 +49,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	for i, selected := range []int{0, 3, 5} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
-		for col := 2; col <= 5; col++ {
+		for col := 2; col <= 6; col++ {
 			if strings.TrimSpace(shortCells[col]) != strings.TrimSpace(fullCells[col]) {
 				t.Fatal("simplified table must use the detailed table's BP-tree measurements")
 			}
@@ -68,7 +68,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 		label string
 		want  []string
 	}{
-		{3, "Tree `Put`, fresh key", []string{"456.7", "89.1", "201.2", "300.3"}},
+		{3, "Tree `Put`, fresh key", []string{"456.7", "89.1", "201.2", "300.3", "123.5"}},
 	} {
 		cells := strings.Split(full[fresh.row+2], "|")
 		if strings.TrimSpace(cells[1]) != fresh.label {

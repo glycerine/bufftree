@@ -21,6 +21,7 @@ var memoryCases = []struct {
 	{"GoMap", "builtin Go map"},
 	{"Tidwall", "tidwall/btree.Map"},
 	{"RBTree", "glycerine/rbtree"},
+	{"Insdict", "insdict.Dict"},
 }
 
 type memoryResult struct {
@@ -81,7 +82,7 @@ func TestMemoryUsage100K(t *testing.T) {
 	fmt.Printf("\n%s %s/%s; 100,000 entries; uint64 keys and values\n",
 		runtime.Version(), runtime.GOOS, runtime.GOARCH)
 	fmt.Println("Retained heap: post-GC HeapAlloc minus pre-load baseline; each row uses a fresh process with GOMAXPROCS=1.")
-	fmt.Println("Go map is pre-sized to 100,000 entries.")
+	fmt.Println("Go map and insdict.Dict are pre-sized to 100,000 entries; insdict has not built its lazy sorted index.")
 	fmt.Printf("\n%s\n", alignedBenchmarkTable([]string{"Container", "Heap bytes", "MiB", "B/key"}, rows))
 	fmt.Println()
 }

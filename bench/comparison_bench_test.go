@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/glycerine/bufftree"
+	"github.com/glycerine/insdict"
 	"github.com/glycerine/rbtree"
 	"github.com/tidwall/btree"
 )
@@ -39,6 +40,24 @@ func (m *benchTidwallMap) Scan(start uint64, length int, visit func(uint64, uint
 		return
 	}
 	m.tree.Ascend(start, func(k, v uint64) bool {
+		length--
+		return visit(k, v) && length > 0
+	})
+}
+
+// Give Dict the same initial capacity hint as the built-in map. Ascend's
+// sorted index stays lazy, so scan timings include preparation when needed.
+type benchInsdict struct{ *insdict.Dict[uint64, uint64] }
+
+func newBenchInsdict(n int) *benchInsdict {
+	return &benchInsdict{insdict.NewDictSize[uint64, uint64](n)}
+}
+func (m *benchInsdict) Put(k, v uint64) { m.Dict.Put(k, v) }
+func (m *benchInsdict) Scan(start uint64, length int, visit func(uint64, uint64) bool) {
+	if length <= 0 {
+		return
+	}
+	m.Ascend(start)(func(k, v uint64) bool {
 		length--
 		return visit(k, v) && length > 0
 	})
@@ -120,6 +139,7 @@ func comparisonPointLayouts(n int) []benchPointLayout {
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
+		{"Insdict", func() benchUint64Points { return newBenchInsdict(n) }},
 	}
 }
 
@@ -179,7 +199,7 @@ type benchScanLayout struct {
 
 // Scans compare ordered traversal. Full traversals compare the cost of visiting
 // every value: Go map uses unspecified order, and
-// tidwall/btree and rbtree use key order. All include the same sum and key counter.
+// tidwall/btree, rbtree, and insdict use key order. All include the same sum and key counter.
 func BenchmarkCompareIteration(b *testing.B) {
 	for _, bc := range comparisonIterationCases(benchLoadSize()) {
 		b.Run(bc.name, bc.run)
@@ -192,6 +212,7 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
 		{"RBTree", func() benchOrderedScan { return newBenchRBTree() }},
+		{"Insdict", func() benchOrderedScan { return newBenchInsdict(n) }},
 	}
 	for _, layout := range layouts {
 		for _, maximum := range []int{10000, 100000} {
@@ -267,17 +288,22 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 		benchSink = sum
 		reportIteration(b, visited)
 	}})
+	cases = append(cases, comparisonBenchmark{"Insdict/Iterate", func(b *testing.B) {
+		benchmarkInsdictIteration(b, n)
+	}})
 	return cases
 }
 
 func TestComparisonOrderedScans(t *testing.T) {
+	const n = 1000
 	for _, layout := range []benchScanLayout{
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
 		{"RBTree", func() benchOrderedScan { return newBenchRBTree() }},
+		{"Insdict", func() benchOrderedScan { return newBenchInsdict(n) }},
 	} {
 		t.Run(layout.name, func(t *testing.T) {
 			m := layout.make()
-			keys := make([]uint64, 1000)
+			keys := make([]uint64, n)
 			values := make(map[uint64]uint64)
 			for i := range keys {
 				k := benchKey(i)
@@ -287,7 +313,10 @@ func TestComparisonOrderedScans(t *testing.T) {
 			}
 			slices.Sort(keys)
 			for _, maximum := range []int{0, 1, 100, 10000} {
-				for _, o := range benchTrace(len(keys), 100, max(1, maximum)) {
+				for i, o := range benchTrace(len(keys), 100, max(1, maximum)) {
+					if i%2 == 0 {
+						o.key |= 1 // Absent pivots must seek the next larger key.
+					}
 					length := o.length
 					if maximum == 0 {
 						length = 0
@@ -317,7 +346,7 @@ func TestComparisonOrderedScans(t *testing.T) {
 }
 
 func TestComparisonPointAdapters(t *testing.T) {
-	for _, idx := range []benchUint64Points{&benchTidwallMap{}, newBenchRBTree()} {
+	for _, idx := range []benchUint64Points{&benchTidwallMap{}, newBenchRBTree(), newBenchInsdict(100)} {
 		if v := idx.Get(1); v != 0 {
 			t.Fatal("missing key")
 		}

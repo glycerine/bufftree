@@ -26,18 +26,19 @@ Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 The Put row measures insertion of a fresh key.
 
-| Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
-| -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |    101.4 |           16.5 |         116.7 |          199.7 |
-| Put                        |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan               |     3.13 |  not supported |          4.17 |          16.11 |
+| Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
+| -------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
+| Get                        |  100.2 |           16.5 |         115.6 |          199.1 |         22.1 |
+| Put                        |  214.6 |          166.5 |         313.6 |          622.7 |        138.8 |
+| Ordered scan               |   3.20 |  not supported |          4.15 |          15.73 |         5.56 |
 
 ~~~
 This compares:
 a) bufftree.NewBPTree(nil) defaults.
-b) The built-in Go map; `m := make(map[uint64]uint64)`
+b) The built-in Go map; `m := make(map[uint64]uint64, n)`
 c) https://github.com/tidwall/btree
 d) https://github.com/glycerine/rbtree
+e) https://github.com/glycerine/insdict; NewDictSize[uint64, uint64](n), Ascend for scans
 ~~~
 Use `make bench` to re-run on your machine.
 
@@ -312,10 +313,13 @@ go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 | bufftree.BPTree   |    2560376 | 2.44 | 25.60 |
 | tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
 | builtin Go map    |    2364576 | 2.26 | 23.65 |
+| insdict.Dict      |    5562488 | 5.30 | 55.62 |
 
 It reports retained heap bytes, MiB, and bytes per key for BPTree,
-the built-in Go map, tidwall's generic Map, and rbtree. It shares the timing
-benchmarks' constructors, uint64 key/value data, and insertion order; the Go map uses the same capacity hint. Each container is
+the built-in Go map, tidwall's generic Map, rbtree, and insdict.Dict. It shares
+the timing benchmarks' constructors, uint64 key/value data, and insertion order;
+the Go map and insdict use the same capacity hint. The insdict measurement
+precedes its first Ascend, so it excludes the lazy sorted index. Each container is
 measured in a fresh test process with `GOMAXPROCS=1`, with forced GC before and
 after loading, and kept alive through the final heap measurement. Results subtract
 the initial `runtime.MemStats.HeapAlloc` baseline and exclude discarded
@@ -323,7 +327,7 @@ temporary allocations; they measure live Go heap, rather than process RSS or
 heap reserved by the runtime. `make memory` and `make bench` run separately,
 and the memory test never invokes `testing.Benchmark`.
 An example report is saved in
-[memory-tuned.txt](benchmark-results/2026-10-09-scan/memory-tuned.txt).
+[memory.txt](benchmark-results/2026-10-09-insdict/memory.txt).
 The compact layout reduced BPTree retained memory from 36.10 to 24.74 B/key
 before retuning. The fresh-put-focused defaults use 25.60 B/key on this workload,
 including metadata and tree buffers: 3.5% above the previous geometry, but 29%
@@ -338,7 +342,7 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkTree` | Section 6.1: node-size sweeps; random/sequential insertions, updates, hits/misses, scans/maps up to 100,000 entries |
 | `BenchmarkYCSB` | Section 6.2: uniform and Zipfian A/B/C/E/X/Y workloads |
 | `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree and Go map |
-| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Go map, tidwall/btree, and rbtree |
+| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Go map, tidwall/btree, rbtree, and insdict.Dict |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 | `BenchmarkFreshPut` (in `bench/`) | The same fresh-insert workload, with CPU-profile labels separating insertion from untimed fixture loading |
 | `BenchmarkFreshPutConfig` (in `bench/`) | Original fresh-insert sweep over internal fanout, log size, header size, and block size |
@@ -389,7 +393,7 @@ BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 22
+benchmark by default and reporting their median. It measures only the 28
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
@@ -561,19 +565,19 @@ Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.
 five 250ms runs using identical data and uniform point-operation traces.
 The `bufftree` column uses the current implementation with its default
 configuration. Baselines are
-published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
-neither competitor has a local module replacement. Reads, existing-key updates,
-and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
-and growth costs.
+published `github.com/tidwall/btree v1.8.1`, `github.com/glycerine/rbtree v0.2.2`,
+and `github.com/glycerine/insdict v0.14.1`; none has a local module replacement.
+Fresh puts include allocation and growth costs; scans include lazy preparation
+on the first call, amortized across repeated scans.
 
-| Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
-| ----------------------------- | -------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    101.4 |           16.5 |         116.7 |          199.7 |
-| Tree `Get`, miss              |     98.4 |           16.1 |         118.4 |          221.4 |
-| Tree `Put`, existing key      |     97.2 |           27.1 |         126.9 |          207.0 |
-| Tree `Put`, fresh key         |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan, maximum 10,000  |     3.11 |  not supported |          4.13 |          15.80 |
-| Ordered scan, maximum 100,000 |     3.13 |  not supported |          4.17 |          16.11 |
+| Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
+| ----------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
+| Tree `Get`, hit               |  100.2 |           16.5 |         115.6 |          199.1 |         22.1 |
+| Tree `Get`, miss              |   98.9 |           15.6 |         115.7 |          222.2 |         19.0 |
+| Tree `Put`, existing key      |   97.1 |           27.1 |         125.9 |          210.5 |         23.9 |
+| Tree `Put`, fresh key         |  214.6 |          166.5 |         313.6 |          622.7 |        138.8 |
+| Ordered scan, maximum 10,000  |   3.18 |  not supported |          4.19 |          15.68 |         5.62 |
+| Ordered scan, maximum 100,000 |   3.20 |  not supported |          4.15 |          15.73 |         5.56 |
 
 Go map updates are plain assignments, matching the new void `Put` contract.
 Point benchmarks use the same interface dispatch
@@ -582,6 +586,9 @@ for all containers. The tidwall baseline uses its generic
 with no path hints or copies. The rbtree adapter reuses a pointer-shaped query
 object to avoid boxing allocations; updates use `InsertGetIt` and change an
 existing item's value with one search. Competitor return values are discarded.
+The insdict adapter uses `NewDictSize[uint64, uint64](n)`, matching the Go map's
+initial capacity hint, and `Ascend(start)` with the same callback and length
+limit as tidwall. Its native full-traversal benchmark uses `Ascend()`.
 
 Fresh Put rows insert unique odd keys into the initial even-key dataset, using
 the same scrambled keys for every container. Each batch grows from 65,536 to
@@ -598,7 +605,15 @@ so it does not retain old keys or values.
 
 Native Go maps do not provide ordered scans. Traversal figures
 report `iter_ns/key` using actual visited keys; scan lengths vary up to the
-named maximum and stop at the tree's end.
+named maximum and stop at the tree's end. Insdict builds a sorted index lazily
+and reuses it while the key set stays unchanged; existing-value updates preserve
+that index. These repeated-scan figures therefore mostly measure cached traversal.
+`BenchmarkScanFirst/Insdict` measures the first scan's sorting cost, and
+`BenchmarkScanMixed/Insdict` measures existing-key updates plus scans. Inserting
+new keys invalidates insdict's index and requires sorting again on the next scan.
+A separate three-sample 100ms run measured about 20 ms for its first scan after
+loading 65,536 entries, including roughly 512 KiB for the sorted index; see
+[insdict-scans.txt](benchmark-results/2026-10-09-insdict/insdict-scans.txt).
 
 Separate reference-style benchmarks cover 16-byte string keys and new
 insertions. Fresh insertions allocate storage and redistribute BPA records;
@@ -606,10 +621,10 @@ reads and updates to existing keys have different costs. CPU profiling guided
 log-only buffering, bulk block traversal, cheaper log-shadow checks, and the
 shared redistribution buffer.
 
-Current benchmark runs and validation logs are saved in
-[benchmark-results/2026-10-09-scan](benchmark-results/2026-10-09-scan).
+Current comparison runs and validation logs are saved in
+[benchmark-results/2026-10-09-insdict](benchmark-results/2026-10-09-insdict).
 The tables use measured values from
-[readme-tuned.txt](benchmark-results/2026-10-09-scan/readme-tuned.txt).
+[readme.txt](benchmark-results/2026-10-09-insdict/readme.txt).
 The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency
