@@ -90,6 +90,26 @@ func BenchmarkTuneFinalists(b *testing.B) {
 	benchmarkConfigurations(b, configs)
 }
 
+// Repeat a neighborhood sweep after changing defaults and optimizing separator
+// growth. Both insertion traces remain available to avoid selecting for just
+// the adjacent odd/even-key workload.
+func BenchmarkTuneSecondLeg(b *testing.B) {
+	configs := []bufftree.Config{{Fanout: 64, LogSize: 32, NumBlocks: 32, BlockSize: 32}}
+	for _, fanout := range []int{64, 96, 128, 160, 192, 224, 256, 320, 384, 512} {
+		configs = append(configs, bufftree.Config{Fanout: fanout, LogSize: 32, NumBlocks: 32, BlockSize: 34})
+	}
+	for _, logSize := range []int{16, 24, 28, 30, 34, 36, 40, 48} {
+		configs = append(configs, bufftree.Config{Fanout: 256, LogSize: logSize, NumBlocks: 32, BlockSize: 34})
+	}
+	for _, blockSize := range []int{30, 31, 32, 33, 35, 36, 37, 38} {
+		configs = append(configs, bufftree.Config{Fanout: 256, LogSize: 32, NumBlocks: 32, BlockSize: blockSize})
+	}
+	for _, numBlocks := range []int{28, 30, 31, 33, 34, 36} {
+		configs = append(configs, bufftree.Config{Fanout: 256, LogSize: 32, NumBlocks: numBlocks, BlockSize: 34})
+	}
+	benchmarkConfigurations(b, configs)
+}
+
 func benchmarkConfigurations(b *testing.B, configs []bufftree.Config) {
 	n := benchLoadSize()
 	keys := make([]uint64, n)

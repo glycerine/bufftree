@@ -31,7 +31,6 @@ The Put row measures insertion of a fresh key.
 | Get                        |    101.1 |           16.6 |         118.6 |          204.7 |
 | Put                        |    229.6 |          169.3 |         309.9 |          575.1 |
 | Ordered scan               |     4.55 |  not supported |          4.11 |          15.75 |
-| Dict traversal             |     2.79 |          10.05 |          2.58 |          15.47 |
 
 ~~~
 This compares:
@@ -49,8 +48,7 @@ including the costs of frequent exact counting and sequential insertion.
 
 
 ----------------------------
-This package supports either insertion-ordered iteration using bufftree.Dict, 
-or sorted key-order iteration using bufftree.BPTree.
+This package provides a BP-tree with sorted key-order iteration.
 
 ## How it works
 
@@ -72,11 +70,10 @@ has locking and concurrency implications. See the
 [notes on concurrency section](#notes-on-concurrency) at the
 end of this README.
 
-`Tree[K,V]` iterates in key order and supports range queries. `Dict[K,V]`
-iterates in insertion order. Both use the BP-tree for point lookups,
+`Tree[K,V]` iterates in key order and supports range queries, point lookups,
 updates, and deletion. Keys may be any
-`cmp.Ordered` type, including named types; values may be any type. Both zero
-values are usable. Do not copy either container after its first use.
+`cmp.Ordered` type, including named types; values may be any type. The zero
+value is usable. Do not copy a tree after its first use.
 The Config struct can be used to tune memory use.
 
 ```go
@@ -90,22 +87,11 @@ for key, value := range tree.All() {
     tree.Del(key)           // Safe: iteration continues past the deleted key.
 }
 
-dict := bufftree.NewDict[string, int](nil)
-dict.Put("charlie", 3)
-dict.Put("alice", 1)
-dict.Put("bob", 2)
-dict.Put("alice", 10) // Updating preserves the original position.
-
-it := dict.Iter()
-for it.Next() {
-    fmt.Println(it.Key(), it.Value()) // charlie 3, alice 10, bob 2
-    it.Del()
-}
 ```
 
 ## API and iteration
 
-Both containers provide these methods:
+The tree provides these methods:
 
 | Method | Result |
 | --- | --- |
@@ -152,14 +138,6 @@ are not revisited. Exhausted iterators stay exhausted until `Seek` resets them.
 `Clear` ends traversal on the next advance unless new keys ahead of the current
 position have since been inserted.
 
-Dictionary iteration is live in insertion order. It supports deletion of current
-and upcoming entries and observes updates to upcoming values. New entries
-appended before the iterator reaches the end are visited, including when the
-current tail was deleted before appending. Deleting and reinserting a key
-appends it at the end as a new entry. Once `Next` returns false, that iterator
-stays exhausted. `Clear` ends existing dictionary iterators. A loop that keeps
-appending new entries can keep extending its own traversal.
-
 `MapRange` permits deleting the current key. Its visitors must otherwise leave
 the tree unchanged; use `Range` for general live traversal. It copies matching
 entries one leaf at a time so deletion-induced merges cannot invalidate the
@@ -171,7 +149,7 @@ values from deleted entries.
 
 Keys use their natural order, with floating-point NaNs comparing equal to one
 another and sorting **after** all other keys in ordered tree traversal. Signed
-zeros compare equal. Dictionary traversal always follows insertion order.
+zeros compare equal.
 A stored nil value is distinguished from an absent key by `Get2`'s `found`
 result. A half-open range ending at NaN excludes NaN; `IterFrom(NaN)` and
 `Scan(NaN, ...)` start at the NaN entry.
@@ -213,10 +191,7 @@ checks for mutation before reading another borrowed record.
 Point lookups descend through the internal separators, check the leaf's
 insertion log, and use its sorted header to select a block. Updates and deletion
 use the same BP-tree path. Deletion still locates the entry and resolves the
-leaf's occupancy for rebalancing. Dict also needs a membership lookup on Put
-to preserve insertion order. Queries allocate no memory.
-The insertion-order chain uses an end marker that becomes the next appended
-entry, preserving iterator progress even when its previous tail was deleted.
+leaf's occupancy for rebalancing. Queries allocate no memory.
 
 Internal nodes contain sorted separators. Leaf and internal splits propagate
 upward. Deletion redistributes or merges underfull siblings and collapses a
@@ -225,29 +200,28 @@ until redistribution; their values are cleared.
 
 ```go
 cfg := bufftree.Config{
-    Fanout:    64, // Maximum internal children.
+    Fanout:    256, // Maximum internal children.
     LogSize:   32,
     NumBlocks: 32,
-    BlockSize: 32,
+    BlockSize: 34,
 }
 tree := bufftree.NewBPTree[int, string](&cfg)
-dict := bufftree.NewDict[int, string](&cfg)
 ```
 
-`NewBPTree[K,V](nil)` and `NewDict[K,V](nil)` use the default configuration.
+`NewBPTree[K,V](nil)` uses the default configuration.
 Passing `&cfg` copies and stores the configuration before the constructor
-returns. Neither constructor modifies your config; changing it later does not
+returns. The constructor does not modify your config; changing it later does not
 affect the constructed container.
 
 Those are the defaults; zero numeric fields select defaults. Fanout must be at least 3;
 other fields must be at least 2. Invalid configurations panic. Sizes are measured
 in entries, so byte sizes depend on the generic types and Go struct padding.
-The default leaf allocates 1,088 record slots and holds up to 1,024 live keys,
+The default leaf allocates 1,152 record slots and holds up to 1,088 live keys,
 reserving one slot per block for its mirrored header and leaving at least one
 unused log slot after an operation.
 
 For uint64 keys and values, the default record array plus bitmap occupies
-17,416 bytes, versus 26,112 bytes for the previous record array alone; these
+18,440 bytes, versus 26,112 bytes for the original 32-slot-block record array alone; these
 figures exclude leaf metadata and shared tree buffers.
 
 Adaptations to the paper include an exact (lazily reconciled) `Len` and a
@@ -290,7 +264,6 @@ go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 
 | Container         | Heap bytes | MiB  | B/key |
 | ----------------- | ---------: | ---: | ----: |
-| bufftree.Dict     |    7278376 | 6.94 | 72.78 |
 | glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
 | tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
 | bufftree.BPTree   |    2474184 | 2.36 | 24.74 |
@@ -298,7 +271,7 @@ go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 
 ```
 
-It reports retained heap bytes, MiB, and bytes per key for Dict, BPTree,
+It reports retained heap bytes, MiB, and bytes per key for BPTree,
 the built-in Go map, tidwall's generic Map, and rbtree. It shares the timing
 benchmarks' constructors, uint64 key/value data, and insertion order; the Go map uses the same capacity hint. Each container is
 measured in a fresh test process with `GOMAXPROCS=1`, with forced GC before and
@@ -319,9 +292,8 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkLeafCopies` | Section 4: 128 leaf copies, sizes 4–4,096; half-to-full insertions, full-leaf misses, and scans |
 | `BenchmarkTree` | Section 6.1: node-size sweeps; random/sequential insertions, updates, hits/misses, scans/maps up to 100,000 entries |
 | `BenchmarkYCSB` | Section 6.2: uniform and Zipfian A/B/C/E/X/Y workloads |
-| `BenchmarkDict` | Dictionary reads, updates, insertion-order traversal, and deleting current during traversal |
-| `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree, Dict, and Go map |
-| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Dict, Go map, tidwall/btree, and rbtree |
+| `BenchmarkReferencePoints` | Identical 16-byte string keys for Tree and Go map |
+| `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Go map, tidwall/btree, and rbtree |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 | `BenchmarkFreshPut` (in `bench/`) | The same fresh-insert workload, with CPU-profile labels separating insertion from untimed fixture loading |
 | `BenchmarkFreshPutConfig` (in `bench/`) | Fresh-insert sweeps over internal fanout, log size, header size, and block size |
@@ -365,14 +337,13 @@ make bench BENCH_TIME=250ms BENCH_COUNT=5
 go test -v -run '^$' -bench '^BenchmarkYCSB/BP/h32-b32/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkTree/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkLeafCopies/' -benchmem
-go test -v -run '^$' -bench '^BenchmarkDict/' -benchmem
 go test -v -run '^$' -bench '^BenchmarkReferencePoints/' -benchmem
 go -C bench test -v -run '^$' -bench '^BenchmarkCompare(Points|Iteration)$' -benchmem -benchtime=250ms -count=5
 BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem -count=5
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 29
+benchmark by default and reporting their median. It measures only the 22
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
@@ -383,7 +354,7 @@ into the README; the test does not overwrite documentation.
 Profile fresh insertion independently with:
 
 ```sh
-go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(Tree|Dict)$' \
+go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^Tree$' \
     -benchmem -benchtime=3s -cpuprofile=/tmp/bufftree-fresh.cpu \
     -memprofile=/tmp/bufftree-fresh.mem -o=/tmp/bufftree-fresh.test
 go tool pprof -top -relative_percentages '-tagfocus=container=^Tree$' \
@@ -393,8 +364,8 @@ go tool pprof -top -alloc_space -ignore=loadComparisonPoints \
 ```
 
 CPU profiles include fixture loading even though the benchmark timer excludes
-it. The container label selects the insertion phase; use `container=^Dict$`
-for Dict. Heap profiles use stack filtering to exclude fixture loading.
+it. The container label selects the insertion phase. Heap profiles use stack
+filtering to exclude fixture loading.
 
 [`bench/go.mod`](bench/go.mod) pins the published competitor versions and
 replaces only `github.com/glycerine/bufftree` with `..`, so comparisons measure
@@ -438,11 +409,9 @@ custom logs spanning multiple bitmap words.
 The hot log scan has no per-element bounds checks, tombstone-free sorting checks
 bitmap words instead of individual flags, and internal-node fields used during
 descent are grouped together. No unsafe code, assembly, or architecture-specific
-instructions are needed. The default configuration is unchanged.
-
-A new 35-configuration sweep measured the default at 122.1 ns/Put and the
-best median at 120.4 ns/Put (fanout 128). That small difference does not justify
-changing the general-purpose defaults; large-block trials were also variable.
+instructions are needed. The measurements in this diagnosis section used the
+then-default configuration (fanout 64, log/header/block sizes 32). The subsequent
+scan optimization and fresh-parameter sweep described below change those defaults.
 
 Five fixed-size samples of the fresh-key trace, each timing 1,048,576 inserts
 in complete 65,536-key batches, gave these medians (ns/Put). Both binaries were
@@ -484,8 +453,7 @@ insertion-only counters or proof that all gains come from L1 behavior.
 
 Pinned regression measurements also improved Tree hit/miss/update time from
 100.7/98.15/105.9 to 93.26/91.26/91.72 ns, and ordered scans from 4.597 to
-4.139 ns/key. Dict reads and updates improved; its traversal remained variable
-with essentially unchanged medians (2.600 versus 2.606 ns/key).
+4.139 ns/key.
 
 The paper's performance claims also need their original context:
 
@@ -508,7 +476,7 @@ Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.
 65,536 uint64 keys/values and the default leaf layout. These are medians of
 five 250ms runs using identical data and uniform point-operation traces.
 The `bufftree` column uses the current implementation with its default
-configuration; Tree and Dict both use BP-tree point lookups. Baselines are
+configuration. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
 neither competitor has a local module replacement. Reads, existing-key updates,
 and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
@@ -520,12 +488,8 @@ and growth costs.
 | Tree `Get`, miss              |     98.5 |           15.8 |         118.8 |          217.6 |
 | Tree `Put`, existing key      |    100.4 |           27.1 |         123.8 |          206.3 |
 | Tree `Put`, fresh key         |    229.6 |          169.3 |         309.9 |          575.1 |
-| Dict `Get`, hit               |    102.2 |           16.6 |         118.6 |          204.7 |
-| Dict `Put`, existing key      |    101.8 |           27.1 |         123.8 |          206.3 |
-| Dict `Put`, fresh key         |    556.0 |          169.3 |         309.9 |          575.1 |
 | Ordered scan, maximum 10,000  |     4.68 |  not supported |          4.10 |          15.90 |
 | Ordered scan, maximum 100,000 |     4.55 |  not supported |          4.11 |          15.75 |
-| Dict traversal                |     2.79 |          10.05 |          2.58 |          15.47 |
 
 Go map updates are plain assignments, matching the new void `Put` contract.
 Point benchmarks use the same interface dispatch
@@ -545,12 +509,10 @@ Fresh-Put profiling identified repeated searches, sorting/merge overhead, and
 temporary allocations. Leaves now reuse one buffer owned by their tree for
 redistribution and splits, reducing temporary allocation bytes.
 The buffer adds one leaf's capacity per tree
-(16 KiB with the default uint64 layout), and its entries are cleared after use
+(17 KiB with the default uint64 layout), and its entries are cleared after use
 so it does not retain old keys or values.
 
-The final row measures visiting all 65,536 values and summing them. Dict visits
-in insertion order, Go map in unspecified order, and tidwall/btree and rbtree
-in key order. Native Go maps do not provide ordered scans. Traversal figures
+Native Go maps do not provide ordered scans. Traversal figures
 report `iter_ns/key` using actual visited keys; scan lengths vary up to the
 named maximum and stop at the tree's end.
 
@@ -587,7 +549,7 @@ Thus it is out of scope for now.
 
 In the paper, traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4). [jea note: I'm not convinced this would not stall or confuse the first writer badly... what if there is rebalancing and the node is no longer even the right node...!]
 
-Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock. Dict’s insertion-ordered traversal follows its linked sequence and does not sort BPA blocks.
+Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock.
 
 ------------------
 Copyright (C) 2026, Jason E. Aten, Ph.D.

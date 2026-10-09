@@ -162,12 +162,12 @@ func refresh[K cmp.Ordered, V any](n *node[K, V]) {
 	}
 	n.min = n.children[0].min
 	count := len(n.children) - 1
-	if cap(n.keys) < count {
-		n.keys = make([]K, count)
+	if count < len(n.keys) {
+		clear(n.keys[count:])
 	} else {
-		clear(n.keys)
-		n.keys = n.keys[:count]
+		n.keys = slices.Grow(n.keys, count-len(n.keys))
 	}
+	n.keys = n.keys[:count]
 	for i := 1; i < len(n.children); i++ {
 		n.keys[i-1] = n.children[i].min
 	}

@@ -10,6 +10,31 @@ import (
 
 var tinyConfig = Config{Fanout: 3, LogSize: 3, NumBlocks: 3, BlockSize: 3}
 
+func TestSeparatorRefreshClearsRemovedKeys(t *testing.T) {
+	n := &node[string, int]{children: []*node[string, int]{{min: "a"}, {min: "b"}, {min: "c"}, {min: "d"}}}
+	refresh(n)
+	if n.min != "a" || !slices.Equal(n.keys, []string{"b", "c", "d"}) {
+		t.Fatal("incorrect initial separators")
+	}
+	storage := n.keys[:cap(n.keys)]
+	n.children = n.children[:2]
+	n.children[1].min = "updated"
+	refresh(n)
+	if !slices.Equal(n.keys, []string{"updated"}) {
+		t.Fatal("incorrect refreshed separator")
+	}
+	for _, key := range storage[1:] {
+		if key != "" {
+			t.Fatal("removed separator retains string storage")
+		}
+	}
+	n.children = append(n.children, &node[string, int]{min: "z"})
+	refresh(n)
+	if !slices.Equal(n.keys, []string{"updated", "z"}) {
+		t.Fatal("incorrect separators after regrowth")
+	}
+}
+
 func TestNewBPTreeNilConfig(t *testing.T) {
 	tr := NewBPTree[int, int](nil)
 	model := map[int]int{3: 30, 1: 10, 2: 20}
