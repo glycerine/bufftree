@@ -82,25 +82,31 @@ func BenchmarkScanFirst(b *testing.B) {
 	for _, layout := range scanComparisonLayouts(n) {
 		for _, length := range []int{100, 10000, n} {
 			b.Run(fmt.Sprintf("%s/Scan%d", layout.name, length), func(b *testing.B) {
-				var sum, visited uint64
-				visit := func(k, v uint64) bool { sum += v; visited++; return true }
-				b.ReportAllocs()
-				b.ResetTimer()
-				b.StopTimer()
-				for i := 0; i < b.N; i++ {
-					tr := layout.make()
-					for j := 0; j < n; j++ {
-						tr.Put(benchKey(j), uint64(j))
-					}
-					b.StartTimer()
-					tr.Scan(0, length, visit)
-					b.StopTimer()
-				}
-				benchSink = sum
-				reportIteration(b, visited)
+				benchmarkFirstScan(b, layout, n, length)
 			})
 		}
 	}
+}
+
+// Rebuild outside the timer for every iteration so each timed scan includes
+// all lazy index allocation and sorting, followed by traversal.
+func benchmarkFirstScan(b *testing.B, layout benchScanLayout, n, length int) {
+	var sum, visited uint64
+	visit := func(k, v uint64) bool { sum += v; visited++; return true }
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.StopTimer()
+	for i := 0; i < b.N; i++ {
+		tr := layout.make()
+		for j := 0; j < n; j++ {
+			tr.Put(benchKey(j), uint64(j))
+		}
+		b.StartTimer()
+		tr.Scan(0, length, visit)
+		b.StopTimer()
+	}
+	benchSink = sum
+	reportIteration(b, visited)
 }
 
 // Time both writes and scans, so settling the log cannot hide costs in setup.

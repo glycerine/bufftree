@@ -24,7 +24,10 @@ From their abstract:
 
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
-The Put row measures insertion of a fresh key.
+The Put row measures insertion of a fresh key. Ordered scan reuses
+scan preparation; First ordered scan visits the entire freshly loaded table,
+including index allocation and sorting on every measured scan. All timings are
+ns/key; multiply the first-scan value by 65,536 for total nanoseconds per scan.
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
 | -------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
@@ -393,7 +396,7 @@ BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 28
+benchmark by default and reporting their median. It measures only the 32
 distinct cases needed for the two README tables and reuses shared results.
 The longer Make command above uses the five 250ms samples used in the saved
 measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
@@ -567,8 +570,12 @@ The `bufftree` column uses the current implementation with its default
 configuration. Baselines are
 published `github.com/tidwall/btree v1.8.1`, `github.com/glycerine/rbtree v0.2.2`,
 and `github.com/glycerine/insdict v0.14.1`; none has a local module replacement.
-Fresh puts include allocation and growth costs; scans include lazy preparation
-on the first call, amortized across repeated scans.
+Fresh puts include allocation and growth costs. The length-limited scan rows
+amortize lazy preparation across repeated scans. The First ordered scan row
+loads a fresh container outside the timer for every iteration, then times one
+full scan of all 65,536 entries, including lazy index allocation and sorting.
+This row reports total scan time divided by the number of entries; preparation
+is paid in full for every scan and never reused between iterations.
 
 | Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
 | ----------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
@@ -624,7 +631,7 @@ shared redistribution buffer.
 Current comparison runs and validation logs are saved in
 [benchmark-results/2026-10-09-insdict](benchmark-results/2026-10-09-insdict).
 The tables use measured values from
-[readme.txt](benchmark-results/2026-10-09-insdict/readme.txt).
+[readme-first-scan.txt](benchmark-results/2026-10-09-insdict/readme-first-scan.txt).
 The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency

@@ -215,6 +215,9 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 		{"Insdict", func() benchOrderedScan { return newBenchInsdict(n) }},
 	}
 	for _, layout := range layouts {
+		cases = append(cases, comparisonBenchmark{layout.name + "/FirstScanFull", func(b *testing.B) {
+			benchmarkFirstScan(b, layout, n, n)
+		}})
 		for _, maximum := range []int{10000, 100000} {
 			cases = append(cases, comparisonBenchmark{fmt.Sprintf("%s/Scan%d", layout.name, maximum), func(b *testing.B) {
 				tr := layout.make()

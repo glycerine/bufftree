@@ -18,11 +18,12 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	values["Points/Tidwall/FreshPut"] = 201.2
 	values["Points/RBTree/FreshPut"] = 300.3
 	values["Iteration/Tree/Scan100000"] = 4.713
+	values["Iteration/Insdict/FirstScanFull"] = 303.126
 	simple, detailed, err := formatReadmeBenchmarkTables(values)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 28 {
+	if len(readmeBenchmarkNames()) != 32 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -46,7 +47,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	short := strings.Split(strings.TrimSpace(simple), "\n")
 	full := strings.Split(strings.TrimSpace(detailed), "\n")
-	for i, selected := range []int{0, 3, 5} {
+	for i, selected := range []int{0, 3, 5, 6} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 6; col++ {
@@ -80,6 +81,18 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 			}
 		}
 	}
+	for _, row := range []string{short[5], full[8]} {
+		cells := strings.Split(row, "|")
+		if !strings.Contains(cells[1], "First ordered scan") || strings.TrimSpace(cells[6]) != "303.13" {
+			t.Fatal("both tables must show the unamortized first full scan", row)
+		}
+	}
+	delete(values, "Iteration/Insdict/FirstScanFull")
+	if _, _, err := formatReadmeBenchmarkTables(values); err == nil {
+		t.Fatal("first full scan must have its own measurement")
+	}
+	values["Iteration/Insdict/FirstScanFull"] = 303.126
+
 	delete(values, "Points/Tree/GetHit")
 	if _, _, err := formatReadmeBenchmarkTables(values); err == nil {
 		t.Fatal("missing timing must not silently become zero")

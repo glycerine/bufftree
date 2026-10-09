@@ -25,6 +25,7 @@ var readmeBenchmarkRows = []readmeBenchmarkRow{
 	{"Tree `Put`, fresh key", [5]string{"Points/Tree/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut", "Points/Insdict/FreshPut"}},
 	{"Ordered scan, maximum 10,000", [5]string{"Iteration/Tree/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000", "Iteration/Insdict/Scan10000"}},
 	{"Ordered scan, maximum 100,000", [5]string{"Iteration/Tree/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000", "Iteration/Insdict/Scan100000"}},
+	{"First ordered scan, full table", [5]string{"Iteration/Tree/FirstScanFull", "", "Iteration/Tidwall/FirstScanFull", "Iteration/RBTree/FirstScanFull", "Iteration/Insdict/FirstScanFull"}},
 }
 
 func readmeBenchmarkNames() []string {
@@ -140,9 +141,9 @@ func formatReadmeBenchmarkTables(results map[string]float64) (simple, detailed s
 	}
 	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree", "insdict.Dict"}, rows)
 	var shortRows [][]string
-	for i, selected := range []int{0, 3, 5} {
+	for i, selected := range []int{0, 3, 5, 6} {
 		row := rows[selected]
-		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan"}[i], row[1], row[2], row[3], row[4], row[5]})
+		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan", "First ordered scan"}[i], row[1], row[2], row[3], row[4], row[5]})
 	}
 	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree", "insdict.Dict"}, shortRows)
 	return simple, detailed, nil
