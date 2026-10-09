@@ -42,7 +42,7 @@ func BenchmarkReferencePoints(b *testing.B) {
 		name string
 		make func() stringBenchIndex
 	}{
-		{"Tree", func() stringBenchIndex { return NewBPTree[string, uint64](nil) }},
+		{"Tree", func() stringBenchIndex { return newTransactionBench[string, uint64](nil) }},
 		{"GoMap", func() stringBenchIndex { return make(benchStringMap, n) }},
 	} {
 		for _, op := range []string{"Get", "Get2", "GetMiss", "Update", "Insert"} {
@@ -85,7 +85,7 @@ func BenchmarkReferencePoints(b *testing.B) {
 
 func TestReferenceStringPointQueries(t *testing.T) {
 	type namedString string
-	tr := NewBPTree[namedString, []byte](nil)
+	tr := newTreeCore[namedString, []byte](nil)
 	keys := referenceStringKeys(1000)
 	value := []byte("value")
 	for _, key := range keys {

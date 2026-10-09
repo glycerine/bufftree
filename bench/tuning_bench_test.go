@@ -135,18 +135,18 @@ func benchmarkConfigurations(b *testing.B, configs []bufftree.Config) {
 		b.Run(name, func(b *testing.B) {
 			b.Run("FreshPut", func(b *testing.B) {
 				layout := benchPointLayout{name, func() benchUint64Points {
-					return bufftree.NewBPTree[uint64, uint64](&cfg)
+					return newBenchTree(&cfg)
 				}}
 				benchmarkFreshPut(b, layout, n, keys, true)
 			})
 			b.Run("FreshIndependent", func(b *testing.B) {
 				layout := benchPointLayout{name, func() benchUint64Points {
-					return bufftree.NewBPTree[uint64, uint64](&cfg)
+					return newBenchTree(&cfg)
 				}}
 				benchmarkFreshPut(b, layout, n, independent, true)
 			})
 			b.Run("Scan100000", func(b *testing.B) {
-				tr := bufftree.NewBPTree[uint64, uint64](&cfg)
+				tr := newBenchTree(&cfg)
 				for i := 0; i < n; i++ {
 					tr.Put(benchKey(i), uint64(i))
 				}

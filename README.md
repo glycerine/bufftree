@@ -24,13 +24,18 @@ From their abstract:
 
 Benchmarks comparing our implementation (bufftree) against common alternatives:
 
-The Put row measures insertion of a fresh key.
+The Put row measures one fresh key in a complete write transaction.
+**Put batch (amortized)** measures 1,024 fresh keys per write transaction,
+including undo journaling and commit preparation, divided by actual keys.
+Other containers insert the same keys but do not provide the BP-tree transaction
+or rollback guarantee. Scans use one read-only transaction per scan.
 
-| Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
-| -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |    101.4 |           16.5 |         116.7 |          199.7 |
-| Put                        |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan               |     3.13 |  not supported |          4.17 |          16.11 |
+| Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
+| -------------------------- | -----: | -------------: | ------------: | -------------: |
+| Get                        |  321.2 |           19.8 |         133.8 |          226.5 |
+| Put                        | 1105.4 |          167.0 |         321.4 |          648.2 |
+| Put batch (amortized)      |  711.4 |          166.4 |         312.3 |          640.7 |
+| Ordered scan               |   5.74 |  not supported |          4.75 |          17.74 |
 
 ~~~
 This compares:
@@ -41,11 +46,10 @@ d) https://github.com/glycerine/rbtree
 ~~~
 Use `make bench` to re-run on your machine.
 
-Compact records, log-only buffering, and run-based scans now beat tidwall on
-the random fresh-Put and repeated length-limited scan workloads measured here. See the
-[diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below,
-including the costs of frequent exact counting and sequential insertion.
-
+The transaction API adds synchronization, rollback journaling, and preparation
+before publication. Use the single-key and batch rows to choose a transaction
+size for your workload. Earlier unlocked measurements below are historical
+baselines, not measurements of the current API.
 
 ----------------------------
 This package provides a BP-tree with sorted key-order iteration.
@@ -61,15 +65,10 @@ b) a sorted header of boundary keys; and c) contiguous data blocks.
 New entries accumulate in the insert buffer and move into blocks in batches.
 This avoids the cost of keeping the entire leaf sorted after every insertion. 
 Point lookups check the buffer and use the header to select a block.
-Ordered scans sort blocks as needed and merge in buffered entries. 
-Later long scans can flush the buffer to avoid repeating that merge work.
-When blocks fill unevenly, the BPA redistributes entries across them,
-combining inexpensive writes with efficient sequential scans.
-This does mean that a full table scan will re-write your data, which
-has locking and concurrency implications. See the 
-[notes on concurrency section](#notes-on-concurrency) at the
-end of this README.
-
+Write transactions may sort blocks as needed for their own scans. Commit and
+rollback prepare modified leaves before releasing the exclusive lock. Shared
+read transactions merge the already sorted streams without modifying storage.
+When blocks fill unevenly, the BPA redistributes entries across them.
 `Tree[K,V]` iterates in key order and supports range queries, point lookups,
 updates, and deletion. Keys may be any
 `cmp.Ordered` type, including named types; values may be any type. The zero
@@ -77,84 +76,106 @@ value is usable. Do not copy a tree after its first use.
 The Config struct can be used to tune memory use.
 
 ```go
-tree := bufftree.NewBPTree[int, string](nil)
-tree.Put(30, "thirty")
-tree.Put(10, "ten")
-tree.Put(20, "twenty")
-
-for key, value := range tree.All() {
-    fmt.Println(key, value) // 10 ten, 20 twenty, 30 thirty
-    tree.Del(key)           // Safe: iteration continues past the deleted key.
-}
-
+db := bufftree.NewBPTree[int, string](nil)
+err := db.Update(func(tx *bufftree.WriteTx[int, string]) error {
+    for k, v := range map[int]string{30: "thirty", 10: "ten", 20: "twenty"} {
+        if err := tx.Put(k, v); err != nil { return err }
+    }
+    for key, value := range tx.All() {
+        fmt.Println(key, value) // 10 ten, 20 twenty, 30 thirty
+        if err := tx.Delete(key); err != nil { return err }
+    }
+    return nil // Commit. Returning an error rolls back every write above.
+})
+if err != nil { panic(err) }
 ```
 
-## API and iteration
+## Transactions and iteration
 
-The tree provides these methods:
+Every data operation requires a transaction. A `ReadOnlyTx` holds shared access
+for its entire lifetime, so overlapping readers see stable committed contents.
+A `WriteTx` excludes all other transactions and sees its own writes. There are
+no direct `Tree.Put`, `Get`, `Len`, or scan methods.
 
-| Method | Result |
+| Database method | Lifetime |
 | --- | --- |
-| `Get(key)` | Value, or the zero value if absent |
-| `Get2(key)` | `(value, found)` |
-| `Put(key, value)` | No return value; insert or replace |
-| `Del(key)` | No return value; absent keys are unchanged |
-| `Len()` | Exact number of live entries |
-| `Clear()` | Remove all entries |
-| `All()` | `iter.Seq2[K,V]` for Go range loops |
-| `Iter()` | Explicit iterator; call `Next()` before `Key()`/`Value()` |
+| `View(func(*ReadOnlyTx) error)` | Shared lock through callback return or panic |
+| `Update(func(*WriteTx) error)` | Exclusive lock; commit on nil, rollback on error/panic/Goexit |
+| `BeginView()` | Caller must `Close()` |
+| `BeginUpdate()` | Returns `(tx, error)`; immediately defer `tx.Rollback()` |
 
-`Len()` remains exact. Its first call after writes reconciles buffered
-membership in changed leaves; subsequent calls without intervening writes are
-constant-time. Reconciliation allocates no memory and does not move records or
-disturb live iterator positions. It does update metadata, so it requires the
-same external synchronization as writes. Counting after every insertion loses
-the benefit of deferring membership checks; batch your counts when possible.
+Manual write transactions end with `Commit` or `Rollback`. First terminal action
+wins; cleanup is idempotent. Explicit commit/rollback inside `Update` ends the
+handle, but the wrapper keeps the lock until the callback exits. An error after
+explicit commit cannot undo that commit. Explicit `Close` inside `View` similarly
+leaves lock release to the wrapper.
 
-`Tree` also provides:
+Use each transaction sequentially in one goroutine. **Never begin a nested
+transaction on the same database**, including read-within-read. Pass the existing
+transaction to helpers. Callbacks may use that transaction again, including to
+mutate during a write scan. They must not wait on work that needs the same lock.
 
-| Method | Behavior |
+| Transaction method | Behavior |
 | --- | --- |
-| `IterFrom(start)` | Iterate beginning at the first key `>= start` |
-| `iterator.Seek(start)` | Position at the first key `>= start`; read it immediately |
-| `Range(start, end, visit)` | Visit keys in `[start,end)` in key order |
-| `Scan(start, length, visit)` | Visit at most `length` keys `>= start` in key order |
-| `MapRange(start, end, visit)` | Visit `[start,end)` in unspecified order without sorting blocks |
+| `Get(key)` | `(value, found, error)`; nil/zero values can be present |
+| `Len()` | Exact `int64`; read-only transactions do no reconciliation |
+| `NewIter()` | Unpositioned bidirectional iterator |
+| `GetKV`, `Find`, `FindIt` | Owned result holders; `Exact`, `GTE`, `LTE`, `GT`, `LT` |
+| `All()` | Streaming `iter.Seq2[K,V]` |
+| `Scan(start, length, visit)` | At most length keys at or above start |
+| `Ascend`, `Descend` | Inclusive pivot, ascending/descending |
+| `Range` / `AscendRange(lo, hi, visit)` | `[lo, hi)` |
+| `DescendRange(hi, lo, visit)` | `(lo, hi]`, descending |
+| `MapRange(lo, hi, visit)` | Same streaming traversal as `Range` |
+| Write-only `Put`, `Delete` / `Del` | Return error; journal before mutation |
+| Write-only `DeleteRange(lo, hi, loInclusive, hiInclusive)` | `(count, allGone, error)` |
+| Write-only `Clear()` | `(allGone, error)`; fully rollbackable |
+| Write-only `Merge(key, fn)` | Callback returns `(value, write, delete)`; both flags true is an error |
 
-Visitors have signature `func(K,V) bool`; returning false stops traversal.
-Empty or reversed ranges and nonpositive scan lengths visit no entries.
-`Valid()` reports whether an explicit iterator has a current entry.
-`iterator.Del()` removes its current key; the following `Next()` advances.
-Deleting through the container works as well.
+`FindIt` returns `(kv, exact, err, it)`. A miss returns an invalid iterator;
+invalid modifiers or a closed transaction return an error without registering
+resources. `KVcloser.Close()` is nil-safe and never unlocks the database.
+Closing a holder removes it from the active resource registry. The transaction
+automatically closes all outstanding iterators and result holders.
 
-Tree iteration is live. After a mutation, an iterator seeks strictly beyond its
-last returned key, preserving progress across flushes, splits, merges, and root
-collapse. New keys ahead of that position may be visited; keys at or behind it
-are not revisited. Exhausted iterators stay exhausted until `Seek` resets them.
-`Clear` ends traversal on the next advance unless new keys ahead of the current
-position have since been inserted.
+```go
+err = db.View(func(tx *bufftree.ReadOnlyTx[int, string]) error {
+    it := tx.NewIter()
+    defer it.Close()
+    for it.Seek(10); it.Valid(); it.Next() {
+        fmt.Println(it.Key(), it.Value())
+    }
+    return nil
+})
+```
 
-`MapRange` permits deleting the current key. Its visitors must otherwise leave
-the tree unchanged; use `Range` for general live traversal. It copies matching
-entries one leaf at a time so deletion-induced merges cannot invalidate the
-visitor's progress. A leaf-sized buffer is prepared during the first insertion
-and reused, so ordinary range queries allocate no heap memory. Recursive
-`MapRange` calls borrow separate buffers; deeper nesting can allocate another
-buffer on its first use. Buffers are cleared when returned so they do not retain
-values from deleted entries.
+`Seek`, `SeekFirst`, and `SeekLast` position immediately. `Next` and `Prev` return
+nothing; test `Valid`. Moving an invalid iterator does nothing until another
+seek. `KV()` returns an iterator-owned pair, valid until movement or cleanup.
+`Key` and `Value` return zero values on an invalid iterator. A closed iterator
+cannot access tree storage. Closed transaction methods return `ErrTxClosed`;
+helpers without an error result panic with it.
 
-Keys use their natural order, with floating-point NaNs comparing equal to one
-another and sorting **after** all other keys in ordered tree traversal. Signed
-zeros compare equal.
-A stored nil value is distinguished from an absent key by `Get2`'s `found`
-result. A half-open range ending at NaN excludes NaN; `IterFrom(NaN)` and
-`Scan(NaN, ...)` start at the NaN entry.
+Read-only scans see one stable state across their whole span. Write scans are
+live: deletion of the current entry, splits, merges, nested preparation, and
+`Clear` invalidate cursors; the next step seeks strictly beyond the saved key
+(or before it in reverse). A newly inserted key ahead may be visited; one behind
+is not revisited. Self-extending callbacks may therefore fail to terminate.
+There is no range copy before invoking a visitor, and returning false stops
+immediately.
 
-Containers and iterators require external synchronization across goroutines.
-Ordered traversal can write to leaves by sorting their log and blocks or
-flushing buffered entries, so it
-also needs exclusive synchronization against other operations. The paper's
-per-node concurrent locking scheme is not implemented here.
+Keys use their natural order, with NaNs equivalent and sorted **after** all
+other keys. Signed zeros compare equal; zero and empty strings are real keys,
+not unbounded endpoint markers. Use `SeekFirst`/`SeekLast` for unbounded scans.
+
+**Values containing references must be immutable.** `Get` and iterators copy Go
+values shallowly. Replace a slice, map, or object binding with `Put`; mutating it
+in place bypasses synchronization and rollback. Undo memory grows with write
+history. `Clear` records the removed contents, and deleting an entire table uses
+O(deleted entries) journal space even though its scan streams. Commit provides
+atomic in-memory publication, not disk durability.
+
+See [txn_design.md](txn_design.md) for the lifecycle and proof obligations.
 
 ## Layout and configuration
 
@@ -170,24 +191,23 @@ the header and block form one contiguous scan run; this uses existing storage,
 not a second scan array. Header overwrites and deletion synchronize the mirror,
 including clearing deleted pointer values.
 
-`Put` searches only the log before buffering, whether the key is new or already
-in a block. Log entries shadow older records. A full log flushes records into the corresponding
-blocks. Inserts append within blocks, and overflowing blocks trigger a sorted
-merge and global redistribution. Ordered scans merge the log with the header
-and block stream, sorting only encountered blocks and caching their sortedness.
-Unordered maps filter the block stream against the log without sorting blocks.
-Ordered scans process contiguous runs directly when no log entry can shadow
-them, with a separate fast path for an empty log. `Scan`, `Range`, and `All`
-share this traversal; explicit iterators keep their own cursors. After a leaf
-has been visited, a later sufficiently long scan may flush its log. Narrow
-ranges and first visits retain the merge path. Scan-driven rearrangement advances
-the tree version, so existing live cursors reseek safely. Every callback still
-checks for mutation before reading another borrowed record.
+`WriteTx.Put` first records the previous binding for rollback. The core write
+then buffers the new value in the log. Log entries shadow older records. A full
+log flushes into the corresponding blocks; inserts append within blocks, and
+block overflow triggers a sorted merge and redistribution.
 
-Point lookups descend through the internal separators, check the leaf's
-insertion log, and use its sorted header to select a block. Updates and deletion
-use the same BP-tree path. Deletion still locates the entry and resolves the
-leaf's occupancy for rebalancing. Queries allocate no memory.
+Publication sorts the remaining log and changed blocks without requiring a
+flush of every log. Pure forward and reverse cursors merge the log with the
+header/block stream, with buffered records and tombstones taking precedence.
+`Scan`, `Range`, `MapRange`, and `All` consume contiguous runs. Explicit iterators
+keep their own small cursors. Writer-side preparation and logical writes advance
+a transaction epoch, so stale writer cursors reseek before touching old storage.
+Every callback traversal checks lifetime and mutation before reusing a run.
+
+Point lookups descend through internal separators, check the insertion log,
+and use the sorted header to select a block. Deletion also resolves occupancy
+for rebalancing. Lookups within an existing transaction allocate no memory;
+transaction entry and explicit resource handles have their own allocation costs.
 
 Internal nodes contain sorted separators. Leaf and internal splits propagate
 upward. Deletion redistributes or merges underfull siblings and collapses a
@@ -238,8 +258,10 @@ go test -v
 Tests cover BPA invariants, randomized operations against map/order models,
 balanced tree structure, 65,536-entry bulk splitting and deletion, iterator
 mutation and later appends, NaNs sorting last, zero values, and public API
-examples. Allocation tests cover reads, ordered and unordered
-queries, iteration, and named string/float keys. Benchmark operation traces
+examples. Transaction tests cover whole-span isolation, physically pure concurrent
+readers, writer admission, real rollback, managed/manual lifetime, resource cleanup,
+panics, and Goexit. Core-level allocation tests cover the underlying algorithms;
+transaction allocation costs are measured separately. Benchmark operation traces
 are also checked against an independent sorted-leaf B+ tree. The `reference/`
 material is not part of the top-level package.
 
@@ -259,6 +281,9 @@ make memory
 go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 ```
 
+The following table is the historical pre-transaction measurement. Run
+`make memory` to measure the current transaction implementation.
+
 | Container         | Heap bytes | MiB  | B/key |
 | ----------------- | ---------: | ---: | ----: |
 | glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
@@ -275,11 +300,10 @@ the initial `runtime.MemStats.HeapAlloc` baseline and exclude discarded
 temporary allocations; they measure live Go heap, rather than process RSS or
 heap reserved by the runtime. `make memory` and `make bench` run separately,
 and the memory test never invokes `testing.Benchmark`.
-An example report is saved in
-[memory-tuned.txt](benchmark-results/2026-10-09-scan/memory-tuned.txt).
+The historical table records the earlier default geometry.
 The compact layout reduced BPTree retained memory from 36.10 to 24.74 B/key
 before retuning. The fresh-put-focused defaults use 25.60 B/key on this workload,
-including metadata and tree buffers: 3.5% above the previous geometry, but 29%
+including the then-current metadata and tree buffers: 3.5% above the previous geometry, but 29%
 below the original layout. The longer log crosses a Go allocation-size boundary;
 record width is still 16 bytes.
 
@@ -298,7 +322,7 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkTuneGeometry`, `BenchmarkTuneRefine`, `BenchmarkTuneNeighborhood`, `BenchmarkTuneFinalists`, `BenchmarkTuneSecondLeg`, `BenchmarkTuneConfirm` (in `bench/`) | Successive configuration sweeps, with fresh adjacent/independent keys and ordered scans measured separately |
 | `BenchmarkFreshPutDistribution` (in `bench/`) | Independent random fresh keys, and ascending/descending growth from empty |
 | `BenchmarkFreshPutWithLen` (in `bench/`) | Fresh inserts including exact Len after every write, every 32 writes, or a complete batch |
-| `BenchmarkScanFirst` (in `bench/`) | First scan after loading, including lazy sorting and scan preparation |
+| `BenchmarkScanFirst` (in `bench/`) | First scan after loading, publication preparation is paid by preceding writes |
 | `BenchmarkScanMixed` (in `bench/`) | 32 existing-key writes followed by a random scan; both phases timed |
 | `BenchmarkOrderedAll` (in `bench/`) | Native full ordered traversal, without a length-limit adapter for tidwall |
 
@@ -342,10 +366,10 @@ BUFFTREE_BENCH_N=1000000 go test -v -run '^$' -bench '^BenchmarkYCSB/' -benchmem
 ```
 
 `make bench` runs `bench/TestReadmeBenchmarkTable`, using three 100ms samples per
-benchmark by default and reporting their median. It measures only the 22
+benchmark by default and reporting their median. It measures only the 26
 distinct cases needed for the two README tables and reuses shared results.
-The longer Make command above uses the five 250ms samples used in the saved
-measurements below. `BUFFTREE_BENCH_N` also controls the Make target's load size.
+The longer Make command above increases sampling to five 250ms runs. The
+current tables below use the default three 100ms runs. `BUFFTREE_BENCH_N` also controls the Make target's load size.
 Normal `go -C bench test -v` skips the measurement test; its formatting and
 timing regression tests still run. The generated tables are printed for copying
 into the README; the test does not overwrite documentation.
@@ -374,6 +398,12 @@ These are single-goroutine experiments, including the leaf copies. They do not
 reproduce the paper's 100M-entry, 48-hyperthread setup or compare against Masstree
 and OpenBw-tree. Comparisons use the same key/value data and workloads on this
 machine.
+
+## Historical unlocked measurements
+
+The following two sections describe the earlier, nontransactional implementation.
+Their timings and API tradeoffs are retained for comparison and do not describe
+the current transaction cost.
 
 ## Fresh-Put diagnosis (2026-10-09)
 
@@ -504,89 +534,80 @@ these tiny differences are not statistically established wins, but the best
 observed configuration is applied rather than discarded. Results are specific
 to this machine, key/value sizes, and these traces—not a universal optimum.
 
-See the [scan and tuning report](benchmark-results/2026-10-09-scan/summary.txt)
-for controlled comparisons, caveats, sweep results, and reproduction commands.
+These historical scan and tuning figures precede the transaction API.
 
 ## Measured performance
 
-Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
-65,536 uint64 keys/values and the default leaf layout. These are medians of
-five 250ms runs using identical data and uniform point-operation traces.
-The `bufftree` column uses the current implementation with its default
-configuration. Baselines are
-published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
-neither competitor has a local module replacement. Reads, existing-key updates,
-and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
-and growth costs.
+Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64,
+Go 1.26.4, with 65,536 uint64 keys/values and the default leaf layout. These
+are unpinned medians of three 100ms samples from `make bench`. The BP-tree
+uses the public transaction API. Each point operation and each scan includes
+transaction entry and exit. Batch Put uses up to 1,024 fresh keys in one
+`Update`; its ns/key includes the journal and Commit. Partial batches divide
+by their actual key count.
 
-| Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
-| ----------------------------- | -------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    101.4 |           16.5 |         116.7 |          199.7 |
-| Tree `Get`, miss              |     98.4 |           16.1 |         118.4 |          221.4 |
-| Tree `Put`, existing key      |     97.2 |           27.1 |         126.9 |          207.0 |
-| Tree `Put`, fresh key         |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan, maximum 10,000  |     3.11 |  not supported |          4.13 |          15.80 |
-| Ordered scan, maximum 100,000 |     3.13 |  not supported |          4.17 |          16.11 |
+Baselines are published `github.com/tidwall/btree v1.8.1` and
+`github.com/glycerine/rbtree v0.2.2`. The tidwall baseline is its generic `Map`
+with default degree 32 and no path hints or copies. Baselines perform the same
+operations without adding transaction isolation or rollback. These are API
+cost comparisons, not equivalent concurrency guarantees.
 
-Go map updates are plain assignments, matching the new void `Put` contract.
-Point benchmarks use the same interface dispatch
-for all containers. The tidwall baseline uses its generic
-[`Map`](https://github.com/tidwall/btree/blob/v1.8.1/map.go), default degree 32,
-with no path hints or copies. The rbtree adapter reuses a pointer-shaped query
-object to avoid boxing allocations; updates use `InsertGetIt` and change an
-existing item's value with one search. Competitor return values are discarded.
+| Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree |
+| ----------------------------- | -----: | -------------: | ------------: | -------------: |
+| Tree `Get`, hit               |  321.2 |           19.8 |         133.8 |          226.5 |
+| Tree `Get`, miss              |  323.2 |           18.8 |         140.4 |          240.2 |
+| Tree `Put`, existing key      |  969.2 |           31.8 |         150.8 |          228.5 |
+| Tree `Put`, fresh key         | 1105.4 |          167.0 |         321.4 |          648.2 |
+| Put batch (amortized)         |  711.4 |          166.4 |         312.3 |          640.7 |
+| Ordered scan, maximum 10,000  |   5.84 |  not supported |          4.82 |          17.22 |
+| Ordered scan, maximum 100,000 |   5.74 |  not supported |          4.75 |          17.74 |
 
-Fresh Put rows insert unique odd keys into the initial even-key dataset, using
-the same scrambled keys for every container. Each batch grows from 65,536 to
-131,072 entries; loading a new initial dataset between batches is outside the
-timer. This includes allocations, leaf splits, and BPA redistribution during
-insertion. The simplified table's Put row uses these fresh-insertion measurements.
+Fresh inserts use the same unique odd keys against an initially even-key
+65,536-entry fixture. Every container grows to 131,072 entries, then reloads
+outside the timer. Both single-key and batch rows include insertion, growth,
+and finalization costs inside the timer. The batch fixture and key order match
+the single-key workload. Go map uses assignments; competitor return values are
+discarded.
 
-Fresh-Put profiling identified repeated searches, sorting/merge overhead, and
-temporary allocations. Leaves now reuse one buffer owned by their tree for
-redistribution and splits, reducing temporary allocation bytes.
-The buffer adds one leaf's capacity per tree
-(17 KiB with the default uint64 layout), and its entries are cleared after use
-so it does not retain old keys or values.
+Scan figures divide by actual visited keys; lengths vary up to the named maximum
+and stop at the tree's end. No full result is copied before callbacks. Earlier
+unlocked README tables are preserved in
+[previous-readme-tables.md](benchmark-results/2026-10-09-txn/previous-readme-tables.md).
+The current tables come from
+[readme.txt](benchmark-results/2026-10-09-txn/readme.txt).
 
-Native Go maps do not provide ordered scans. Traversal figures
-report `iter_ns/key` using actual visited keys; scan lengths vary up to the
-named maximum and stop at the tree's end.
+Additional transaction benchmarks cover batched reads/writes, reverse traversal,
+concurrent read scans, deleting scans with rollback, and isolated commit
+preparation:
 
-Separate reference-style benchmarks cover 16-byte string keys and new
-insertions. Fresh insertions allocate storage and redistribute BPA records;
-reads and updates to existing keys have different costs. CPU profiling guided
-log-only buffering, bulk block traversal, cheaper log-shadow checks, and the
-shared redistribution buffer.
+```sh
+go test -run '^$' -bench '^BenchmarkTransaction' -benchmem
+```
 
-Current benchmark runs and validation logs are saved in
-[benchmark-results/2026-10-09-scan](benchmark-results/2026-10-09-scan).
-The tables use measured values from
-[readme-tuned.txt](benchmark-results/2026-10-09-scan/readme-tuned.txt).
-The 2026-10-01 reports describe earlier implementations.
+The isolated commit benchmark excludes preceding mutations; the end-to-end Put
+rows include them. `B/op` in a batch benchmark is per batch, while `put_ns/key`
+is per inserted key. These single-thread comparison workloads do not measure
+lock acquisition contention or promise bounded writer latency.
 
 ## notes on concurrency
 
-Be aware: we do no locking at present. The paper discusses approaches,
-but they have pretty severe sounding trade offs. This is because
-**an ordered scan can rearrange stored records in memory**, 
-while preserving their logical key/value contents. 
+The implementation uses one database-wide `sync.RWMutex`. Read-only transactions
+hold `RLock`; writes hold `Lock`. Transaction methods reuse ownership and never
+upgrade or reacquire that lock. Commit and rollback sort remaining dirty streams
+and finalize counts **before unlocking**, so shared scans make no physical tree
+changes. Logs can remain buffered; publication does not flush every log.
 
-The paper's locking approach tracks whether each block and the 
-log are sorted, so subsequent scans reuse that ordering until writes disturb it. 
-[Section 3](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=6).
+Read consistency lasts for the entire transaction, including a multi-leaf scan.
+A writer cannot publish between two entries in a read transaction. Writer
+progress requires active transactions to finish and ordinary scheduler/lock
+admission progress; the API does not promise FIFO acquisition or bounded waiting.
+Long transactions and leaked manual handles delay other work by design.
 
-Section 5 explicitly addresses the locking implications. A scan first acquires a leaf’s read lock and checks sortedness. If everything it needs is sorted, it proceeds under that shared lock; otherwise, it releases the read lock and acquires the leaf’s write lock to sort. This temporarily blocks other readers and writers accessing that leaf. [Section 5](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=8).
-
-Here is the scary part: it is a classic hazard to try and upgrade from a read lock
-to a write lock! Other readers or even other writers may have priority, and so the writer may have to
-yield to them! The opportunities for deadlock or livelock are multidinous, and
-this would need very careful conconcurrency modeling to get right and work well.
-Thus it is out of scope for now.
-
-In the paper, traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4). [jea note: I'm not convinced this would not stall or confuse the first writer badly... what if there is rebalancing and the node is no longer even the right node...!]
-
-Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock.
+[txn.lean](txn.lean) checks abstract ownership, read-ready publication, stable
+read spans, no internal wait cycles, terminal behavior, and reverse journal
+restoration. It does not verify the concrete Go implementation or BPA enumeration.
+Unit tests, randomized model comparisons, and `go test -race .` exercise those
+implementation obligations. The paper's per-node locking scheme is not used.
 
 ------------------
 Copyright (C) 2026, Jason E. Aten, Ph.D.

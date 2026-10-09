@@ -19,7 +19,7 @@ func TestCompactRecordAndBitmap(t *testing.T) {
 
 func TestBufferedOverwritesDoNotSplit(t *testing.T) {
 	cfg := Config{Fanout: 3, LogSize: 7, NumBlocks: 3, BlockSize: 5}
-	tr := NewBPTree[int, int](&cfg)
+	tr := newTreeCore[int, int](&cfg)
 	for i := 0; i < 15; i++ {
 		tr.Put(i, i)
 	}
@@ -100,7 +100,7 @@ func TestLogClearPreservesHeaderBitmap(t *testing.T) {
 
 func TestBufferedMembershipAndLen(t *testing.T) {
 	for _, cfg := range []Config{tinyConfig, {}, {Fanout: 5, LogSize: 65, NumBlocks: 3, BlockSize: 17}} {
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		model := map[int]int{}
 		rng := rand.New(rand.NewSource(994))
 		for step := 0; step < 20000; step++ {
@@ -145,7 +145,7 @@ func TestBufferedMembershipAndLen(t *testing.T) {
 }
 
 func TestLenDoesNotMoveIteratorRecords(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	for i := 200; i >= 0; i-- {
 		tr.Put(i, i)
 	}
@@ -175,7 +175,7 @@ func TestLenDoesNotMoveIteratorRecords(t *testing.T) {
 }
 
 func TestPartiallyCountedLogSort(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	for i := 0; i < 256; i++ {
 		tr.Put(i*2, i)
 	}
@@ -212,7 +212,7 @@ func TestPartiallyCountedLogSort(t *testing.T) {
 }
 
 func TestDeferredLenDoesNotAllocate(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	for i := 0; i < 2000; i++ {
 		tr.Put(i, i)
 	}
@@ -231,7 +231,7 @@ func TestDeferredLenDoesNotAllocate(t *testing.T) {
 }
 
 func TestDeferredNaNAndPointerTombstones(t *testing.T) {
-	tr := NewBPTree[float64, *int](nil)
+	tr := newTreeCore[float64, *int](nil)
 	a, b := 11, 22
 	for i := 100; i >= 0; i-- {
 		tr.Put(float64(i), &a)

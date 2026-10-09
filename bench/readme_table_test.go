@@ -22,7 +22,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 22 {
+	if len(readmeBenchmarkNames()) != 26 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -46,7 +46,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	short := strings.Split(strings.TrimSpace(simple), "\n")
 	full := strings.Split(strings.TrimSpace(detailed), "\n")
-	for i, selected := range []int{0, 3, 5} {
+	for i, selected := range []int{0, 3, 4, 6} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 5; col++ {
@@ -55,7 +55,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 			}
 		}
 	}
-	for i, want := range []string{"22.6", "456.7", "4.71"} {
+	for i, want := range []string{"22.6", "456.7", "123.5", "4.71"} {
 		if got := strings.TrimSpace(strings.Split(short[i+2], "|")[2]); got != want {
 			t.Fatalf("simplified value %q, want %q", got, want)
 		}
@@ -93,6 +93,10 @@ func TestReadmeBenchmarkTiming(t *testing.T) {
 	}
 	if value, err := readmeBenchmarkTime(result, true); err != nil || value != 0.25 {
 		t.Fatal("traversal time must use the per-key metric", value, err)
+	}
+	result.Extra["put_ns/key"] = 0.75
+	if value, err := readmeBenchmarkTime(result, false); err != nil || value != 0.75 {
+		t.Fatal("batch must use per-key time", value, err)
 	}
 	delete(result.Extra, "iter_ns/key")
 	if _, err := readmeBenchmarkTime(result, true); err == nil {

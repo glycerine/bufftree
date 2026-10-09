@@ -3,7 +3,7 @@ package bufftree
 import "testing"
 
 func TestFirstScanDefersLogFlush(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	n := 8*tr.cfg.LogSize + 5
 	for i := 0; i < n; i++ {
 		tr.Put(i, i)
@@ -36,7 +36,7 @@ func TestFirstScanDefersLogFlush(t *testing.T) {
 
 func TestHeaderMirrorsOverwriteAndDelete(t *testing.T) {
 	cfg := Config{Fanout: 3, LogSize: 7, NumBlocks: 3, BlockSize: 5}
-	tr := NewBPTree[int, *int](&cfg)
+	tr := newTreeCore[int, *int](&cfg)
 	a, b := 11, 22
 	for i := 0; i < 15; i++ {
 		tr.Put(i, &a)
@@ -76,7 +76,7 @@ func TestHeaderMirrorsOverwriteAndDelete(t *testing.T) {
 }
 
 func TestScanPreparationPreservesLiveCursors(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	for i := 0; i < 4096; i++ {
 		tr.Put((i*129)%4096, i)
 	}
@@ -119,7 +119,7 @@ func TestScanPreparationPreservesLiveCursors(t *testing.T) {
 
 func TestScanRunMutationAcrossLeaves(t *testing.T) {
 	cfg := Config{Fanout: 4, LogSize: 8, NumBlocks: 4, BlockSize: 8}
-	tr := NewBPTree[int, int](&cfg)
+	tr := newTreeCore[int, int](&cfg)
 	for i := 0; i < 300; i++ {
 		tr.Put(i*2, i*2)
 	}
@@ -158,9 +158,9 @@ func TestScanRunMutationAcrossLeaves(t *testing.T) {
 }
 
 func TestTinyFirstScanDoesNotAllocate(t *testing.T) {
-	trees := make([]*Tree[int, int], 101)
+	trees := make([]*treeCore[int, int], 101)
 	for i := range trees {
-		tr := NewBPTree[int, int](nil)
+		tr := newTreeCore[int, int](nil)
 		tr.Put(3, 3)
 		tr.Put(1, 1)
 		tr.Put(2, 2)

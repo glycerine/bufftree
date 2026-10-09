@@ -1,7 +1,10 @@
 // Package bufftree implements generic in-memory BP-trees with buffered,
 // partitioned leaves. Tree iterates by key.
-// Trees and their iterators require external synchronization
-// when used by multiple goroutines. Ordered reads may sort or flush leaves.
+// Access is transaction-only: concurrent ReadOnlyTx instances see stable state;
+// a WriteTx has exclusive access and supports real in-memory rollback.
+// Shared reads never rearrange storage. Stored reference-valued data must be
+// immutable; replace bindings through WriteTx.Put. Never nest transactions on
+// the same database. Pass the existing transaction to callbacks and helpers.
 package bufftree
 
 // Config measures node sizes in entries, not bytes. Zero numeric fields use defaults.

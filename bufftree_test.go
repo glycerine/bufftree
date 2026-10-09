@@ -36,7 +36,7 @@ func TestSeparatorRefreshClearsRemovedKeys(t *testing.T) {
 }
 
 func TestNewBPTreeNilConfig(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	model := map[int]int{3: 30, 1: 10, 2: 20}
 	for k, v := range model {
 		tr.Put(k, v)
@@ -50,7 +50,7 @@ func TestNewBPTreeNilConfig(t *testing.T) {
 func TestNewBPTreeCopiesConfig(t *testing.T) {
 	for _, cfg := range []Config{{}, tinyConfig} {
 		original := cfg
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		if cfg != original {
 			t.Fatal("constructor must not normalize the caller's config in place")
 		}
@@ -74,7 +74,7 @@ func TestNewBPTreeCopiesConfig(t *testing.T) {
 }
 
 func TestGetAndGet2(t *testing.T) {
-	var tr Tree[int, string]
+	var tr treeCore[int, string]
 	for _, idx := range []interface {
 		Get(int) string
 		Get2(int) (string, bool)
@@ -109,7 +109,7 @@ func TestGetAndGet2(t *testing.T) {
 			t.Fatal("Get2 deleted key")
 		}
 	}
-	var nilTree Tree[string, []int]
+	var nilTree treeCore[string, []int]
 	nilTree.Put("nil", nil)
 	if nilTree.Get("nil") != nil || nilTree.Get("absent") != nil {
 		t.Fatal("nil value")
@@ -126,7 +126,7 @@ func TestTreeRandomAgainstMap(t *testing.T) {
 	for seed := int64(0); seed < 5; seed++ {
 		t.Run(string(rune('A'+seed)), func(t *testing.T) {
 			cfg := tinyConfig
-			tr := NewBPTree[int, int](&cfg)
+			tr := newTreeCore[int, int](&cfg)
 			model := map[int]int{}
 			rng := rand.New(rand.NewSource(seed))
 			for i := 0; i < 10000; i++ {
@@ -160,7 +160,7 @@ func TestTreeRandomAgainstMap(t *testing.T) {
 	}
 }
 
-func checkTree(t *testing.T, tr *Tree[int, int], model map[int]int) {
+func checkTree(t *testing.T, tr *treeCore[int, int], model map[int]int) {
 	t.Helper()
 	if tr.Len() != len(model) {
 		t.Fatalf("length %d != %d", tr.Len(), len(model))
@@ -249,7 +249,7 @@ func checkTree(t *testing.T, tr *Tree[int, int], model map[int]int) {
 
 func TestTreeDeleteDuringIteration(t *testing.T) {
 	for _, reverse := range []bool{false, true} {
-		tr := NewBPTree[int, int](&tinyConfig)
+		tr := newTreeCore[int, int](&tinyConfig)
 		for i := 0; i < 1000; i++ {
 			k := i
 			if reverse {
@@ -285,7 +285,7 @@ func TestTreeDeleteDuringIteration(t *testing.T) {
 }
 
 func TestTreeRangeAndMutation(t *testing.T) {
-	tr := NewBPTree[int, int](&tinyConfig)
+	tr := newTreeCore[int, int](&tinyConfig)
 	for i := 0; i < 100; i++ {
 		tr.Put(i*2, i)
 	}
@@ -315,7 +315,7 @@ func TestTreeRangeAndMutation(t *testing.T) {
 }
 
 func TestTreeZeroValueAndOrderedTypes(t *testing.T) {
-	var tr Tree[string, []int]
+	var tr treeCore[string, []int]
 	tr.Put("z", []int{1})
 	tr.Put("a", nil)
 	if v, ok := tr.Get2("a"); !ok || v != nil {
@@ -327,7 +327,7 @@ func TestTreeZeroValueAndOrderedTypes(t *testing.T) {
 	if tr.Len() != 0 {
 		t.Fatal("zero value iteration")
 	}
-	ft := NewBPTree[float64, int](&tinyConfig)
+	ft := newTreeCore[float64, int](&tinyConfig)
 	for _, k := range []float64{math.NaN(), math.Inf(-1), -1, 0, 1, math.Inf(1)} {
 		ft.Put(k, 7)
 	}
@@ -350,13 +350,13 @@ func TestTreeZeroValueAndOrderedTypes(t *testing.T) {
 		t.Fatal("float deletes")
 	}
 	type key uint16
-	var named Tree[key, struct{ X int }]
+	var named treeCore[key, struct{ X int }]
 	named.Put(1, struct{ X int }{3})
 }
 
 func TestNaNKeysSortLast(t *testing.T) {
 	for _, cfg := range []Config{tinyConfig, {}} {
-		tr := NewBPTree[float64, int](&cfg)
+		tr := newTreeCore[float64, int](&cfg)
 		tr.Put(math.NaN(), 1)
 		tr.Put(math.Inf(-1), -100)
 		tr.Put(math.Inf(1), 100)
@@ -422,7 +422,7 @@ func TestNaNKeysSortLast(t *testing.T) {
 		}
 	}
 	type namedFloat float32
-	var tr Tree[namedFloat, []int]
+	var tr treeCore[namedFloat, []int]
 	tr.Put(namedFloat(math.NaN()), []int{1})
 	tr.Put(0, nil)
 	it := tr.Iter()
@@ -439,7 +439,7 @@ func TestConfigValidation(t *testing.T) {
 					t.Fatal("invalid config accepted")
 				}
 			}()
-			NewBPTree[int, int](&cfg)
+			newTreeCore[int, int](&cfg)
 		}()
 	}
 }
@@ -456,7 +456,7 @@ func TestTreeBulkSplitAndCollapse(t *testing.T) {
 		if cfg == (Config{}) {
 			n = 65536
 		}
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		model := make(map[int]int, n)
 		rng := rand.New(rand.NewSource(2023))
 		for _, k := range rng.Perm(n) {
@@ -482,7 +482,7 @@ func TestTreeBulkSplitAndCollapse(t *testing.T) {
 }
 
 func TestTreeIteratorsAndEarlyStop(t *testing.T) {
-	tr := NewBPTree[int, int](&tinyConfig)
+	tr := newTreeCore[int, int](&tinyConfig)
 	for i := 0; i < 100; i++ {
 		tr.Put(i, i)
 	}

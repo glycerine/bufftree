@@ -2,20 +2,29 @@ package bufftree_test
 
 import (
 	"fmt"
-
 	"github.com/glycerine/bufftree"
 )
 
 func ExampleTree() {
-	tree := bufftree.NewBPTree[int, string](nil)
-	tree.Put(30, "thirty")
-	tree.Put(10, "ten")
-	tree.Put(20, "twenty")
-	for key, value := range tree.All() {
-		fmt.Println(key, value)
-		tree.Del(key)
+	db := bufftree.NewBPTree[int, string](nil)
+	err := db.Update(func(tx *bufftree.WriteTx[int, string]) error {
+		for k, v := range map[int]string{30: "thirty", 10: "ten", 20: "twenty"} {
+			if err := tx.Put(k, v); err != nil {
+				return err
+			}
+		}
+		for key, value := range tx.All() {
+			fmt.Println(key, value)
+			if err := tx.Delete(key); err != nil {
+				return err
+			}
+		}
+		fmt.Println("remaining:", tx.Len())
+		return nil
+	})
+	if err != nil {
+		panic(err)
 	}
-	fmt.Println("remaining:", tree.Len())
 	// Output:
 	// 10 ten
 	// 20 twenty
@@ -23,14 +32,19 @@ func ExampleTree() {
 	// remaining: 0
 }
 
-func ExampleTree_Range() {
-	var tree bufftree.Tree[int, int]
-	for i := 0; i < 10; i++ {
-		tree.Put(i, i*i)
-	}
-	tree.Range(3, 6, func(key, value int) bool {
-		fmt.Println(key, value)
-		return true
+func ExampleTree_View() {
+	var db bufftree.Tree[int, int]
+	_ = db.Update(func(tx *bufftree.WriteTx[int, int]) error {
+		for i := 0; i < 10; i++ {
+			if err := tx.Put(i, i*i); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	_ = db.View(func(tx *bufftree.ReadOnlyTx[int, int]) error {
+		tx.Range(3, 6, func(k, v int) bool { fmt.Println(k, v); return true })
+		return nil
 	})
 	// Output:
 	// 3 9

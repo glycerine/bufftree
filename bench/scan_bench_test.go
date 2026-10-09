@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/glycerine/bufftree"
 	"github.com/tidwall/btree"
 )
 
 func scanComparisonLayouts() []benchScanLayout {
 	return []benchScanLayout{
-		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
+		{"Tree", func() benchOrderedScan { return newBenchTree(nil) }},
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
 	}
 }
@@ -19,7 +18,7 @@ func scanComparisonLayouts() []benchScanLayout {
 func BenchmarkOrderedAll(b *testing.B) {
 	n := benchLoadSize()
 	b.Run("Tree", func(b *testing.B) {
-		tr := bufftree.NewBPTree[uint64, uint64](nil)
+		tr := newBenchTree(nil)
 		for i := 0; i < n; i++ {
 			tr.Put(benchKey(i), uint64(i))
 		}

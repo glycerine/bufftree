@@ -1,0 +1,17 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTransactions/Writefalse/Batch1-48  	  684055	       197.4 ns/op	       197.4 ns/key	      80 B/op	       1 allocs/op
+BenchmarkTransactions/Writetrue/Batch1-48   	  170935	       702.2 ns/op	       702.2 ns/key	     144 B/op	       1 allocs/op
+BenchmarkTransactions/Writefalse/Batch32-48 	   42954	      2787 ns/op	        87.09 ns/key	      80 B/op	       1 allocs/op
+BenchmarkTransactions/Writetrue/Batch32-48  	   10000	     11034 ns/op	       344.8 ns/key	    4000 B/op	       6 allocs/op
+BenchmarkTransactions/Writefalse/Batch1024-48         	    1819	     57679 ns/op	        56.33 ns/key	      80 B/op	       1 allocs/op
+BenchmarkTransactions/Writetrue/Batch1024-48          	     440	    261909 ns/op	       255.8 ns/key	  122786 B/op	      11 allocs/op
+BenchmarkTransactionScans/Forward-48                  	    4686	     23615 ns/op	         5.765 ns/key	      80 B/op	       1 allocs/op
+BenchmarkTransactionScans/Reverse-48                  	    3794	     28694 ns/op	         7.005 ns/key	     416 B/op	       4 allocs/op
+BenchmarkTransactionScans/DeleteRollback-48           	      30	   3648218 ns/op	       890.7 ns/key	 1134913 B/op	      84 allocs/op
+BenchmarkTransactionScans/ConcurrentRead-48           	  920234	       154.5 ns/op	      80 B/op	       1 allocs/op
+BenchmarkTransactionCommitPreparation-48              	   25954	      4593 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree	13.808s

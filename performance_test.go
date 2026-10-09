@@ -7,7 +7,7 @@ import (
 )
 
 func TestRedistributionBufferDoesNotRetainValues(t *testing.T) {
-	tr := NewBPTree[int, *int](nil)
+	tr := newTreeCore[int, *int](nil)
 	for i := 0; i < 4096; i++ {
 		v := i
 		tr.Put(int(benchKey(i)>>1), &v)
@@ -36,7 +36,7 @@ func TestQueriesDoNotAllocate(t *testing.T) {
 }
 
 func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
-	tr := NewBPTree[int, int](&cfg)
+	tr := newTreeCore[int, int](&cfg)
 	for i := 0; i < 4096; i++ {
 		tr.Put(i, i)
 	}
@@ -70,7 +70,7 @@ func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
 }
 
 func TestMapRangeReentrant(t *testing.T) {
-	tr := NewBPTree[int, int](&tinyConfig)
+	tr := newTreeCore[int, int](&tinyConfig)
 	for i := 0; i < 100; i++ {
 		tr.Put(i, i)
 	}
@@ -101,7 +101,7 @@ func TestMapRangeReentrant(t *testing.T) {
 
 func TestScansAgainstSortedModel(t *testing.T) {
 	for _, cfg := range []Config{tinyConfig, {}} {
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		model := map[int]int{}
 		rng := rand.New(rand.NewSource(44))
 		for step := 0; step < 2000; step++ {
@@ -155,7 +155,7 @@ func TestScansAgainstSortedModel(t *testing.T) {
 }
 
 func TestScanMutationWithinBlock(t *testing.T) {
-	tr := NewBPTree[int, int](nil)
+	tr := newTreeCore[int, int](nil)
 	for i := 0; i < 200; i++ {
 		tr.Put(2*i, i)
 	}
@@ -179,7 +179,7 @@ func TestScanMutationWithinBlock(t *testing.T) {
 }
 
 func TestDelOnTreeAndIterator(t *testing.T) {
-	tr := NewBPTree[int, string](nil)
+	tr := newTreeCore[int, string](nil)
 	tr.Put(1, "one")
 	tit := tr.Iter()
 	tit.Del()

@@ -42,7 +42,7 @@ func benchLayouts() []benchLayout {
 	for _, pair := range [][2]int{{4, 4}, {8, 8}, {16, 16}, {32, 32}, {32, 64}, {64, 64}} {
 		h, block := pair[0], pair[1]
 		out = append(out, benchLayout{fmt.Sprintf("BP/h%d-b%d", h, block), func() benchIndex {
-			return NewBPTree[uint64, uint64](&Config{Fanout: 64, LogSize: h, NumBlocks: h, BlockSize: block})
+			return newTransactionBench[uint64, uint64](&Config{Fanout: 64, LogSize: h, NumBlocks: h, BlockSize: block})
 		}})
 	}
 	for _, slots := range []int{16, 32, 64, 256, 1024, 4096} {

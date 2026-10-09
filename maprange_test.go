@@ -4,7 +4,7 @@ import "testing"
 
 func TestMapRangeDeletionAndLogShadowing(t *testing.T) {
 	for _, cfg := range []Config{tinyConfig, {}} {
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		for i := 0; i < 2000; i++ {
 			tr.Put(i, i)
 		}

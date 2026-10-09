@@ -6,10 +6,11 @@ import (
 	"slices"
 )
 
-// Tree is a BP-tree ordered by key. Floating-point NaNs compare equal to one
-// another and sort after all other keys. The zero value is ready
-// for use. Do not copy a Tree after its first use.
-type Tree[K cmp.Ordered, V any] struct {
+// treeCore is the mutable BP-tree engine. Transaction code owns its locking.
+// The legacy traversal helpers below are retained for algorithm regression
+// tests; public reads use only the pure cursors in iter.go.
+type treeCore[K cmp.Ordered, V any] struct {
+	preparing     *bpa[K, V]
 	root          *node[K, V]
 	cfg           Config
 	length        int
@@ -29,27 +30,27 @@ type node[K cmp.Ordered, V any] struct {
 	prev, next *node[K, V]
 }
 
-// NewBPTree creates a key-ordered BP-tree. A nil cfg selects the defaults.
+// newTreeCore constructs an engine for internal algorithm tests.
 // A non-nil cfg is copied; later changes to the caller's config do not affect
 // the tree. Zero numeric fields select defaults. Invalid configurations panic.
-func NewBPTree[K cmp.Ordered, V any](cfg *Config) *Tree[K, V] {
+func newTreeCore[K cmp.Ordered, V any](cfg *Config) *treeCore[K, V] {
 	var internal Config
 	if cfg != nil {
 		internal = *cfg
 	}
-	return &Tree[K, V]{cfg: internal.normalized()}
+	return &treeCore[K, V]{cfg: internal.normalized()}
 }
 
 // Len returns the exact number of keys. The first call after writes reconciles
 // buffered membership in changed leaves; subsequent calls take constant time.
 // Reconciliation does not move records or invalidate live iterator positions.
-func (t *Tree[K, V]) Len() int {
+func (t *treeCore[K, V]) Len() int {
 	for t.pending != nil {
 		t.reconcile(t.pending)
 	}
 	return t.length
 }
-func (t *Tree[K, V]) reconcile(p *bpa[K, V]) {
+func (t *treeCore[K, V]) reconcile(p *bpa[K, V]) {
 	n := p.resolveSize()
 	t.length += n - p.accounted
 	p.accounted = n
@@ -66,7 +67,10 @@ func (t *Tree[K, V]) reconcile(p *bpa[K, V]) {
 	}
 	p.dirty, p.prevDirty, p.nextDirty = false, nil, nil
 }
-func (t *Tree[K, V]) markDirty(p *bpa[K, V]) {
+func (t *treeCore[K, V]) markDirty(p *bpa[K, V]) {
+	if !p.needsPrep {
+		p.needsPrep, p.nextPrep, t.preparing = true, t.preparing, p
+	}
 	if !p.dirty {
 		if t.pending != nil {
 			t.pending.prevDirty = p
@@ -74,12 +78,13 @@ func (t *Tree[K, V]) markDirty(p *bpa[K, V]) {
 		p.dirty, p.nextDirty, t.pending = true, t.pending, p
 	}
 }
-func (t *Tree[K, V]) Clear() {
+func (t *treeCore[K, V]) Clear() {
+	t.discardPreparation()
 	t.root, t.pending = nil, nil
 	t.length = 0
 	t.version++
 }
-func (t *Tree[K, V]) findLeaf(k K) *node[K, V] {
+func (t *treeCore[K, V]) findLeaf(k K) *node[K, V] {
 	n := t.root
 	for n != nil && n.leaf == nil {
 		lo, width := 0, len(n.keys)
@@ -97,7 +102,7 @@ func (t *Tree[K, V]) findLeaf(k K) *node[K, V] {
 	}
 	return n
 }
-func (t *Tree[K, V]) firstLeaf() *node[K, V] {
+func (t *treeCore[K, V]) firstLeaf() *node[K, V] {
 	n := t.root
 	for n != nil && n.leaf == nil {
 		n = n.children[0]
@@ -107,13 +112,13 @@ func (t *Tree[K, V]) firstLeaf() *node[K, V] {
 
 // Get returns the value for k, or the zero value of V if k is absent.
 // Use Get2 to distinguish an absent key from a stored zero value.
-func (t *Tree[K, V]) Get(k K) V {
+func (t *treeCore[K, V]) Get(k K) V {
 	v, _ := t.Get2(k)
 	return v
 }
 
 // Get2 returns the value for k and whether the key exists.
-func (t *Tree[K, V]) Get2(k K) (V, bool) {
+func (t *treeCore[K, V]) Get2(k K) (V, bool) {
 	if n := t.findLeaf(k); n != nil {
 		return n.leaf.get(k)
 	}
@@ -123,7 +128,7 @@ func (t *Tree[K, V]) Get2(k K) (V, bool) {
 
 // Put inserts or replaces a value. Writes are buffered without looking up the
 // previous value in the leaf's blocks.
-func (t *Tree[K, V]) Put(k K, v V) {
+func (t *treeCore[K, V]) Put(k K, v V) {
 	if t.root == nil {
 		t.cfg = t.cfg.normalized()
 		t.root = &node[K, V]{min: k, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer)}
@@ -186,7 +191,7 @@ func childIndex[K cmp.Ordered, V any](p, n *node[K, V]) int {
 	}
 	panic("bufftree: broken parent link")
 }
-func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
+func (t *treeCore[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	// Like redistribution, splitting has no callbacks and can borrow the
 	// tree's scratch space. Both loads copy their input before it is cleared.
 	es := n.leaf.collectInto(t.rebuildBuffer[:0])
@@ -206,7 +211,7 @@ func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	return right
 }
 
-func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
+func (t *treeCore[K, V]) insertSibling(left, right *node[K, V]) {
 	for {
 		p := left.parent
 		if p == nil {
@@ -238,7 +243,7 @@ func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
 }
 
 // Del removes k. Deleting an absent key has no effect.
-func (t *Tree[K, V]) Del(k K) {
+func (t *treeCore[K, V]) Del(k K) {
 	n := t.findLeaf(k)
 	if n == nil {
 		return
@@ -266,13 +271,13 @@ func (t *Tree[K, V]) Del(k K) {
 		refreshUp(n.parent)
 	}
 }
-func (t *Tree[K, V]) underfull(n *node[K, V]) bool {
+func (t *treeCore[K, V]) underfull(n *node[K, V]) bool {
 	if n.leaf != nil {
 		return n.leaf.size < n.leaf.capacity()/2
 	}
 	return len(n.children) < (t.cfg.Fanout+1)/2
 }
-func (t *Tree[K, V]) rebalance(n *node[K, V]) {
+func (t *treeCore[K, V]) rebalance(n *node[K, V]) {
 	for n != t.root && t.underfull(n) {
 		p := n.parent
 		i := childIndex(p, n)
@@ -348,8 +353,8 @@ func (t *Tree[K, V]) rebalance(n *node[K, V]) {
 // mutation triggers a seek strictly beyond the last returned key; newly inserted
 // keys ahead of it may be visited. An exhausted iterator stays exhausted until
 // Seek is called. Iteration is live, not a snapshot.
-type Iterator[K cmp.Ordered, V any] struct {
-	tree                          *Tree[K, V]
+type coreIterator[K cmp.Ordered, V any] struct {
+	tree                          *treeCore[K, V]
 	leaf                          *node[K, V]
 	cursor                        bpaCursor[K, V]
 	key                           K
@@ -359,11 +364,11 @@ type Iterator[K cmp.Ordered, V any] struct {
 	version                       uint64
 }
 
-func (t *Tree[K, V]) Iter() *Iterator[K, V] { return &Iterator[K, V]{tree: t} }
-func (t *Tree[K, V]) IterFrom(start K) *Iterator[K, V] {
-	return &Iterator[K, V]{tree: t, start: start, bounded: true}
+func (t *treeCore[K, V]) Iter() *coreIterator[K, V] { return &coreIterator[K, V]{tree: t} }
+func (t *treeCore[K, V]) IterFrom(start K) *coreIterator[K, V] {
+	return &coreIterator[K, V]{tree: t, start: start, bounded: true}
 }
-func (it *Iterator[K, V]) position(k K, bounded, strict bool) {
+func (it *coreIterator[K, V]) position(k K, bounded, strict bool) {
 	if bounded {
 		it.leaf = it.tree.findLeaf(k)
 	} else {
@@ -374,7 +379,7 @@ func (it *Iterator[K, V]) position(k K, bounded, strict bool) {
 	}
 	it.version = it.tree.version
 }
-func (it *Iterator[K, V]) Next() bool {
+func (it *coreIterator[K, V]) Next() bool {
 	if it.done {
 		return false
 	}
@@ -403,16 +408,16 @@ func (it *Iterator[K, V]) Next() bool {
 
 // Seek positions the iterator at the first key >= start, returning its validity.
 // Read Key/Value immediately after a successful Seek; Next then advances.
-func (it *Iterator[K, V]) Seek(start K) bool {
+func (it *coreIterator[K, V]) Seek(start K) bool {
 	it.start, it.bounded, it.started, it.valid, it.done = start, true, false, false, false
 	return it.Next()
 }
-func (it *Iterator[K, V]) Valid() bool { return it.valid }
-func (it *Iterator[K, V]) Key() K      { return it.key }
-func (it *Iterator[K, V]) Value() V    { return it.value }
+func (it *coreIterator[K, V]) Valid() bool { return it.valid }
+func (it *coreIterator[K, V]) Key() K      { return it.key }
+func (it *coreIterator[K, V]) Value() V    { return it.value }
 
 // Del deletes the current key. An unpositioned iterator has no effect.
-func (it *Iterator[K, V]) Del() {
+func (it *coreIterator[K, V]) Del() {
 	if it.valid {
 		it.tree.Del(it.key)
 	}
@@ -420,7 +425,7 @@ func (it *Iterator[K, V]) Del() {
 
 // All can be used with Go's range-over-function syntax. Deleting yielded keys
 // is supported; breaking the loop stops traversal immediately.
-func (t *Tree[K, V]) All() iter.Seq2[K, V] {
+func (t *treeCore[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
 		if n := t.firstLeaf(); n != nil {
 			var end K
@@ -430,7 +435,7 @@ func (t *Tree[K, V]) All() iter.Seq2[K, V] {
 }
 
 // Range visits keys in [start,end) in key order. Return false to stop.
-func (t *Tree[K, V]) Range(start, end K, visit func(K, V) bool) {
+func (t *treeCore[K, V]) Range(start, end K, visit func(K, V) bool) {
 	if !lessKey(start, end) {
 		return
 	}
@@ -438,7 +443,7 @@ func (t *Tree[K, V]) Range(start, end K, visit func(K, V) bool) {
 }
 
 // Scan visits at most length entries with keys >= start in key order.
-func (t *Tree[K, V]) Scan(start K, length int, visit func(K, V) bool) {
+func (t *treeCore[K, V]) Scan(start K, length int, visit func(K, V) bool) {
 	if length <= 0 {
 		return
 	}
@@ -451,7 +456,7 @@ func (t *Tree[K, V]) Scan(start K, length int, visit func(K, V) bool) {
 // Only compact a previously scanned leaf: its first scan should not pay both
 // initial sorting and eager log redistribution. Avoid preparing a narrow Range
 // or allocating scratch for a tiny new tree.
-func (t *Tree[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, bounded bool, length int) scanCursor[K, V] {
+func (t *treeCore[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, bounded bool, length int) scanCursor[K, V] {
 	if n.leaf.scanReady && n.leaf.logN > 0 && length >= n.leaf.size && cap(t.rebuildBuffer) >= n.leaf.size &&
 		(!bounded || (n.next != nil && !lessKey(end, n.next.min))) {
 		n.leaf.flush()
@@ -463,7 +468,7 @@ func (t *Tree[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, boun
 
 // Walk contiguous runs; only reconstruct the cursor when a callback mutates
 // the tree. Run boundaries handle log merging separately from the hot visit loop.
-func (t *Tree[K, V]) walk(start, end K, bounded bool, length int, visit func(K, V) bool) {
+func (t *treeCore[K, V]) walk(start, end K, bounded bool, length int, visit func(K, V) bool) {
 	n := t.findLeaf(start)
 	if n == nil {
 		return
@@ -518,7 +523,7 @@ scan:
 // The visitor may delete its current key. Other mutations during MapRange are
 // unsupported; use Range for general live iteration. A per-leaf snapshot of
 // matching entries preserves traversal even if deleting a key merges leaves.
-func (t *Tree[K, V]) MapRange(start, end K, visit func(K, V) bool) {
+func (t *treeCore[K, V]) MapRange(start, end K, visit func(K, V) bool) {
 	if compareKey(start, end) >= 0 {
 		return
 	}

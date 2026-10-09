@@ -105,7 +105,7 @@ func TestFreshPutMixedBatches(t *testing.T) {
 		{Fanout: 5, LogSize: 16, NumBlocks: 3, BlockSize: 5},
 		{Fanout: 5, LogSize: 73, NumBlocks: 67, BlockSize: 71},
 	} {
-		tr := NewBPTree[int, int](&cfg)
+		tr := newTreeCore[int, int](&cfg)
 		model := map[int]int{}
 		rng := rand.New(rand.NewSource(891))
 		for i := 0; i < 30000; i++ {
@@ -133,7 +133,7 @@ func TestFreshPutMixedBatches(t *testing.T) {
 
 func TestPutResurrectsFullLeafTombstone(t *testing.T) {
 	cfg := Config{LogSize: 2, NumBlocks: 2, BlockSize: 2}
-	tr := NewBPTree[int, int](&cfg)
+	tr := newTreeCore[int, int](&cfg)
 	for _, k := range []int{10, 20, 30, 40} {
 		tr.Put(k, k)
 	}
@@ -167,7 +167,7 @@ func TestDistinctFlushRebuildAfterPartialCopy(t *testing.T) {
 }
 
 func TestSplitScratchDoesNotRetainValues(t *testing.T) {
-	tr := NewBPTree[int, *int](&tinyConfig)
+	tr := newTreeCore[int, *int](&tinyConfig)
 	for i := 0; i < 200; i++ {
 		v := i
 		tr.Put(i, &v)

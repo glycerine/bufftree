@@ -33,7 +33,7 @@ func BenchmarkFreshPutConfig(b *testing.B) {
 		name := fmt.Sprintf("f%d-l%d-h%d-b%d", cfg.Fanout, cfg.LogSize, cfg.NumBlocks, cfg.BlockSize)
 		b.Run(name, func(b *testing.B) {
 			layout := benchPointLayout{name, func() benchUint64Points {
-				return bufftree.NewBPTree[uint64, uint64](&cfg)
+				return newBenchTree(&cfg)
 			}}
 			benchmarkFreshPut(b, layout, n, keys, false)
 		})
@@ -176,4 +176,64 @@ func benchmarkFreshPut(b *testing.B, layout benchPointLayout, n int, keys []uint
 		inserted++
 	}
 	b.StopTimer()
+}
+
+// Each timed operation is a complete batch, including BP-tree Commit. The
+// metric divides by actual inserted keys, including partial final batches.
+const freshPutBatchSize = 1024
+
+func putComparisonBatch(idx benchUint64Points, keys []uint64, offset uint64) {
+	if batch, ok := idx.(interface{ PutBatch([]uint64, uint64) }); ok {
+		batch.PutBatch(keys, offset)
+		return
+	}
+	for i, k := range keys {
+		idx.Put(k, offset+uint64(i))
+	}
+}
+func benchmarkFreshPutBatch(b *testing.B, layout benchPointLayout, n int, keys []uint64) {
+	idx := loadComparisonPoints(layout, n)
+	inserted := 0
+	var total uint64
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		if inserted == n {
+			b.StopTimer()
+			idx = loadComparisonPoints(layout, n)
+			inserted = 0
+			b.StartTimer()
+		}
+		count := min(freshPutBatchSize, n-inserted)
+		putComparisonBatch(idx, keys[inserted:inserted+count], uint64(inserted))
+		inserted += count
+		total += uint64(count)
+	}
+	b.StopTimer()
+	b.ReportMetric(float64(b.Elapsed().Nanoseconds())/float64(total), "put_ns/key")
+	b.ReportMetric(float64(total)/float64(b.N), "keys/op")
+}
+func TestComparisonBatchPuts(t *testing.T) {
+	for _, n := range []int{17, 2*freshPutBatchSize + 37} {
+		for _, layout := range comparisonPointLayouts(n) {
+			idx := loadComparisonPoints(layout, n)
+			for offset := 0; offset < n; {
+				count := min(freshPutBatchSize, n-offset)
+				keys := make([]uint64, count)
+				for i := range keys {
+					keys[i] = benchKey(offset+i) | 1
+				}
+				putComparisonBatch(idx, keys, uint64(offset))
+				offset += count
+			}
+			if idx.(interface{ Len() int }).Len() != 2*n {
+				t.Fatal(layout.name, "batch length")
+			}
+			for i := 0; i < n; i++ {
+				if idx.Get(benchKey(i)) != uint64(i) || idx.Get(benchKey(i)|1) != uint64(i) {
+					t.Fatal(layout.name, "batch value", i)
+				}
+			}
+		}
+	}
 }

@@ -6,7 +6,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/glycerine/bufftree"
 	"github.com/glycerine/rbtree"
 	"github.com/tidwall/btree"
 )
@@ -25,7 +24,7 @@ func (m benchUint64Map) Put(k, v uint64) {
 }
 
 // Use tidwall's generic ordered Map with its default degree (32), without
-// copies or path hints. Discard Set's results to match the void Put contract.
+// copies or path hints. Discard Set's results in the common benchmark adapter.
 type benchTidwallMap struct{ tree btree.Map[uint64, uint64] }
 
 func (m *benchTidwallMap) Get(k uint64) uint64 {
@@ -95,7 +94,7 @@ func (m *benchRBTree) Scan(start uint64, length int, visit func(uint64, uint64) 
 
 // Compare identical uint64 data, uniform lookup/update traces, and unique
 // scrambled insertions. All point operations use the same interface dispatch.
-// Map writes use assignment alone, matching Put's void return contract.
+// Map writes use assignment alone; BP-tree writes include a complete Update.
 func BenchmarkComparePoints(b *testing.B) {
 	for _, bc := range comparisonPointCases(benchLoadSize()) {
 		b.Run(bc.name, bc.run)
@@ -116,7 +115,7 @@ type benchPointLayout struct {
 // the same configurations, capacity hints, and adapters as the benchmarks.
 func comparisonPointLayouts(n int) []benchPointLayout {
 	return []benchPointLayout{
-		{"Tree", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
+		{"Tree", func() benchUint64Points { return newBenchTree(nil) }},
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
@@ -163,6 +162,9 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 		cases = append(cases, comparisonBenchmark{layout.name + "/FreshPut", func(b *testing.B) {
 			benchmarkFreshPut(b, layout, n, freshKeys, false)
 		}})
+		cases = append(cases, comparisonBenchmark{layout.name + "/FreshPutBatch", func(b *testing.B) {
+			benchmarkFreshPutBatch(b, layout, n, freshKeys)
+		}})
 	}
 	return cases
 }
@@ -189,7 +191,7 @@ func BenchmarkCompareIteration(b *testing.B) {
 func comparisonIterationCases(n int) []comparisonBenchmark {
 	var cases []comparisonBenchmark
 	layouts := []benchScanLayout{
-		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
+		{"Tree", func() benchOrderedScan { return newBenchTree(nil) }},
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
 		{"RBTree", func() benchOrderedScan { return newBenchRBTree() }},
 	}

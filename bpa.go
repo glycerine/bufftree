@@ -15,6 +15,8 @@ type entry[K cmp.Ordered, V any] struct {
 // Each block's reserved first slot mirrors its header, making the live header
 // and sorted block one contiguous scan run without increasing the allocation.
 type bpa[K cmp.Ordered, V any] struct {
+	needsPrep     bool
+	nextPrep      *bpa[K, V]
 	cfg           Config
 	data          []entry[K, V]
 	dead          []uint64 // log and header only; block deletions compact in place
