@@ -3,6 +3,7 @@ package bench
 import (
 	"github.com/glycerine/bufftree"
 	"iter"
+	"testing"
 )
 
 // One complete transaction per operation, including journal creation and
@@ -57,5 +58,27 @@ func (m *benchTree) PutBatch(keys []uint64, offset uint64) {
 	})
 	if err != nil {
 		panic(err)
+	}
+}
+
+// Independent fresh keys check that the batch improvement is not specific to
+// inserting keys adjacent to the initially loaded records.
+func BenchmarkTxnBatchDistribution(b *testing.B) {
+	n := benchLoadSize()
+	for _, distribution := range []string{"Adjacent", "Independent"} {
+		keys := make([]uint64, n)
+		for i := range keys {
+			if distribution == "Adjacent" {
+				keys[i] = benchKey(i) | 1
+			} else {
+				keys[i] = benchKey(n + i)
+			}
+		}
+		for _, layout := range comparisonPointLayouts(n) {
+			if layout.name != "Tree" && layout.name != "Tidwall" {
+				continue
+			}
+			b.Run(distribution+"/"+layout.name, func(b *testing.B) { benchmarkFreshPutBatch(b, layout, n, keys) })
+		}
 	}
 }

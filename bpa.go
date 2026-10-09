@@ -32,14 +32,21 @@ type bpa[K cmp.Ordered, V any] struct {
 	prevDirty     *bpa[K, V]
 	counts        []int
 	sorted        []bool
+	ordered       []int // sorted prefix of each block; shares allocation with counts
 	logSorted     bool
+	logPrefix     int  // sorted prefix retained while new log records accumulate
+	logNoShadows  bool // log keys cannot match live base entries (outside flush)
 	rebuildBuffer *[]entry[K, V]
+	membership    []uint64 // conservative membership; never clear individual keys
 }
 
 func newBPA[K cmp.Ordered, V any](cfg Config, shared ...*[]entry[K, V]) *bpa[K, V] {
 	cfg = cfg.normalized()
-	p := &bpa[K, V]{cfg: cfg, data: make([]entry[K, V], cfg.LogSize+cfg.NumBlocks+cfg.NumBlocks*cfg.BlockSize), counts: make([]int, cfg.NumBlocks), sorted: make([]bool, cfg.NumBlocks), logSorted: true}
+	p := &bpa[K, V]{cfg: cfg, data: make([]entry[K, V], cfg.LogSize+cfg.NumBlocks+cfg.NumBlocks*cfg.BlockSize), sorted: make([]bool, cfg.NumBlocks), logSorted: true, logNoShadows: true}
+	metadata := make([]int, 2*cfg.NumBlocks)
+	p.counts, p.ordered = metadata[:cfg.NumBlocks:cfg.NumBlocks], metadata[cfg.NumBlocks:]
 	p.dead = make([]uint64, (cfg.LogSize+cfg.NumBlocks+63)/64)
+	p.membership = make([]uint64, filterWords(p.capacity()))
 	if len(shared) != 0 {
 		p.rebuildBuffer = shared[0]
 	}
@@ -64,6 +71,8 @@ func (p *bpa[K, V]) clearLog() {
 		p.dead[n/64] &^= (uint64(1) << uint(n%64)) - 1
 	}
 	p.logN, p.countedLog, p.size, p.logSorted = 0, 0, p.baseSize, true
+	p.logPrefix = 0
+	p.logNoShadows = true
 }
 func (p *bpa[K, V]) capacity() int             { return p.cfg.NumBlocks * p.cfg.BlockSize }
 func (p *bpa[K, V]) log() []entry[K, V]        { return p.data[:p.logN] }
@@ -129,7 +138,8 @@ func (p *bpa[K, V]) baseLocation(k K) int {
 		return p.cfg.LogSize + i
 	}
 	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + 1
-	for j, e := range p.block(i) {
+	block := p.block(i)
+	for j, e := range block {
 		if equalKey(e.key, k) {
 			return start + j
 		}
@@ -149,10 +159,11 @@ func (p *bpa[K, V]) get(k K) (V, bool) {
 	return zero, false
 }
 
-// location includes tombstones and gives deletion the physical slot to modify.
+// location includes tombstones. Slicing the live log once avoids a second
+// bounds check per element when its length is stored separately from data.
 func (p *bpa[K, V]) location(k K) int {
-	for i := 0; i < p.logN; i++ {
-		if equalKey(p.data[i].key, k) {
+	for i, e := range p.log() {
+		if equalKey(e.key, k) {
 			return i
 		}
 	}
@@ -162,6 +173,7 @@ func (p *bpa[K, V]) location(k K) int {
 // trySet checks only the insertion log. size is an upper bound until a flush
 // or resolveSize removes the contribution of buffered duplicates.
 func (p *bpa[K, V]) trySet(k K, v V) bool {
+	p.remember(membershipHash(k))
 	log := p.log()
 	for i := range log {
 		if equalKey(log[i].key, k) {
@@ -200,6 +212,10 @@ func (p *bpa[K, V]) set(k K, v V) {
 }
 
 func (p *bpa[K, V]) resolveSize() int {
+	if p.logNoShadows {
+		p.countedLog = p.logN
+		return p.size
+	}
 	// New log entries optimistically count as new keys. Subtract each base
 	// duplicate once. Deleting/resurrecting log records adjusts size directly,
 	// so this correction is the same for live entries and tombstones.
@@ -231,6 +247,7 @@ func (p *bpa[K, V]) del(k K) bool {
 	} else {
 		b := (i - p.cfg.LogSize - p.cfg.NumBlocks) / p.cfg.BlockSize
 		block := p.block(b)
+		p.ordered[b] = min(p.ordered[b], i-(p.cfg.LogSize+p.cfg.NumBlocks+b*p.cfg.BlockSize+1))
 		p.data[i] = block[len(block)-1]
 		clear(block[len(block)-1:])
 		p.counts[b]--
@@ -243,7 +260,14 @@ func (p *bpa[K, V]) del(k K) bool {
 
 // appendLog requires a live entry whose key is not already in the log.
 func (p *bpa[K, V]) appendLog(e entry[K, V]) {
+	// The unchecked core write path may buffer a live base duplicate.
+	if p.headerN > 0 {
+		p.logNoShadows = false
+	}
 	// Unused log slots have zero bits, established by newBPA/clearLog/load.
+	if p.logSorted {
+		p.logPrefix = p.logN
+	}
 	p.data[p.logN] = e
 	p.logN++
 	p.logSorted = false
@@ -259,11 +283,12 @@ func (p *bpa[K, V]) sortLog() {
 			p.resolveSize()
 		}
 		if !p.logHasDead() {
-			sortEntries(p.log())
+			sortEntriesFrom(p.log(), p.logPrefix)
 		} else {
 			p.sortDeadLog()
 		}
 		p.logSorted = true
+		p.logPrefix = p.logN
 	}
 }
 
@@ -308,7 +333,8 @@ func (p *bpa[K, V]) sortDeadLog() {
 }
 func (p *bpa[K, V]) sortBlock(i int) {
 	if !p.sorted[i] {
-		sortEntries(p.block(i))
+		sortEntriesFrom(p.block(i), p.ordered[i])
+		p.ordered[i] = p.counts[i]
 		p.sorted[i] = true
 	}
 }
@@ -316,12 +342,14 @@ func (p *bpa[K, V]) sortBlock(i int) {
 // Logs and blocks are small and often almost sorted after a flush. Shift a
 // whole record per step and compare keys directly, avoiding comparator calls
 // and repeated swaps. Keep O(n log n) sorting for large custom configurations.
-func sortEntries[K cmp.Ordered, V any](es []entry[K, V]) {
+func sortEntries[K cmp.Ordered, V any](es []entry[K, V]) { sortEntriesFrom(es, 1) }
+
+func sortEntriesFrom[K cmp.Ordered, V any](es []entry[K, V], prefix int) {
 	if len(es) > 64 {
 		slices.SortFunc(es, compareEntry[K, V])
 		return
 	}
-	for i := 1; i < len(es); i++ {
+	for i := max(1, prefix); i < len(es); i++ {
 		e := es[i]
 		j := i
 		for j > 0 && lessKey(e.key, es[j-1].key) {
@@ -341,8 +369,10 @@ func (p *bpa[K, V]) flush() {
 		p.rebuild()
 		return
 	}
-	// Route the sorted batch in one pass over the header. Search each target
-	// block only once per buffered key, when the block is already cache-hot.
+	// Route the sorted batch in one pass over the header. Search a target block
+	// only when the log might shadow existing base records. The no-shadow fact
+	// is consumed within this flush: partially copied records may then overlap
+	// the log, but the remaining log keys are distinct. Rebuild still deduplicates.
 	i := 0
 	for j, e := range log {
 		for i+1 < p.headerN && !lessKey(e.key, p.header(i+1).key) {
@@ -365,14 +395,17 @@ func (p *bpa[K, V]) flush() {
 		start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + 1
 		block := p.block(i)
 		loc := -1
-		for k := range block {
-			if equalKey(block[k].key, e.key) {
-				loc = k
-				break
+		if !p.logNoShadows {
+			for k := range block {
+				if equalKey(block[k].key, e.key) {
+					loc = k
+					break
+				}
 			}
 		}
 		if loc >= 0 {
 			if dead {
+				p.ordered[i] = min(p.ordered[i], loc)
 				block[loc] = block[len(block)-1]
 				clear(block[len(block)-1:])
 				p.counts[i]--
@@ -399,7 +432,7 @@ func (p *bpa[K, V]) flush() {
 
 func (p *bpa[K, V]) rebuild() {
 	if p.rebuildBuffer == nil {
-		p.load(p.collect())
+		p.loadContents(p.collect())
 		return
 	}
 	// Rebuilds are synchronous and have no callbacks. Leaves of a tree
@@ -409,22 +442,35 @@ func (p *bpa[K, V]) rebuild() {
 		buf = make([]entry[K, V], 0, p.capacity())
 	}
 	es := p.collectInto(buf[:0])
-	p.load(es)
+	p.loadContents(es)
 	clear(es)
 	*p.rebuildBuffer = es[:0]
 }
 
 // load redistributes sorted, unique, live entries across all available blocks.
 func (p *bpa[K, V]) load(es []entry[K, V]) {
+	clear(p.membership)
+	for _, e := range es {
+		p.remember(membershipHash(e.key))
+	}
+	p.loadContents(es)
+}
+
+// Redistribution within this leaf preserves the filter: every resulting key
+// was already represented. Split/merge loads use load to rebuild membership.
+func (p *bpa[K, V]) loadContents(es []entry[K, V]) {
 	if len(es) > p.capacity() {
 		panic("bufftree: BPA redistribution overflow")
 	}
 	clear(p.data)
 	clear(p.dead)
 	clear(p.counts)
+	clear(p.ordered)
 	clear(p.sorted)
 	p.logN, p.size, p.headerN = 0, len(es), min(len(es), p.cfg.NumBlocks)
 	p.logSorted = true
+	p.logPrefix = 0
+	p.logNoShadows = true
 	p.scanReady = false
 	p.baseSize, p.countedLog = len(es), 0
 	pos := 0
@@ -433,6 +479,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 		*p.header(i) = es[pos]
 		p.mirrorHeader(i)
 		p.counts[i] = n - 1
+		p.ordered[i] = n - 1
 		copy(p.block(i), es[pos+1:pos+n])
 		p.sorted[i] = true
 		pos += n

@@ -32,10 +32,10 @@ or rollback guarantee. Scans use one read-only transaction per scan.
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -----: | -------------: | ------------: | -------------: |
-| Get                        |  321.2 |           19.8 |         133.8 |          226.5 |
-| Put                        | 1105.4 |          167.0 |         321.4 |          648.2 |
-| Put batch (amortized)      |  711.4 |          166.4 |         312.3 |          640.7 |
-| Ordered scan               |   5.74 |  not supported |          4.75 |          17.74 |
+| Get                        |  325.1 |           20.0 |         135.1 |          206.2 |
+| Put                        |  652.7 |          164.7 |         309.7 |          628.1 |
+| Put batch (amortized)      |  268.6 |          166.4 |         303.7 |          638.8 |
+| Ordered scan               |   6.16 |  not supported |          5.02 |          18.56 |
 
 ~~~
 This compares:
@@ -46,10 +46,11 @@ d) https://github.com/glycerine/rbtree
 ~~~
 Use `make bench` to re-run on your machine.
 
-The transaction API adds synchronization, rollback journaling, and preparation
-before publication. Use the single-key and batch rows to choose a transaction
-size for your workload. Earlier unlocked measurements below are historical
-baselines, not measurements of the current API.
+The optimized 1,024-key batch takes 268.6 ns/key versus tidwall’s 303.7 ns/key
+on this workload, including rollback journaling and commit preparation. Single-key
+transactions remain slower. See [batch optimization](#batch-transaction-optimization-2026-10-09)
+for pinned confirmation, independent-key results, and the memory tradeoff. Earlier
+unlocked measurements below are historical baselines.
 
 ----------------------------
 This package provides a BP-tree with sorted key-order iteration.
@@ -191,13 +192,17 @@ the header and block form one contiguous scan run; this uses existing storage,
 not a second scan array. Header overwrites and deletion synchronize the mirror,
 including clearing deleted pointer values.
 
-`WriteTx.Put` first records the previous binding for rollback. The core write
-then buffers the new value in the log. Log entries shadow older records. A full
-log flushes into the corresponding blocks; inserts append within blocks, and
-block overflow triggers a sorted merge and redistribution.
+`WriteTx.Put` descends once. A per-leaf membership filter can prove a key absent;
+a possible match uses exact lookup. The transaction journals the old binding or
+absence before modifying storage. Existing entries are updated in place; fresh
+keys enter the insertion log with membership already counted. When all log keys
+are known not to shadow live base entries, flushing skips duplicate searches.
+Unchecked core operations conservatively disable that shortcut when necessary.
+A full log flushes into blocks; block overflow redistributes records.
 
 Publication sorts the remaining log and changed blocks without requiring a
-flush of every log. Pure forward and reverse cursors merge the log with the
+flush of every log. Sorted-prefix lengths let preparation skip already ordered
+records, inserting only the disturbed suffix into order. Pure forward and reverse cursors merge the log with the
 header/block stream, with buffered records and tombstones taking precedence.
 `Scan`, `Range`, `MapRange`, and `All` consume contiguous runs. Explicit iterators
 keep their own small cursors. Writer-side preparation and logical writes advance
@@ -281,15 +286,14 @@ make memory
 go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 ```
 
-The following table is the historical pre-transaction measurement. Run
-`make memory` to measure the current transaction implementation.
+Current `make memory` results, after the batch transaction optimization:
 
 | Container         | Heap bytes | MiB  | B/key |
 | ----------------- | ---------: | ---: | ----: |
-| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
-| bufftree.BPTree   |    2560376 | 2.44 | 25.60 |
-| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| bufftree.BPTree   |    2736576 | 2.61 | 27.37 |
 | builtin Go map    |    2364576 | 2.26 | 23.65 |
+| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
 
 It reports retained heap bytes, MiB, and bytes per key for BPTree,
 the built-in Go map, tidwall's generic Map, and rbtree. It shares the timing
@@ -300,12 +304,13 @@ the initial `runtime.MemStats.HeapAlloc` baseline and exclude discarded
 temporary allocations; they measure live Go heap, rather than process RSS or
 heap reserved by the runtime. `make memory` and `make bench` run separately,
 and the memory test never invokes `testing.Benchmark`.
-The historical table records the earlier default geometry.
-The compact layout reduced BPTree retained memory from 36.10 to 24.74 B/key
-before retuning. The fresh-put-focused defaults use 25.60 B/key on this workload,
-including the then-current metadata and tree buffers: 3.5% above the previous geometry, but 29%
-below the original layout. The longer log crosses a Go allocation-size boundary;
-record width is still 16 bytes.
+The [current memory report](benchmark-results/2026-10-09-txn-opt/memory.txt)
+measures 27.37 B/key for BP-tree, versus 25.62 B/key for the baseline transaction implementation.
+The filter and sorted-prefix metadata add about 6.8% on this load. Record width
+remains 16 bytes. The point-at-a-time memory fixture does not retain a batch
+journal; a database used for batches may additionally keep up to 4,096 cleared
+undo records (at most 96 KiB for uint64 keys and values). No old value references
+are retained in that scratch buffer.
 
 The benchmark families adapt the paper's experiments to Go:
 
@@ -554,13 +559,13 @@ cost comparisons, not equivalent concurrency guarantees.
 
 | Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -----: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |  321.2 |           19.8 |         133.8 |          226.5 |
-| Tree `Get`, miss              |  323.2 |           18.8 |         140.4 |          240.2 |
-| Tree `Put`, existing key      |  969.2 |           31.8 |         150.8 |          228.5 |
-| Tree `Put`, fresh key         | 1105.4 |          167.0 |         321.4 |          648.2 |
-| Put batch (amortized)         |  711.4 |          166.4 |         312.3 |          640.7 |
-| Ordered scan, maximum 10,000  |   5.84 |  not supported |          4.82 |          17.22 |
-| Ordered scan, maximum 100,000 |   5.74 |  not supported |          4.75 |          17.74 |
+| Tree `Get`, hit               |  325.1 |           20.0 |         135.1 |          206.2 |
+| Tree `Get`, miss              |  358.5 |           19.1 |         135.5 |          250.0 |
+| Tree `Put`, existing key      |  402.6 |           32.5 |         144.6 |          227.1 |
+| Tree `Put`, fresh key         |  652.7 |          164.7 |         309.7 |          628.1 |
+| Put batch (amortized)         |  268.6 |          166.4 |         303.7 |          638.8 |
+| Ordered scan, maximum 10,000  |   6.23 |  not supported |          5.10 |          18.01 |
+| Ordered scan, maximum 100,000 |   6.16 |  not supported |          5.02 |          18.56 |
 
 Fresh inserts use the same unique odd keys against an initially even-key
 65,536-entry fixture. Every container grows to 131,072 entries, then reloads
@@ -574,7 +579,7 @@ and stop at the tree's end. No full result is copied before callbacks. Earlier
 unlocked README tables are preserved in
 [previous-readme-tables.md](benchmark-results/2026-10-09-txn/previous-readme-tables.md).
 The current tables come from
-[readme.txt](benchmark-results/2026-10-09-txn/readme.txt).
+[readme.txt](benchmark-results/2026-10-09-txn-opt/readme.txt).
 
 Additional transaction benchmarks cover batched reads/writes, reverse traversal,
 concurrent read scans, deleting scans with rollback, and isolated commit
@@ -588,6 +593,48 @@ The isolated commit benchmark excludes preceding mutations; the end-to-end Put
 rows include them. `B/op` in a batch benchmark is per batch, while `put_ns/key`
 is per inserted key. These single-thread comparison workloads do not measure
 lock acquisition contention or promise bounded writer latency.
+
+## Batch transaction optimization (2026-10-09)
+
+Profiling the complete 1,024-key transaction identified repeated routing and
+membership searches, journal growth, and sorting already ordered prefixes.
+The implementation now:
+
+* Reuses one descent and lookup for undo, mutation, and exact membership counts.
+* Updates existing bindings in place and avoids duplicate searches when flushing
+  a log proven not to shadow live base entries.
+* Uses a blocked membership filter to reject absent keys without exact searching.
+  Possible matches still take the exact path. NaNs are normalized before hashing;
+  named types and signed zeros retain the BP-tree's equality semantics.
+* Keeps sorted-prefix lengths for the log and blocks, so publication repairs only
+  disturbed suffixes.
+* Stores compact chronological undo records, separates `Clear` images, and reuses
+  bounded, cleared journal storage. Rollback and publication guarantees remain.
+
+Five CPU-6 runs, one execution thread, each timing 2,097,152 inserts in complete
+1,024-key transactions, gave these medians:
+
+| Fresh-key workload | BP-tree ns/key | tidwall ns/key |
+| --- | ---: | ---: |
+| Adjacent to initially loaded keys | 136.9 | 149.9 |
+| Independent scrambled keys | 151.5 | 152.8 |
+
+The original transaction implementation took 352.9 ns/key on the pinned adjacent
+trace. The optimized version takes about 61% less time. It is about 9% below
+tidwall on that trace; the independent-key result is effectively a tie. The
+unpinned `make bench` batch row is about 12% below tidwall. These runs still use
+the original geometry: fanout 256, log 42, 32 blocks of size 34. The gains come
+from implementation changes, not a change to batch size or removal of rollback.
+
+Sorting remains writer work, before publication. The filter never permits a
+probabilistic answer: a false positive costs an exact search, and tests exercise
+forced collisions, equivalent float keys, structural changes, and rollback.
+The abstract negative-filter implication is also checked in `txn.lean`; concrete
+hash/layout correctness is tested in Go.
+
+See [the profiling and validation report](benchmark-results/2026-10-09-txn-opt/summary.md)
+for commands, successive measurements, profiles, and limitations. Pinned and
+unpinned measurements must be compared within their own runs.
 
 ## notes on concurrency
 

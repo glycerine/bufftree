@@ -1,0 +1,109 @@
+File: bufftree-batch-before.test
+Build ID: e639ca0b7fbc168c3049da1388fe0502e54ae346
+Type: cpu
+Time: 2026-10-09 14:43:58 CDT
+Duration: 6.58s, Total samples = 1.43s (21.73%)
+Active filters:
+   tagfocus=container=^Tree$
+Showing nodes accounting for 1.43s, 100% of 1.43s total
+      flat  flat%   sum%        cum   cum%
+     0.23s 16.08% 16.08%      0.23s 16.08%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).findLeaf
+     0.19s 13.29% 29.37%      0.24s 16.78%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).partition (inline)
+     0.16s 11.19% 40.56%      0.19s 13.29%  github.com/glycerine/bufftree.sortEntries[go.shape.uint64,go.shape.uint64]
+     0.14s  9.79% 50.35%      0.14s  9.79%  github.com/glycerine/bufftree.equalKey[go.shape.uint64] (inline)
+     0.06s  4.20% 54.55%      0.97s 67.83%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).Put
+     0.05s  3.50% 58.04%      0.05s  3.50%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).header (inline)
+     0.05s  3.50% 61.54%      0.23s 16.08%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).location
+     0.05s  3.50% 65.03%      0.42s 29.37%  github.com/glycerine/bufftree.(*txState[go.shape.uint64,go.shape.uint64]).preimage
+     0.04s  2.80% 67.83%      0.40s 27.97%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).baseLocation
+     0.04s  2.80% 70.63%      0.04s  2.80%  runtime.memmove
+     0.03s  2.10% 72.73%      0.39s 27.27%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).prepareRead
+     0.03s  2.10% 74.83%      0.25s 17.48%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).resolveSize
+     0.03s  2.10% 76.92%      0.20s 13.99%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).trySet
+     0.03s  2.10% 79.02%      0.03s  2.10%  github.com/glycerine/bufftree.lessKey[go.shape.uint64] (inline)
+     0.03s  2.10% 81.12%      0.03s  2.10%  runtime.memclrNoHeapPointers
+     0.02s  1.40% 82.52%      0.02s  1.40%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).block (inline)
+     0.02s  1.40% 83.92%      0.02s  1.40%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).capacity (inline)
+     0.02s  1.40% 85.31%      0.36s 25.17%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).Put
+     0.01s   0.7% 86.01%      0.14s  9.79%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).appendLog
+     0.01s   0.7% 86.71%      0.04s  2.80%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).collectInto
+     0.01s   0.7% 87.41%      0.15s 10.49%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+     0.01s   0.7% 88.11%      0.01s   0.7%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).isDead (inline)
+     0.01s   0.7% 88.81%      0.01s   0.7%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).load
+     0.01s   0.7% 89.51%      0.14s  9.79%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortBlock
+     0.01s   0.7% 90.21%      0.01s   0.7%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).discardPreparation (inline)
+     0.01s   0.7% 90.91%      0.01s   0.7%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).markDirty (inline)
+     0.01s   0.7% 91.61%      0.01s   0.7%  github.com/glycerine/bufftree.(*txState[go.shape.uint64,go.shape.uint64]).check (inline)
+     0.01s   0.7% 92.31%      0.01s   0.7%  github.com/glycerine/bufftree.(*txState[go.shape.uint64,go.shape.uint64]).invalidate (inline)
+     0.01s   0.7% 93.01%      0.98s 68.53%  github.com/glycerine/bufftree/bench.(*benchTree).PutBatch.func1
+     0.01s   0.7% 93.71%      0.01s   0.7%  runtime.(*lfstack).pop
+     0.01s   0.7% 94.41%      0.01s   0.7%  runtime.(*sweepLocked).sweep
+     0.01s   0.7% 95.10%      0.01s   0.7%  runtime.(*unwinder).resolveInternal
+     0.01s   0.7% 95.80%      0.01s   0.7%  runtime.asyncPreempt
+     0.01s   0.7% 96.50%      0.01s   0.7%  runtime.bulkBarrierPreWrite
+     0.01s   0.7% 97.20%      0.01s   0.7%  runtime.findBitRange64 (inline)
+     0.01s   0.7% 97.90%      0.01s   0.7%  runtime.scanObjectsSmall
+     0.01s   0.7% 98.60%      0.01s   0.7%  runtime.sweepone
+     0.01s   0.7% 99.30%      0.01s   0.7%  runtime.tryDeferToSpanScan
+     0.01s   0.7%   100%      0.01s   0.7%  runtime.typePointers.nextFast (inline)
+         0     0%   100%      0.01s   0.7%  gcWriteBarrier
+         0     0%   100%      1.43s   100%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Update
+         0     0%   100%      0.45s 31.47%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).Commit (inline)
+         0     0%   100%      0.45s 31.47%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).finish
+         0     0%   100%      0.04s  2.80%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).rebuild
+         0     0%   100%      0.28s 19.58%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortLog
+         0     0%   100%      0.04s  2.80%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).Len (inline)
+         0     0%   100%      0.44s 30.77%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).publish
+         0     0%   100%      0.04s  2.80%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).reconcile
+         0     0%   100%      0.02s  1.40%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).splitLeaf
+         0     0%   100%      0.01s   0.7%  github.com/glycerine/bufftree.newBPA[go.shape.uint64,go.shape.uint64]
+         0     0%   100%      1.43s   100%  github.com/glycerine/bufftree/bench.(*benchTree).PutBatch
+         0     0%   100%      1.43s   100%  github.com/glycerine/bufftree/bench.benchmarkFreshPutBatch
+         0     0%   100%      1.43s   100%  github.com/glycerine/bufftree/bench.comparisonPointCases.func3
+         0     0%   100%      1.43s   100%  github.com/glycerine/bufftree/bench.putComparisonBatch
+         0     0%   100%      0.01s   0.7%  runtime.(*mcache).allocLarge
+         0     0%   100%      0.03s  2.10%  runtime.(*mcache).nextFree
+         0     0%   100%      0.03s  2.10%  runtime.(*mcache).refill
+         0     0%   100%      0.02s  1.40%  runtime.(*mcentral).cacheSpan
+         0     0%   100%      0.01s   0.7%  runtime.(*mcentral).grow
+         0     0%   100%      0.01s   0.7%  runtime.(*mcentral).uncacheSpan
+         0     0%   100%      0.02s  1.40%  runtime.(*mheap).alloc
+         0     0%   100%      0.02s  1.40%  runtime.(*mheap).alloc.func1
+         0     0%   100%      0.01s   0.7%  runtime.(*mheap).allocSpan
+         0     0%   100%      0.01s   0.7%  runtime.(*mheap).reclaim
+         0     0%   100%      0.01s   0.7%  runtime.(*mheap).reclaimChunk
+         0     0%   100%      0.01s   0.7%  runtime.(*pageAlloc).alloc
+         0     0%   100%      0.01s   0.7%  runtime.(*pallocBits).find
+         0     0%   100%      0.01s   0.7%  runtime.(*pallocBits).findSmallN
+         0     0%   100%      0.01s   0.7%  runtime.(*spanSet).push
+         0     0%   100%      0.01s   0.7%  runtime.(*spanSetBlockAlloc).alloc
+         0     0%   100%      0.01s   0.7%  runtime.(*unwinder).next
+         0     0%   100%      0.01s   0.7%  runtime.callers
+         0     0%   100%      0.01s   0.7%  runtime.callers.func1
+         0     0%   100%      0.02s  1.40%  runtime.deductAssistCredit
+         0     0%   100%      0.01s   0.7%  runtime.deductSweepCredit
+         0     0%   100%      0.02s  1.40%  runtime.gcAssistAlloc
+         0     0%   100%      0.02s  1.40%  runtime.gcAssistAlloc.func2
+         0     0%   100%      0.02s  1.40%  runtime.gcAssistAlloc1
+         0     0%   100%      0.02s  1.40%  runtime.gcDrainN
+         0     0%   100%      0.10s  6.99%  runtime.growslice
+         0     0%   100%      0.01s   0.7%  runtime.mProf_Malloc
+         0     0%   100%      0.01s   0.7%  runtime.makeslice
+         0     0%   100%      0.09s  6.29%  runtime.mallocgc
+         0     0%   100%      0.03s  2.10%  runtime.mallocgcLarge
+         0     0%   100%      0.03s  2.10%  runtime.mallocgcSmallScanHeader
+         0     0%   100%      0.01s   0.7%  runtime.mallocgcSmallScanNoHeader
+         0     0%   100%      0.01s   0.7%  runtime.memclrHasPointers
+         0     0%   100%      0.02s  1.40%  runtime.memclrNoHeapPointersChunked
+         0     0%   100%      0.01s   0.7%  runtime.profilealloc
+         0     0%   100%      0.01s   0.7%  runtime.scanObject
+         0     0%   100%      0.01s   0.7%  runtime.scanSpan
+         0     0%   100%      0.06s  4.20%  runtime.systemstack
+         0     0%   100%      0.01s   0.7%  runtime.tracebackPCs
+         0     0%   100%      0.01s   0.7%  runtime.typePointers.next
+         0     0%   100%      0.01s   0.7%  runtime.wbBufFlush
+         0     0%   100%      0.01s   0.7%  runtime.wbBufFlush.func1
+         0     0%   100%      0.01s   0.7%  runtime.wbBufFlush1
+         0     0%   100%      0.01s   0.7%  runtime.wbMove
+         0     0%   100%      1.43s   100%  testing.(*B).launch
+         0     0%   100%      1.43s   100%  testing.(*B).runN

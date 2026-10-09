@@ -326,3 +326,38 @@ The public API, rollback, preparation, and resource semantics above are implemen
 above, with no `sorry` or custom axioms; it is not a proof of the compiled Go code.
 Prepared-state assertions belong at commit/rollback publication, not after each
 individual write in an open batch.
+
+## 12. Implemented batch optimizations
+
+The public API and transaction semantics above remain unchanged. The writer's
+required preimage lookup now also determines membership and supplies the leaf
+for mutation, avoiding repeated descent. Existing bindings update in place;
+new bindings enter a counted log. A conservative `logNoShadows` flag allows a
+flush to skip block duplicate searches only when no log key shadows a live
+base record. Unchecked core appends clear that fact when necessary.
+
+A per-leaf blocked membership filter is an exact-lookup shortcut, never an
+approximate public answer. Every insertion records its key; loads across leaves
+rebuild the filter, while redistribution within a leaf preserves its superset.
+Deleting keys need not clear bits. The filter uses `maphash.Comparable` with an
+immutable process-local seed and a fixed hash for every NaN. This preserves
+comparator equivalence, including named types and signed zeros. A negative probe
+can bypass the exact lookup; a positive probe cannot establish presence. Tests
+force collisions and check membership across splits, merges, and rollback.
+
+Sorted-prefix metadata identifies the part of each log/block that still needs
+insertion sorting. Deletion shortens the prefix when it swaps a final record
+into an earlier position. Publication still leaves complete streams sorted.
+Read transactions never update the filter, prefixes, or any shared bookkeeping.
+
+Undo records store one key (the prior representative if present, the requested
+key otherwise), the prior value, and an action tag. Clear images live in a
+separate chronological stack; reverse replay consumes one image per Clear tag.
+This preserves reverse journal semantics while making scalar undo records
+pointer-free. After terminal replay/publication, clear all journal references,
+including the inline first record. Reuse only cleared dynamically allocated
+storage with capacity at most 4,096 records; never reuse transaction handles.
+
+See `benchmark-results/2026-10-09-txn-opt/summary.md` for measured speed/memory
+tradeoffs. This is an implementation refinement of the transaction protocol,
+not a replacement for the concrete refinement obligations listed above.

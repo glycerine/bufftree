@@ -213,6 +213,45 @@ theorem rollback_restores {α : Type} (edits : List (Edit α)) (s : α) :
     rw [replay_append, ih]
     exact e.restores s
 
+-- The membership filter is only a negative lookup shortcut. Collisions may
+-- cause extra exact searches; they may never suppress a present key. This is
+-- an abstract bit-set invariant, not a verification of maphash or its layout.
+namespace Membership
+abbrev Bits := Nat → Bool
+variable {K : Type}
+
+def Sound (positions : K → Nat × Nat) (live : K → Prop) (bits : Bits) : Prop :=
+  ∀ k, live k → bits (positions k).1 = true ∧ bits (positions k).2 = true
+
+def maybePresent (positions : K → Nat × Nat) (bits : Bits) (k : K) : Bool :=
+  bits (positions k).1 && bits (positions k).2
+
+def remember (positions : K → Nat × Nat) (bits : Bits) (k : K) : Bits :=
+  fun i => bits i || i == (positions k).1 || i == (positions k).2
+
+theorem negative_is_absent (positions : K → Nat × Nat) (live : K → Prop)
+    (bits : Bits) (sound : Sound positions live bits) (k : K)
+    (negative : maybePresent positions bits k = false) : ¬ live k := by
+  intro present
+  have h := sound k present
+  simp [maybePresent, h.1, h.2] at negative
+
+theorem insert_preserves_sound (positions : K → Nat × Nat) (live : K → Prop)
+    (bits : Bits) (sound : Sound positions live bits) (k : K) :
+    Sound positions (fun q => q = k ∨ live q) (remember positions bits k) := by
+  intro q h
+  rcases h with rfl | present
+  · simp [remember]
+  · have h := sound q present
+    simp [remember, h.1, h.2]
+
+theorem deletion_preserves_sound (positions : K → Nat × Nat)
+    (before after : K → Prop) (bits : Bits) (sound : Sound positions before bits)
+    (subset : ∀ k, after k → before k) : Sound positions after bits := by
+  intro k h
+  exact sound k (subset k h)
+end Membership
+
 -- Conditional lock admission is explicit, without asserting strict FIFO.
 def AdmissionProgress (pending admitted : Nat → Prop) : Prop :=
   ∀ n, pending n → ∃ m, n ≤ m ∧ admitted m
@@ -221,6 +260,8 @@ theorem pending_eventually_admitted (pending admitted : Nat → Prop)
     (progress : AdmissionProgress pending admitted) (n : Nat) (h : pending n) :
     ∃ m, n ≤ m ∧ admitted m := progress n h
 
+#print axioms Membership.negative_is_absent
+#print axioms Membership.insert_preserves_sound
 #print axioms reachable_safe
 #print axioms preserves_safe
 #print axioms whole_span_stable

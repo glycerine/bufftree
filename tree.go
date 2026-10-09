@@ -137,6 +137,11 @@ func (t *treeCore[K, V]) Put(k K, v V) {
 		}
 	}
 	n := t.findLeaf(k)
+	t.putAt(n, k, v)
+}
+
+// putAt reuses a descent already performed by a transaction's undo lookup.
+func (t *treeCore[K, V]) putAt(n *node[K, V], k K, v V) {
 	t.markDirty(n.leaf)
 	if !n.leaf.trySet(k, v) {
 		// Buffered duplicates can overestimate occupancy by at most logN.

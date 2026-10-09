@@ -1,0 +1,9 @@
+'Transactions.Membership.negative_is_absent' depends on axioms: [propext]
+'Transactions.Membership.insert_preserves_sound' depends on axioms: [propext, Classical.choice, Quot.sound]
+'Transactions.reachable_safe' depends on axioms: [propext]
+'Transactions.preserves_safe' depends on axioms: [propext]
+'Transactions.whole_span_stable' depends on axioms: [propext, Quot.sound]
+'Transactions.methods_preserve_ownership' does not depend on any axioms
+'Transactions.no_internal_wait_cycle' depends on axioms: [propext]
+'Transactions.terminal_idempotent' depends on axioms: [propext]
+'Transactions.rollback_restores' depends on axioms: [propext, Quot.sound]

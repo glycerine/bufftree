@@ -15,8 +15,9 @@ var (
 // Tree owns an in-memory BP-tree. All access goes through a transaction.
 // Do not copy a Tree after first use. Its zero value is an empty database.
 type Tree[K cmp.Ordered, V any] struct {
-	mu   sync.RWMutex
-	core treeCore[K, V]
+	mu         sync.RWMutex
+	core       treeCore[K, V]
+	undoBuffer []undoRecord[K, V]
 }
 
 // NewBPTree copies and validates cfg. Nil and zero fields select defaults.
@@ -53,14 +54,25 @@ type txState[K cmp.Ordered, V any] struct {
 	iters                  map[*Iter[K, V]]struct{}
 	results                map[*KVcloser[K, V]]struct{}
 	undo                   []undoRecord[K, V]
+	clears                 [][]entry[K, V]
 }
 type epochWrap struct{ marker byte }
 
+type undoKind uint8
+
+const (
+	undoAbsent undoKind = iota
+	undoPresent
+	undoClear
+)
+
+// key is the previous stored representative when present, otherwise the input
+// key. Both identify the same comparator equivalence class during undo.
+// Clear images live separately so ordinary scalar journals contain no pointers.
 type undoRecord[K cmp.Ordered, V any] struct {
-	key            K
-	old            entry[K, V]
-	present, clear bool
-	image          []entry[K, V]
+	key   K
+	value V
+	kind  undoKind
 }
 
 // BeginView acquires shared access. Never begin a nested transaction on the
@@ -79,7 +91,11 @@ func (db *Tree[K, V]) BeginUpdate() (*WriteTx[K, V], error) {
 	tx := &WriteTx[K, V]{}
 	tx.s = &tx.state
 	tx.s.db, tx.s.write = db, true
-	tx.s.undo = tx.firstUndo[:0]
+	tx.s.undo = db.undoBuffer
+	db.undoBuffer = nil
+	if tx.s.undo == nil {
+		tx.s.undo = tx.firstUndo[:0]
+	}
 	return tx, nil
 }
 
@@ -137,23 +153,34 @@ func (tx *WriteTx[K, V]) finish(rollback bool) error {
 	if rollback {
 		for i := len(s.undo) - 1; i >= 0; i-- {
 			u := s.undo[i]
-			if u.clear {
+			if u.kind == undoClear {
+				last := len(s.clears) - 1
+				image := s.clears[last]
+				s.clears[last] = nil
+				s.clears = s.clears[:last]
 				c.Clear()
-				for _, e := range u.image {
+				for _, e := range image {
 					c.Put(e.key, e.value)
 				}
 			} else {
 				c.Del(u.key)
-				if u.present {
-					c.Put(u.old.key, u.old.value)
-					c.restoreKey(u.old.key)
+				if u.kind == undoPresent {
+					c.Put(u.key, u.value)
+					c.restoreKey(u.key)
 				}
 			}
 		}
 	}
 	c.publish()
 	clear(s.undo)
+	clear(tx.firstUndo[:])
+	// Retain bounded, cleared scratch, never a live transaction or its inline slot.
+	if cap(s.undo) > 1 && cap(s.undo) <= 4096 {
+		s.db.undoBuffer = s.undo[:0]
+	}
 	s.undo = nil
+	clear(s.clears)
+	s.clears = nil
 	s.closed = true
 	if !s.managed {
 		s.db.mu.Unlock()
@@ -243,19 +270,75 @@ func (s *txState[K, V]) preimage(key K) undoRecord[K, V] {
 	if n := s.db.core.findLeaf(key); n != nil {
 		p := n.leaf
 		if i := p.location(key); i >= 0 && !p.isDead(i) {
-			u.old = p.data[i]
-			u.present = true
+			u.key, u.value, u.kind = p.data[i].key, p.data[i].value, undoPresent
 		}
 	}
 	return u
 }
 func (tx *WriteTx[K, V]) Put(key K, value V) error {
-	if err := tx.s.check(); err != nil {
+	s := tx.s
+	if err := s.check(); err != nil {
 		return err
 	}
-	tx.s.undo = append(tx.s.undo, tx.s.preimage(key))
-	tx.s.invalidate()
-	tx.s.db.core.Put(key, value)
+	c := &s.db.core
+	n := c.findLeaf(key)
+	if n == nil {
+		s.undo = append(s.undo, undoRecord[K, V]{key: key})
+		s.invalidate()
+		c.Put(key, value)
+		return nil
+	}
+	p := n.leaf
+	hash := membershipHash(key)
+	loc := -1
+	if p.mayContain(hash) {
+		loc = p.location(key)
+	}
+	u := undoRecord[K, V]{key: key}
+	if loc >= 0 && !p.isDead(loc) {
+		e := p.data[loc]
+		u = undoRecord[K, V]{key: e.key, value: e.value, kind: undoPresent}
+	}
+	// Journal before mutation. The same search supplies both undo and membership.
+	s.undo = append(s.undo, u)
+	s.invalidate()
+	if u.kind == undoPresent {
+		p.updateValue(loc, value)
+		c.version++
+		return nil
+	}
+	// Raw split/rollback helpers may leave a count prefix pending. Ordinary
+	// transaction inserts below keep it exact, avoiding publication re-searches.
+	if p.countedLog != p.logN {
+		p.resolveSize()
+	}
+	if p.size >= p.capacity() {
+		c.putAt(n, key, value)
+		return nil
+	}
+	c.markDirty(p)
+	p.remember(hash)
+	p.size++
+	if loc >= 0 && loc < p.cfg.LogSize { // resurrect an already-counted tombstone
+		p.data[loc].value = value
+		p.setDead(loc, false)
+	} else {
+		if p.logSorted {
+			p.logPrefix = p.logN
+		}
+		p.data[p.logN] = entry[K, V]{key: key, value: value}
+		p.logN++
+		p.countedLog = p.logN
+		p.logSorted = false
+		if p.logN == p.cfg.LogSize {
+			p.flush()
+		}
+	}
+	if lessKey(key, n.min) {
+		n.min = key
+		refreshUp(n.parent)
+	}
+	c.version++
 	return nil
 }
 func (tx *WriteTx[K, V]) Delete(key K) error {
@@ -263,7 +346,7 @@ func (tx *WriteTx[K, V]) Delete(key K) error {
 		return err
 	}
 	u := tx.s.preimage(key)
-	if !u.present {
+	if u.kind != undoPresent {
 		return nil
 	}
 	tx.s.undo = append(tx.s.undo, u)
@@ -276,13 +359,14 @@ func (tx *WriteTx[K, V]) Clear() (bool, error) {
 	if err := tx.s.check(); err != nil {
 		return false, err
 	}
-	u := undoRecord[K, V]{clear: true}
+	var image []entry[K, V]
 	it := tx.NewIter()
 	for it.SeekFirst(); it.Valid(); it.Next() {
-		u.image = append(u.image, entry[K, V]{it.Key(), it.Value()})
+		image = append(image, entry[K, V]{it.Key(), it.Value()})
 	}
 	it.Close()
-	tx.s.undo = append(tx.s.undo, u)
+	tx.s.clears = append(tx.s.clears, image)
+	tx.s.undo = append(tx.s.undo, undoRecord[K, V]{kind: undoClear})
 	tx.s.invalidate()
 	tx.s.db.core.Clear()
 	return true, nil

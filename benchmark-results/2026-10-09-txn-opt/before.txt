@@ -1,0 +1,20 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    361389 ns/op	      1024 keys/op	       352.9 put_ns/key	  144068 B/op	      17 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    357448 ns/op	      1024 keys/op	       349.1 put_ns/key	  144068 B/op	      17 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    362723 ns/op	      1024 keys/op	       354.2 put_ns/key	  144068 B/op	      17 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    359928 ns/op	      1024 keys/op	       351.5 put_ns/key	  144068 B/op	      17 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    362885 ns/op	      1024 keys/op	       354.4 put_ns/key	  144068 B/op	      17 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    153795 ns/op	      1024 keys/op	       150.2 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    153463 ns/op	      1024 keys/op	       149.9 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    156204 ns/op	      1024 keys/op	       152.5 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    155614 ns/op	      1024 keys/op	       152.0 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    154702 ns/op	      1024 keys/op	       151.1 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/RBTree/FreshPutBatch       	    1024	    305005 ns/op	      1024 keys/op	       297.9 put_ns/key	   65536 B/op	    2048 allocs/op
+BenchmarkComparePoints/RBTree/FreshPutBatch       	    1024	    331613 ns/op	      1024 keys/op	       323.8 put_ns/key	   65536 B/op	    2048 allocs/op
+BenchmarkComparePoints/RBTree/FreshPutBatch       	    1024	    357313 ns/op	      1024 keys/op	       348.9 put_ns/key	   65536 B/op	    2048 allocs/op
+BenchmarkComparePoints/RBTree/FreshPutBatch       	    1024	    360988 ns/op	      1024 keys/op	       352.5 put_ns/key	   65536 B/op	    2048 allocs/op
+BenchmarkComparePoints/RBTree/FreshPutBatch       	    1024	    346485 ns/op	      1024 keys/op	       338.4 put_ns/key	   65536 B/op	    2048 allocs/op
+PASS

@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    152327 ns/op	      1024 keys/op	       148.8 put_ns/key	   24059 B/op	       8 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    153593 ns/op	      1024 keys/op	       150.0 put_ns/key	   24059 B/op	       8 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    149003 ns/op	      1024 keys/op	       145.5 put_ns/key	   24059 B/op	       8 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    151163 ns/op	      1024 keys/op	       147.6 put_ns/key	   24059 B/op	       8 allocs/op
+BenchmarkComparePoints/Tree/FreshPutBatch         	    1024	    152264 ns/op	      1024 keys/op	       148.7 put_ns/key	   24059 B/op	       8 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    156052 ns/op	      1024 keys/op	       152.4 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    154631 ns/op	      1024 keys/op	       151.0 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    156078 ns/op	      1024 keys/op	       152.4 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    154169 ns/op	      1024 keys/op	       150.6 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPutBatch      	    1024	    153418 ns/op	      1024 keys/op	       149.8 put_ns/key	   46958 B/op	      68 allocs/op
+PASS

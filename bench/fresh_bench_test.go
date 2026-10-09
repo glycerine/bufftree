@@ -193,6 +193,10 @@ func putComparisonBatch(idx benchUint64Points, keys []uint64, offset uint64) {
 }
 func benchmarkFreshPutBatch(b *testing.B, layout benchPointLayout, n int, keys []uint64) {
 	idx := loadComparisonPoints(layout, n)
+	background := context.Background()
+	inserting := pprof.WithLabels(background, pprof.Labels("phase", "batch-put", "container", layout.name))
+	pprof.SetGoroutineLabels(inserting)
+	defer pprof.SetGoroutineLabels(background)
 	inserted := 0
 	var total uint64
 	b.ReportAllocs()
@@ -200,8 +204,10 @@ func benchmarkFreshPutBatch(b *testing.B, layout benchPointLayout, n int, keys [
 	for i := 0; i < b.N; i++ {
 		if inserted == n {
 			b.StopTimer()
+			pprof.SetGoroutineLabels(background)
 			idx = loadComparisonPoints(layout, n)
 			inserted = 0
+			pprof.SetGoroutineLabels(inserting)
 			b.StartTimer()
 		}
 		count := min(freshPutBatchSize, n-inserted)

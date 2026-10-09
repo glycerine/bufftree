@@ -1,0 +1,40 @@
+File: bufftree-batch-final.test
+Build ID: 786603a5640d91f6dbafae6b90c9536e3e3b0198
+Type: cpu
+Time: 2026-10-09 14:55:09 CDT
+Duration: 3.92s, Total samples = 1.08s (27.58%)
+Active filters:
+   tagfocus=container=^Tree$
+Showing nodes accounting for 1.08s, 100% of 1.08s total
+Showing top 30 nodes out of 66
+      flat  flat%   sum%        cum   cum%
+     0.31s 28.70% 28.70%      0.31s 28.70%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).findLeaf
+     0.22s 20.37% 49.07%      0.27s 25.00%  github.com/glycerine/bufftree.sortEntriesFrom[go.shape.uint64,go.shape.uint64]
+     0.07s  6.48% 55.56%      0.19s 17.59%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortBlock
+     0.07s  6.48% 62.04%      0.07s  6.48%  github.com/glycerine/bufftree.lessKey[go.shape.uint64] (inline)
+     0.04s  3.70% 65.74%      0.05s  4.63%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).mayContain (inline)
+     0.03s  2.78% 68.52%      0.20s 18.52%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+     0.03s  2.78% 71.30%      0.03s  2.78%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).isDead (inline)
+     0.03s  2.78% 74.07%      0.03s  2.78%  github.com/glycerine/bufftree.lower[go.shape.uint64,go.shape.uint64]
+     0.03s  2.78% 76.85%      0.03s  2.78%  runtime.memclrNoHeapPointers
+     0.02s  1.85% 78.70%      0.74s 68.52%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).Put
+     0.02s  1.85% 80.56%      0.06s  5.56%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).collectInto
+     0.02s  1.85% 82.41%      0.02s  1.85%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).header (inline)
+     0.02s  1.85% 84.26%      0.02s  1.85%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).partition (inline)
+     0.02s  1.85% 86.11%      0.32s 29.63%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).prepareRead
+     0.02s  1.85% 87.96%      0.02s  1.85%  github.com/glycerine/bufftree.filterMask (inline)
+     0.02s  1.85% 89.81%      0.04s  3.70%  github.com/glycerine/bufftree.membershipHash[go.shape.uint64]
+     0.02s  1.85% 91.67%      0.02s  1.85%  hash/maphash.comparableHash[go.shape.uint64]
+     0.02s  1.85% 93.52%      0.02s  1.85%  runtime.tryDeferToSpanScan
+     0.01s  0.93% 94.44%      0.01s  0.93%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).block (inline)
+     0.01s  0.93% 95.37%      0.02s  1.85%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).remember (inline)
+     0.01s  0.93% 96.30%      0.02s  1.85%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).resolveSize
+     0.01s  0.93% 97.22%      0.01s  0.93%  github.com/glycerine/bufftree.(*treeCore[go.shape.uint64,go.shape.uint64]).discardPreparation (inline)
+     0.01s  0.93% 98.15%      0.01s  0.93%  runtime.cheaprand (inline)
+     0.01s  0.93% 99.07%      0.01s  0.93%  runtime.memmove
+     0.01s  0.93%   100%      0.01s  0.93%  runtime.typePointers.next
+         0     0%   100%      0.02s  1.85%  gcWriteBarrier
+         0     0%   100%      1.08s   100%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Update
+         0     0%   100%      0.34s 31.48%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).Commit (inline)
+         0     0%   100%      0.34s 31.48%  github.com/glycerine/bufftree.(*WriteTx[go.shape.uint64,go.shape.uint64]).finish
+         0     0%   100%      0.03s  2.78%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).baseLocation

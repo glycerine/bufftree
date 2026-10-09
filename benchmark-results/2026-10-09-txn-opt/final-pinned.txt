@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTxnBatchDistribution/Adjacent/Tree         	    2048	    140357 ns/op	      1024 keys/op	       137.1 put_ns/key	   24093 B/op	       8 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tree         	    2048	    140604 ns/op	      1024 keys/op	       137.3 put_ns/key	   24093 B/op	       8 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tree         	    2048	    140230 ns/op	      1024 keys/op	       136.9 put_ns/key	   24093 B/op	       8 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tree         	    2048	    139883 ns/op	      1024 keys/op	       136.6 put_ns/key	   24093 B/op	       8 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tree         	    2048	    139898 ns/op	      1024 keys/op	       136.6 put_ns/key	   24093 B/op	       8 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tidwall      	    2048	    153351 ns/op	      1024 keys/op	       149.8 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tidwall      	    2048	    153545 ns/op	      1024 keys/op	       149.9 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tidwall      	    2048	    153509 ns/op	      1024 keys/op	       149.9 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tidwall      	    2048	    154440 ns/op	      1024 keys/op	       150.8 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkTxnBatchDistribution/Adjacent/Tidwall      	    2048	    154092 ns/op	      1024 keys/op	       150.5 put_ns/key	   46958 B/op	      68 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tree      	    2048	    155061 ns/op	      1024 keys/op	       151.4 put_ns/key	   26434 B/op	       9 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tree      	    2048	    155172 ns/op	      1024 keys/op	       151.5 put_ns/key	   26434 B/op	       9 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tree      	    2048	    155189 ns/op	      1024 keys/op	       151.6 put_ns/key	   26434 B/op	       9 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tree      	    2048	    154752 ns/op	      1024 keys/op	       151.1 put_ns/key	   26434 B/op	       9 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tree      	    2048	    155686 ns/op	      1024 keys/op	       152.0 put_ns/key	   26434 B/op	       9 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tidwall   	    2048	    157231 ns/op	      1024 keys/op	       153.5 put_ns/key	   48412 B/op	      70 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tidwall   	    2048	    156792 ns/op	      1024 keys/op	       153.1 put_ns/key	   48412 B/op	      70 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tidwall   	    2048	    156505 ns/op	      1024 keys/op	       152.8 put_ns/key	   48412 B/op	      70 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tidwall   	    2048	    155409 ns/op	      1024 keys/op	       151.8 put_ns/key	   48412 B/op	      70 allocs/op
+BenchmarkTxnBatchDistribution/Independent/Tidwall   	    2048	    155856 ns/op	      1024 keys/op	       152.2 put_ns/key	   48412 B/op	      70 allocs/op
+PASS
