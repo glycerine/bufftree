@@ -37,10 +37,8 @@ func TestQueriesDoNotAllocate(t *testing.T) {
 
 func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
 	tr := NewBPTree[int, int](&cfg)
-	d := NewDict[int, int](&cfg)
 	for i := 0; i < 4096; i++ {
 		tr.Put(i, i)
-		d.Put(i, i)
 	}
 	sum := 0
 	visit := func(k, v int) bool { sum += v; return true }
@@ -56,14 +54,6 @@ func testQueriesDoNotAllocate(t *testing.T, cfg Config) {
 		{"Tree/MapRange", func() { tr.MapRange(35, 4000, visit) }},
 		{"Tree/All", func() {
 			for _, v := range tr.All() {
-				sum += v
-			}
-		}},
-		{"Dict/GetHit", func() { sum += d.Get(55) }},
-		{"Dict/GetMiss", func() { sum += d.Get(-1) }},
-		{"Dict/Get2", func() { v, _ := d.Get2(55); sum += v }},
-		{"Dict/All", func() {
-			for _, v := range d.All() {
 				sum += v
 			}
 		}},
@@ -188,32 +178,26 @@ func TestScanMutationWithinBlock(t *testing.T) {
 	}
 }
 
-func TestDelOnContainersAndIterators(t *testing.T) {
+func TestDelOnTreeAndIterator(t *testing.T) {
 	tr := NewBPTree[int, string](nil)
-	d := NewDict[int, string](nil)
 	tr.Put(1, "one")
-	d.Put(1, "one")
-	tit, dit := tr.Iter(), d.Iter()
+	tit := tr.Iter()
 	tit.Del()
-	dit.Del()
-	if tr.Len() != 1 || d.Len() != 1 {
+	if tr.Len() != 1 {
 		t.Fatal("unpositioned iterator deleted an entry")
 	}
 	tit.Next()
-	dit.Next()
 	tit.Del()
-	dit.Del()
 	tr.Del(1)
-	d.Del(1)
-	if tr.Len() != 0 || d.Len() != 0 {
+	if tr.Len() != 0 {
 		t.Fatal("iterator deletion")
 	}
-	d.Put(2, "two")
-	if !dit.Next() || dit.Key() != 2 {
+	tr.Put(2, "two")
+	if !tit.Next() || tit.Key() != 2 {
 		t.Fatal("append after iterator deletion")
 	}
-	d.Del(2)
-	if d.Len() != 0 {
-		t.Fatal("dictionary deletion")
+	tr.Del(2)
+	if tr.Len() != 0 {
+		t.Fatal("tree deletion")
 	}
 }

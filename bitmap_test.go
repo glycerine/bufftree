@@ -12,8 +12,8 @@ func TestCompactRecordAndBitmap(t *testing.T) {
 		t.Fatalf("uint64 key/value record occupies %d bytes", n)
 	}
 	p := newBPA[uint64, uint64](Config{})
-	if len(p.dead) != 1 || len(p.data) != 1088 {
-		t.Fatal("default leaf must use 1,088 compact records and one bitmap word")
+	if len(p.dead) != 1 || len(p.data) != 1152 {
+		t.Fatal("default leaf must use 1,152 compact records and one bitmap word")
 	}
 }
 

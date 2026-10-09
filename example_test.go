@@ -23,23 +23,6 @@ func ExampleTree() {
 	// remaining: 0
 }
 
-func ExampleDict() {
-	dict := bufftree.NewDict[string, int](nil)
-	dict.Put("charlie", 3)
-	dict.Put("alice", 1)
-	dict.Put("bob", 2)
-	dict.Put("alice", 10)
-	it := dict.Iter()
-	for it.Next() {
-		fmt.Println(it.Key(), it.Value())
-		it.Del()
-	}
-	// Output:
-	// charlie 3
-	// alice 10
-	// bob 2
-}
-
 func ExampleTree_Range() {
 	var tree bufftree.Tree[int, int]
 	for i := 0; i < 10; i++ {

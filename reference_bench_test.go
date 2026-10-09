@@ -43,7 +43,6 @@ func BenchmarkReferencePoints(b *testing.B) {
 		make func() stringBenchIndex
 	}{
 		{"Tree", func() stringBenchIndex { return NewBPTree[string, uint64](nil) }},
-		{"Dict", func() stringBenchIndex { return NewDict[string, uint64](nil) }},
 		{"GoMap", func() stringBenchIndex { return make(benchStringMap, n) }},
 	} {
 		for _, op := range []string{"Get", "Get2", "GetMiss", "Update", "Insert"} {
@@ -87,17 +86,15 @@ func BenchmarkReferencePoints(b *testing.B) {
 func TestReferenceStringPointQueries(t *testing.T) {
 	type namedString string
 	tr := NewBPTree[namedString, []byte](nil)
-	d := NewDict[namedString, []byte](nil)
 	keys := referenceStringKeys(1000)
 	value := []byte("value")
 	for _, key := range keys {
 		tr.Put(namedString(key), value)
-		d.Put(namedString(key), value)
 	}
 	if n := testing.AllocsPerRun(100, func() {
 		for _, key := range keys {
 			tr.Get(namedString(key))
-			d.Get2(namedString(key))
+			tr.Get2(namedString(key))
 		}
 	}); n != 0 {
 		t.Fatal("string query allocates", n)

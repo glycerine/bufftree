@@ -17,7 +17,6 @@ const memoryResultPrefix = "bufftree-heap-result: "
 var memoryCases = []struct {
 	layout, label string
 }{
-	{"Dict", "bufftree.Dict"},
 	{"Tree", "bufftree.BPTree"},
 	{"GoMap", "builtin Go map"},
 	{"Tidwall", "tidwall/btree.Map"},

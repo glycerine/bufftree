@@ -1,11 +1,11 @@
 // Package bufftree implements generic in-memory BP-trees with buffered,
-// partitioned leaves. Tree iterates by key; Dict iterates by insertion order.
-// Trees, dictionaries, and their iterators require external synchronization
-// when used by multiple goroutines. Ordered reads may sort leaf blocks.
+// partitioned leaves. Tree iterates by key.
+// Trees and their iterators require external synchronization
+// when used by multiple goroutines. Ordered reads may sort or flush leaves.
 package bufftree
 
 // Config measures node sizes in entries, not bytes. Zero numeric fields use defaults.
-// The defaults follow the paper's 32-slot log, header, and blocks. Fanout is
+// The defaults use a 32-slot log/header and 34-slot blocks. Fanout is
 // independent of the leaf size. Key/value sizes affect the actual byte footprint.
 type Config struct {
 	Fanout    int
@@ -16,20 +16,16 @@ type Config struct {
 
 func (c Config) normalized() Config {
 	if c.Fanout == 0 {
-		c.Fanout = 64
-		//c.Fanout = 3
+		c.Fanout = 256
 	}
 	if c.LogSize == 0 {
 		c.LogSize = 32
-		//c.LogSize = 2
 	}
 	if c.NumBlocks == 0 {
 		c.NumBlocks = 32
-		//c.NumBlocks = 2
 	}
 	if c.BlockSize == 0 {
-		c.BlockSize = 32
-		//c.BlockSize = 2
+		c.BlockSize = 34
 	}
 	if c.Fanout < 3 || c.LogSize < 2 || c.NumBlocks < 2 || c.BlockSize < 2 {
 		panic("bufftree: fanout must be >= 3; log, block count, and block size must be >= 2")

@@ -23,12 +23,8 @@ var readmeBenchmarkRows = []readmeBenchmarkRow{
 	{"Tree `Get`, miss", [4]string{"Points/Tree/GetMiss", "Points/GoMap/GetMiss", "Points/Tidwall/GetMiss", "Points/RBTree/GetMiss"}},
 	{"Tree `Put`, existing key", [4]string{"Points/Tree/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
 	{"Tree `Put`, fresh key", [4]string{"Points/Tree/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
-	{"Dict `Get`, hit", [4]string{"Points/Dict/GetHit", "Points/GoMap/GetHit", "Points/Tidwall/GetHit", "Points/RBTree/GetHit"}},
-	{"Dict `Put`, existing key", [4]string{"Points/Dict/Update", "Points/GoMap/Update", "Points/Tidwall/Update", "Points/RBTree/Update"}},
-	{"Dict `Put`, fresh key", [4]string{"Points/Dict/FreshPut", "Points/GoMap/FreshPut", "Points/Tidwall/FreshPut", "Points/RBTree/FreshPut"}},
 	{"Ordered scan, maximum 10,000", [4]string{"Iteration/Tree/Scan10000", "", "Iteration/Tidwall/Scan10000", "Iteration/RBTree/Scan10000"}},
 	{"Ordered scan, maximum 100,000", [4]string{"Iteration/Tree/Scan100000", "", "Iteration/Tidwall/Scan100000", "Iteration/RBTree/Scan100000"}},
-	{"Dict traversal", [4]string{"Iteration/Dict/Iterate", "Iteration/GoMap/Iterate", "Iteration/Tidwall/Iterate", "Iteration/RBTree/Iterate"}},
 }
 
 func readmeBenchmarkNames() []string {
@@ -144,9 +140,9 @@ func formatReadmeBenchmarkTables(results map[string]float64) (simple, detailed s
 	}
 	detailed = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, rows)
 	var shortRows [][]string
-	for i, selected := range []int{0, 3, 8, 9} {
+	for i, selected := range []int{0, 3, 5} {
 		row := rows[selected]
-		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan", "Dict traversal"}[i], row[1], row[2], row[3], row[4]})
+		shortRows = append(shortRows, []string{[]string{"Get", "Put", "Ordered scan"}[i], row[1], row[2], row[3], row[4]})
 	}
 	simple = alignedBenchmarkTable([]string{"Operation (showing ns/key)", "BPTree", "builtin Go map", "tidwall/btree", "red-black tree"}, shortRows)
 	return simple, detailed, nil

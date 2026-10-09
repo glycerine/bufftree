@@ -14,17 +14,15 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	values["Points/Tree/GetHit"] = 22.57
 	values["Points/Tree/Update"] = 108.6
 	values["Points/Tree/FreshPut"] = 456.7
-	values["Points/Dict/FreshPut"] = 567.8
 	values["Points/GoMap/FreshPut"] = 89.1
 	values["Points/Tidwall/FreshPut"] = 201.2
 	values["Points/RBTree/FreshPut"] = 300.3
 	values["Iteration/Tree/Scan100000"] = 4.713
-	values["Iteration/Dict/Iterate"] = 2.844
 	simple, detailed, err := formatReadmeBenchmarkTables(values)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(readmeBenchmarkNames()) != 29 {
+	if len(readmeBenchmarkNames()) != 22 {
 		t.Fatal("shared table cells should reuse the same measurements")
 	}
 	for _, table := range []string{simple, detailed} {
@@ -48,7 +46,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 	}
 	short := strings.Split(strings.TrimSpace(simple), "\n")
 	full := strings.Split(strings.TrimSpace(detailed), "\n")
-	for i, selected := range []int{0, 3, 8, 9} {
+	for i, selected := range []int{0, 3, 5} {
 		shortCells := strings.Split(short[i+2], "|")
 		fullCells := strings.Split(full[selected+2], "|")
 		for col := 2; col <= 5; col++ {
@@ -57,7 +55,7 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 			}
 		}
 	}
-	for i, want := range []string{"22.6", "456.7", "4.71", "2.84"} {
+	for i, want := range []string{"22.6", "456.7", "4.71"} {
 		if got := strings.TrimSpace(strings.Split(short[i+2], "|")[2]); got != want {
 			t.Fatalf("simplified value %q, want %q", got, want)
 		}
@@ -71,7 +69,6 @@ func TestReadmeBenchmarkTables(t *testing.T) {
 		want  []string
 	}{
 		{3, "Tree `Put`, fresh key", []string{"456.7", "89.1", "201.2", "300.3"}},
-		{6, "Dict `Put`, fresh key", []string{"567.8", "89.1", "201.2", "300.3"}},
 	} {
 		cells := strings.Split(full[fresh.row+2], "|")
 		if strings.TrimSpace(cells[1]) != fresh.label {

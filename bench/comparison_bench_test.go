@@ -117,7 +117,6 @@ type benchPointLayout struct {
 func comparisonPointLayouts(n int) []benchPointLayout {
 	return []benchPointLayout{
 		{"Tree", func() benchUint64Points { return bufftree.NewBPTree[uint64, uint64](nil) }},
-		{"Dict", func() benchUint64Points { return bufftree.NewDict[uint64, uint64](nil) }},
 		{"GoMap", func() benchUint64Points { return make(benchUint64Map, n) }},
 		{"Tidwall", func() benchUint64Points { return &benchTidwallMap{} }},
 		{"RBTree", func() benchUint64Points { return newBenchRBTree() }},
@@ -179,7 +178,7 @@ type benchScanLayout struct {
 }
 
 // Scans compare ordered traversal. Full traversals compare the cost of visiting
-// every value: Dict uses insertion order, Go map uses unspecified order, and
+// every value: Go map uses unspecified order, and
 // tidwall/btree and rbtree use key order. All include the same sum and key counter.
 func BenchmarkCompareIteration(b *testing.B) {
 	for _, bc := range comparisonIterationCases(benchLoadSize()) {
@@ -216,24 +215,6 @@ func comparisonIterationCases(n int) []comparisonBenchmark {
 			}})
 		}
 	}
-	cases = append(cases, comparisonBenchmark{"Dict/Iterate", func(b *testing.B) {
-		d := bufftree.NewDict[uint64, uint64](nil)
-		for i := 0; i < n; i++ {
-			d.Put(benchKey(i), uint64(i))
-		}
-		var sum, visited uint64
-		b.ReportAllocs()
-		b.ResetTimer()
-		for i := 0; i < b.N; i++ {
-			for _, v := range d.All() {
-				sum += v
-				visited++
-			}
-		}
-		b.StopTimer()
-		benchSink = sum
-		reportIteration(b, visited)
-	}})
 	cases = append(cases, comparisonBenchmark{"GoMap/Iterate", func(b *testing.B) {
 		m := make(benchUint64Map, n)
 		for i := 0; i < n; i++ {

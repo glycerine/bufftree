@@ -280,59 +280,6 @@ func BenchmarkYCSB(b *testing.B) {
 	}
 }
 
-func BenchmarkDict(b *testing.B) {
-	n := benchLoadSize()
-	for _, op := range []string{"Get", "Get2", "Update", "Iterate", "DeleteCurrent"} {
-		b.Run(op, func(b *testing.B) {
-			fill := func() *Dict[uint64, uint64] {
-				d := NewDict[uint64, uint64](nil)
-				for i := 0; i < n; i++ {
-					d.Put(benchKey(i), uint64(i))
-				}
-				return d
-			}
-			d := fill()
-			ops := benchTrace(n, 8192, 1, false)
-			var sum uint64
-			var visited int64
-			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				switch op {
-				case "Get":
-					v := d.Get(ops[i%len(ops)].key)
-					sum += v
-				case "Get2":
-					if v, ok := d.Get2(ops[i%len(ops)].key); ok {
-						sum += v
-					}
-				case "Update":
-					d.Put(ops[i%len(ops)].key, uint64(i))
-				case "Iterate":
-					for _, v := range d.All() {
-						sum += v
-						visited++
-					}
-				case "DeleteCurrent":
-					if i > 0 {
-						b.StopTimer()
-						d = fill()
-						b.StartTimer()
-					}
-					for k, v := range d.All() {
-						sum += v
-						d.Del(k)
-						visited++
-					}
-				}
-			}
-			b.StopTimer()
-			benchSink = sum
-			reportIteration(b, uint64(visited))
-		})
-	}
-}
-
 // A deliberately small, benchmark-only B+ tree baseline with sorted leaf
 // arrays and the same 64-child fanout. It is independent of the BP-tree code.
 type benchKV struct{ key, value uint64 }
