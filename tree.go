@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"iter"
 	"slices"
+	"sync"
 	"sync/atomic"
 )
 
@@ -15,12 +16,13 @@ import (
 // delete entries or call other tree methods.
 // Values are copied, not deep-cloned; callers synchronize mutable referenced data.
 type Tree[K cmp.Ordered, V any] struct {
-	mu            SingleWriterRWMutex
+	mu            sync.RWMutex
 	root          *node[K, V]
 	cfg           Config
 	length        int
 	pending       *bpa[K, V]
 	version       atomic.Uint64
+	mapMu         sync.Mutex // protects only the reusable MapRange scratch pool
 	mapBuffers    [][]entry[K, V]
 	rebuildBuffer []entry[K, V]
 }
@@ -46,16 +48,23 @@ func NewBPTree[K cmp.Ordered, V any](cfg *Config) *Tree[K, V] {
 	return &Tree[K, V]{cfg: internal.normalized()}
 }
 
-// Len returns the exact number of keys. The first call after writes reconciles
-// buffered membership in changed leaves; subsequent calls take constant time.
-// Reconciliation does not move records or invalidate live iterator positions.
+// Len returns the exact number of keys under a shared lock. Writers maintain
+// the count before publishing their changes.
 func (t *Tree[K, V]) Len() int {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	for t.pending != nil {
-		t.reconcile(t.pending)
-	}
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	return t.length
+}
+
+// finishWrite prepares only changed leaves, including split/rebalance siblings.
+// No public read operation is allowed to sort, flush, or reconcile membership.
+func (t *Tree[K, V]) finishWrite() {
+	for t.pending != nil {
+		p := t.pending
+		p.prepareOrdered()
+		t.reconcile(p)
+	}
+	t.mu.Unlock()
 }
 func (t *Tree[K, V]) reconcile(p *bpa[K, V]) {
 	n := p.resolveSize()
@@ -134,17 +143,19 @@ func (t *Tree[K, V]) Get2(k K) (V, bool) {
 	return zero, false
 }
 
-// Put inserts or replaces a value. Writes are buffered without looking up the
-// previous value in the leaf's blocks.
+// Put inserts or replaces a value. It buffers the write, maintains sorted log
+// and block runs, and reconciles exact membership before releasing the lock.
 func (t *Tree[K, V]) Put(k K, v V) {
 	t.mu.Lock()
-	defer t.mu.Unlock()
+	defer t.finishWrite()
 	if t.root == nil {
 		t.cfg = t.cfg.normalized()
 		t.root = &node[K, V]{min: k, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer)}
+		t.mapMu.Lock()
 		if len(t.mapBuffers) == 0 {
 			t.mapBuffers = [][]entry[K, V]{make([]entry[K, V], 0, t.root.leaf.capacity())}
 		}
+		t.mapMu.Unlock()
 	}
 	n := t.findLeaf(k)
 	t.markDirty(n.leaf)
@@ -255,7 +266,7 @@ func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
 // Del removes k. Deleting an absent key has no effect.
 func (t *Tree[K, V]) Del(k K) {
 	t.mu.Lock()
-	defer t.mu.Unlock()
+	defer t.finishWrite()
 	n := t.findLeaf(k)
 	if n == nil {
 		return
@@ -389,8 +400,7 @@ func (it *Iterator[K, V]) position(k K, bounded, strict bool) {
 		it.leaf = it.tree.firstLeaf()
 	}
 	if it.leaf != nil {
-		it.leaf.leaf.prepareOrdered()
-		it.cursor = it.leaf.leaf.cursor(k, bounded, strict)
+		it.cursor = it.leaf.leaf.readCursor(k, bounded, strict)
 	}
 	it.version = it.tree.version.Load()
 }
@@ -398,8 +408,8 @@ func (it *Iterator[K, V]) Next() bool {
 	if it.done {
 		return false
 	}
-	it.tree.mu.Lock()
-	defer it.tree.mu.Unlock()
+	it.tree.mu.RLock()
+	defer it.tree.mu.RUnlock()
 	if !it.started {
 		it.position(it.start, it.bounded, false)
 		it.started = true
@@ -413,8 +423,7 @@ func (it *Iterator[K, V]) Next() bool {
 		}
 		it.leaf = it.leaf.next
 		if it.leaf != nil {
-			it.leaf.leaf.prepareOrdered()
-			it.cursor = it.leaf.leaf.cursor(it.start, false, false)
+			it.cursor = it.leaf.leaf.readCursor(it.start, false, false)
 		}
 	}
 	it.valid, it.done = false, true
@@ -476,26 +485,6 @@ func (t *Tree[K, V]) Scan(start K, length int, visit func(K, V) bool) {
 	t.walk(start, end, false, length, visit)
 }
 
-// Long scans settle a leaf's log once instead of repeatedly merging its runs.
-// This can move records, so other live cursors must notice the new version.
-// Only compact a previously scanned leaf: its first scan should not pay both
-// initial sorting and eager log redistribution. Avoid preparing a narrow Range
-// or allocating scratch for a tiny new tree.
-func (t *Tree[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, bounded bool, length int) scanCursor[K, V] {
-	if t.shouldFlushScan(n, end, bounded, length) {
-		n.leaf.flush()
-		t.version.Add(1)
-	}
-	n.leaf.scanReady = true
-	n.leaf.prepareOrdered()
-	return n.leaf.scanCursor(start, seek, strict)
-}
-
-func (t *Tree[K, V]) shouldFlushScan(n *node[K, V], end K, bounded bool, length int) bool {
-	return n.leaf.scanReady && n.leaf.logN > 0 && length >= n.leaf.size && cap(t.rebuildBuffer) >= n.leaf.size &&
-		(!bounded || (n.next != nil && !lessKey(end, n.next.min)))
-}
-
 // scanBatchState borrows tree storage only while the tree lock is held. A
 // version mismatch invalidates every borrowed slice before it can be accessed.
 type scanBatchState[K cmp.Ordered, V any] struct {
@@ -544,34 +533,15 @@ func (t *Tree[K, V]) scanBatch(s *scanBatchState[K, V], start, end K, bounded, s
 	limit := min(length, cap(out))
 	for s.n != nil {
 		if !s.ready {
-			n := s.n
-			if !n.leaf.ordered || !n.leaf.scanReady || t.shouldFlushScan(n, end, bounded, length) {
-				version := t.version.Load()
-				t.mu.RUnlock()
-				t.mu.Lock()
-				// No upgrade: another writer may have changed topology during
-				// the unlocked interval. Discard the old node in that case.
-				if version != t.version.Load() {
-					s.n = t.findLeaf(start)
-				}
-				if s.n != nil {
-					s.c = t.prepareScan(s.n, start, end, true, strict, bounded, length)
-				}
-				t.mu.Downgrade()
-				if s.n == nil {
-					return out
-				}
-			} else {
-				s.c = n.leaf.scanCursor(start, true, strict)
-			}
+			s.c = s.n.leaf.scanCursor(start, true, strict)
 			s.ready, s.version = true, t.version.Load()
 		}
 		if len(s.run) == 0 {
 			s.run = s.c.nextRun()
 			if len(s.run) == 0 {
 				s.n, s.ready = s.n.next, false
-				// Do not carry a partly copied batch across an unlocked
-				// preparation of the next leaf.
+				// Release shared access at leaf boundaries as well as at
+				// the batch limit, keeping callbacks outside the lock.
 				if len(out) != 0 {
 					return out
 				}
@@ -604,13 +574,14 @@ func (t *Tree[K, V]) MapRange(start, end K, visit func(K, V) bool) {
 	if compareKey(start, end) >= 0 {
 		return
 	}
-	t.mu.Lock()
+	t.mu.RLock()
 	n := t.findLeaf(start)
 	if n == nil {
-		t.mu.Unlock()
+		t.mu.RUnlock()
 		return
 	}
 	var scratch []entry[K, V]
+	t.mapMu.Lock()
 	if count := len(t.mapBuffers); count != 0 {
 		scratch = t.mapBuffers[count-1]
 		t.mapBuffers[count-1] = nil
@@ -618,19 +589,20 @@ func (t *Tree[K, V]) MapRange(start, end K, visit func(K, V) bool) {
 	} else {
 		scratch = make([]entry[K, V], 0, n.leaf.capacity())
 	}
-	t.mu.Unlock()
+	t.mapMu.Unlock()
+	t.mu.RUnlock()
 	used := 0
 	defer func() {
 		clear(scratch[:used])
-		t.mu.Lock()
+		t.mapMu.Lock()
 		t.mapBuffers = append(t.mapBuffers, scratch[:0])
-		t.mu.Unlock()
+		t.mapMu.Unlock()
 	}()
 	for {
-		t.mu.Lock()
+		t.mu.RLock()
 		n = t.findLeaf(start)
 		if n == nil {
-			t.mu.Unlock()
+			t.mu.RUnlock()
 			return
 		}
 		var next K
@@ -640,7 +612,7 @@ func (t *Tree[K, V]) MapRange(start, end K, visit func(K, V) bool) {
 		}
 		scratch = n.leaf.mapEntries(start, end, scratch[:0])
 		used = max(used, len(scratch))
-		t.mu.Unlock()
+		t.mu.RUnlock()
 		for _, e := range scratch {
 			if !visit(e.key, e.value) {
 				return

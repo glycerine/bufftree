@@ -42,7 +42,7 @@ func TestMapRangeDeletionAndLogShadowing(t *testing.T) {
 	}
 }
 
-func TestLazyBlockSorting(t *testing.T) {
+func TestWriterPreparationSortsAllBlocks(t *testing.T) {
 	p := newBPA[int, int](Config{LogSize: 4, NumBlocks: 4, BlockSize: 8})
 	var es []entry[int, int]
 	for i := 0; i < 16; i++ {
@@ -63,9 +63,12 @@ func TestLazyBlockSorting(t *testing.T) {
 			t.Fatal("unordered map sorted a block")
 		}
 	}
-	c := p.cursor(0, true, false)
+	p.prepareOrdered()
+	c := p.readCursor(0, true, false)
 	c.next()
-	if !p.sorted[0] || p.sorted[1] || p.sorted[2] || p.sorted[3] {
-		t.Fatal("short scan sorted untouched blocks")
+	for _, sorted := range p.sorted {
+		if !sorted {
+			t.Fatal("writer preparation left a block unsorted")
+		}
 	}
 }

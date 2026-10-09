@@ -22,7 +22,24 @@ From their abstract:
 
 ## benchmarks up front
 
-Benchmarks comparing our implementation (bufftree) against common alternatives:
+The `finwrite` experiment makes all tree reads strictly read-only using
+`sync.RWMutex`. Writers sort changed log/block runs and maintain exact counts
+before unlocking. No read-side sorting, flushing, upgrading, or downgrade remains.
+
+Fresh-Put medians from five alternating 300ms samples per variant, using the
+same default layout, 65,536-key load, and `GOMAXPROCS=48`:
+
+| Variant | BP-tree ns/put | Unchanged tidwall control ns/put |
+| --- | ---: | ---: |
+| Before: lazy sorting + spin/downgrade lock | 223.5 | 313.9 |
+| `finwrite`: sorted writes + `sync.RWMutex` | 356.5 | 307.8 |
+
+That is **59.5% more time per fresh put (37.3% lower throughput)**. The experiment
+also moves exact-count work from `Len` to writes, so this is the combined cost,
+not an isolated measurement of sorting or lock choice. Geometry is unchanged.
+[Raw results and reproduction](benchmark-results/2026-10-09-sorted/summary.txt).
+
+The following full-operation comparison is historical, **before `finwrite`**:
 
 The Put row measures insertion of a fresh key.
 
@@ -45,7 +62,7 @@ d) https://github.com/glycerine/rbtree
 ~~~
 Use `make bench` to re-run on your machine.
 
-Compact records, log-only buffering, and run-based scans now beat tidwall on
+Before this experiment, compact records, log-only buffering, and run-based scans beat tidwall on
 the random fresh-Put and repeated length-limited scan workloads measured here. See the
 [diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below,
 including the costs of frequent exact counting and sequential insertion.
@@ -63,14 +80,15 @@ The BPA organizes a leaf into three parts: a) a small insert buffer;
 b) a sorted header of boundary keys; and c) contiguous data blocks. 
 
 New entries accumulate in the insert buffer and move into blocks in batches.
-This avoids the cost of keeping the entire leaf sorted after every insertion. 
+On this experimental branch, each write sorts the log and any changed blocks
+before returning. The buffer is still retained; it is not flushed on every Put.
 Point lookups check the buffer and use the header to select a block.
-Ordered scans sort blocks as needed and merge in buffered entries. 
-Later long scans can flush the buffer to avoid repeating that merge work.
+Ordered scans select from the already-sorted runs using only scan-local cursors;
+they never rearrange records, flush buffers, or update leaf metadata.
 When blocks fill unevenly, the BPA redistributes entries across them,
 combining inexpensive writes with efficient sequential scans.
-This does mean that a full table scan will re-write your data, which
-has locking and concurrency implications. See the 
+Unlike the original lazy-sorting design, a full scan here does not rewrite
+tree data. See the
 [notes on concurrency section](#notes-on-concurrency) at the
 end of this README.
 
@@ -108,12 +126,8 @@ The tree provides these methods:
 | `All()` | `iter.Seq2[K,V]` for Go range loops |
 | `Iter()` | Explicit iterator; call `Next()` before `Key()`/`Value()` |
 
-`Len()` remains exact. Its first call after writes reconciles buffered
-membership in changed leaves; subsequent calls without intervening writes are
-constant-time. Reconciliation allocates no memory and does not move records or
-disturb live iterator positions. It updates metadata under an internal exclusive
-lock. Counting after every insertion loses
-the benefit of deferring membership checks; batch your counts when possible.
+`Len()` is exact and constant-time under `RLock`. Writers reconcile membership
+in changed leaves before publishing changes. `Len` never writes metadata.
 
 `Tree` also provides:
 
@@ -155,11 +169,11 @@ result. A half-open range ending at NaN excludes NaN; `IterFrom(NaN)` and
 `Scan(NaN, ...)` start at the NaN entry.
 
 Tree methods are safe for concurrent callers. Writers wait for exclusive access;
-lookups and prepared scan batches share read access. Each individual iterator
+all lookups and scan batches use shared read access. Each individual iterator
 must be used by only one goroutine at a time. Callbacks run without tree locks:
 deleting while iterating and nested tree calls remain supported. Iteration is
 live, not a snapshot, and values containing pointers are not deep-copied.
-The initial integration uses a tree-wide guard, not the paper's per-node protocol.
+This experiment uses a tree-wide `sync.RWMutex`, not the paper's per-node protocol.
 
 ## Layout and configuration
 
@@ -175,19 +189,20 @@ the header and block form one contiguous scan run; this uses existing storage,
 not a second scan array. Header overwrites and deletion synchronize the mirror,
 including clearing deleted pointer values.
 
-`Put` searches only the log before buffering, whether the key is new or already
-in a block. Log entries shadow older records. A full log flushes records into the corresponding
-blocks. Inserts append within blocks, and overflowing blocks trigger a sorted
-merge and global redistribution. Ordered scans merge the log with the header
-and block stream, sorting only encountered blocks and caching their sortedness.
+`Put` searches the log before buffering. Before it returns, writer-side counting
+also checks new log entries against the base. Log entries shadow older records.
+A full log flushes records into the corresponding blocks. Inserts append within
+blocks, and overflowing blocks trigger a sorted merge and global redistribution.
+The writer sorts every changed run before releasing exclusive access. Appending
+to a sorted log inserts only the new tail into order; unchanged blocks are not
+re-sorted. Ordered scans merge the log with the header and block stream without
+writing any of them.
 Unordered maps filter the block stream against the log without sorting blocks.
 Ordered scans process contiguous runs directly when no log entry can shadow
 them, with a separate fast path for an empty log. `Scan`, `Range`, and `All`
-share this traversal; explicit iterators keep their own cursors. After a leaf
-has been visited, a later sufficiently long scan may flush its log. Narrow
-ranges and first visits retain the merge path. Scan-driven rearrangement advances
-the tree version, so existing live cursors reseek safely. Every callback still
-checks for mutation before reading another borrowed record.
+share this traversal; explicit iterators keep their own cursors. Only writes
+advance the tree version. Every callback still checks for mutation before
+visiting another copied record. Scans never settle the log, even on repeat visits.
 
 Point lookups descend through the internal separators, check the leaf's
 insertion log, and use its sorted header to select a block. Updates and deletion
@@ -225,7 +240,7 @@ For uint64 keys and values, the default record array plus bitmap occupies
 18,608 bytes, versus 26,112 bytes for the original 32-slot-block record array alone; these
 figures exclude leaf metadata and shared tree buffers.
 
-Adaptations to the paper include an exact (lazily reconciled) `Len` and a
+Adaptations to the paper include an exact (writer-maintained) `Len` and a
 conservative leaf capacity that can be fully redistributed into header/blocks.
 Buffered duplicate keys temporarily overestimate leaf occupancy; flushing
 resolves it before a split, so overwrites cannot spuriously split a full leaf.
@@ -512,12 +527,12 @@ to this machine, key/value sizes, and these traces—not a universal optimum.
 See the [scan and tuning report](benchmark-results/2026-10-09-scan/summary.txt)
 for controlled comparisons, caveats, sweep results, and reproduction commands.
 
-## Measured performance
+## Measured performance (before the sorted-write experiment)
 
 Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
 65,536 uint64 keys/values and the default leaf layout. These are medians of
 three 200ms runs using identical data and uniform point-operation traces.
-The `bufftree` column uses the current implementation with its default
+The `bufftree` column uses the previous lazy-sorting implementation with its default
 configuration. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
 neither competitor has a local module replacement. Reads, existing-key updates,
@@ -574,10 +589,10 @@ The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency
 
-`Tree` now has internal locking, initially through a tree-wide guard. The paper
-discusses finer-grained approaches, but these have important tradeoffs because
-**an ordered scan can rearrange stored records in memory**, 
-while preserving their logical key/value contents. 
+`Tree` uses a tree-wide `sync.RWMutex` on this branch, with strictly read-only
+reads. The paper and the earlier implementation used a different tradeoff:
+**an ordered scan could rearrange stored records in memory**, while preserving
+their logical key/value contents. The discussion below explains that history.
 
 The paper's locking approach tracks whether each block and the 
 log are sorted, so subsequent scans reuse that ordering until writes disturb it. 
@@ -593,13 +608,20 @@ The paper's per-node protocol remains out of scope for this initial integration.
 
 In the paper, traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4). [jea note: I'm not convinced this would not stall or confuse the first writer badly... what if there is rebalancing and the node is no longer even the right node...!]
 
-Our initial protocol protects topology, deferred length bookkeeping, and shared
+Before this experiment, our initial protocol protected topology, deferred length bookkeeping, and shared
 scratch buffers with one tree-wide reader/writer lock. A scan checks readiness
 under shared access. If preparation is needed, it releases shared access,
 acquires exclusive access, and checks the tree version before using its old
 node pointer. After sorting/flushing it atomically downgrades to shared access.
-The entire visited leaf is prepared before shared cursor use; this can increase
+The entire visited leaf was prepared before shared cursor use; this could increase
 first-scan work for short scans compared with sorting only encountered blocks.
+
+In `finwrite`, **all such preparation happens in writers**. `Get`, `Len`,
+`Scan`, `Range`, `All`, and iterator advancement use only `RLock` for tree access.
+No scan path calls a sorting routine or acquires the tree's write lock. The
+`MapRange` scratch pool has a separate small mutex for buffer checkout/return;
+it does not change records, topology, counts, or sortedness. Each borrowed buffer
+belongs exclusively to its scan.
 
 `Scan`, `Range`, and `All` copy up to 128 key/value pairs into a local batch, then
 release the lock **before invoking callbacks**. For uint64 pairs the batch is
@@ -613,14 +635,15 @@ copies out one current entry and holds no tree lock between calls.
 
 Any goroutine may call `Put`, `Del`, or `Clear`, including from callbacks.
 Overlapping writers wait; callers need no separate writer-admission protocol.
-`Len` reconciliation and iterator advancement currently take exclusive access.
+`Len` and iterator advancement now take shared access only.
 No transaction isolation, snapshots, or `WriteTx` API is implemented. This is a
 correctness and benchmark baseline, not a claim that tree-wide locking scales
 like a finished per-node protocol.
 
 ### Single-writer downgradeable lock
 
-`SingleWriterRWMutex` is a four-byte, zero-value-ready lock, also used by `Tree`. It
+`SingleWriterRWMutex` is retained as a standalone four-byte, zero-value-ready
+lock, but **is not used by `Tree` on this experimental branch**. It
 supports `Lock`, `Unlock`, `RLock`, `RUnlock`, and `Downgrade`. Downgrade atomically
 changes exclusive ownership to one read hold, with no unlocked interval; release
 that hold with `RUnlock`. This lets a caller prepare data exclusively and then
@@ -661,7 +684,7 @@ ordinary single-thread comparisons still use its unsynchronized `Map`. The
 concurrent tidwall scan adapter holds its read lock across its benchmark-only,
 non-reentrant callback, unlike BP-tree's deletion-capable callbacks.
 
-### Initial locking measurements
+### Initial locking measurements (historical, before `finwrite`)
 
 Same-day before/after samples (65,536 uint64 pairs; three 200ms runs) show the
 cost of the initial integration. These are sample medians, not confidence bounds.

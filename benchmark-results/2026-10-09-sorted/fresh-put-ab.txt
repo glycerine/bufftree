@@ -1,0 +1,89 @@
+# Sample 1: before
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1776076	       220.0 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       313.9 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 2: sorted
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	  930942	       343.0 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1225556	       276.7 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 3: sorted
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1174566	       379.4 ns/op	      20 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1244535	       313.3 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 4: before
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1662021	       226.1 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       303.2 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 5: before
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1643906	       223.5 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       311.4 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 6: sorted
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1064965	       350.8 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       308.9 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 7: sorted
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	  922158	       356.5 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       302.3 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 8: before
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1714346	       219.9 ns/op	      21 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       316.2 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 9: before
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1624062	       227.5 ns/op	      20 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       321.7 ns/op	      45 B/op	       0 allocs/op
+PASS
+
+# Sample 10: sorted
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/FreshPut-48         	 1032537	       365.3 ns/op	      20 B/op	       0 allocs/op
+BenchmarkComparePoints/Tidwall/FreshPut-48      	 1000000	       307.8 ns/op	      45 B/op	       0 allocs/op
+PASS

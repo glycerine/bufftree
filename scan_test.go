@@ -2,14 +2,14 @@ package bufftree
 
 import "testing"
 
-func TestFirstScanDefersLogFlush(t *testing.T) {
+func TestScansNeverFlushOrChangeVersion(t *testing.T) {
 	tr := NewBPTree[int, int](nil)
 	n := 8*tr.cfg.LogSize + 5
 	for i := 0; i < n; i++ {
 		tr.Put(i, i)
 	}
 	p := tr.root.leaf
-	if p.logN != 5 || p.scanReady {
+	if p.logN != 5 || !p.ordered {
 		t.Fatal("unexpected cold-scan fixture")
 	}
 	version := tr.version.Load()
@@ -25,12 +25,9 @@ func TestFirstScanDefersLogFlush(t *testing.T) {
 		if count != n {
 			t.Fatal("cold/prepared scan count")
 		}
-		if pass == 0 && (p.logN != 5 || tr.version.Load() != version) {
-			t.Fatal("first scan eagerly flushed its log")
+		if p.logN != 5 || tr.version.Load() != version {
+			t.Fatal("scan modified its leaf or version")
 		}
-	}
-	if p.logN != 0 || tr.version.Load() == version {
-		t.Fatal("repeat long scan did not prepare its leaf")
 	}
 }
 
@@ -75,7 +72,7 @@ func TestHeaderMirrorsOverwriteAndDelete(t *testing.T) {
 	}
 }
 
-func TestScanPreparationPreservesLiveCursors(t *testing.T) {
+func TestReadOnlyScansPreserveLiveCursors(t *testing.T) {
 	tr := NewBPTree[int, int](nil)
 	for i := 0; i < 4096; i++ {
 		tr.Put((i*129)%4096, i)
@@ -104,8 +101,8 @@ func TestScanPreparationPreservesLiveCursors(t *testing.T) {
 		}
 		return true
 	})
-	if count != 4096 || tr.version.Load() == version {
-		t.Fatal("fixture did not exercise scan preparation")
+	if count != 4096 || tr.version.Load() != version {
+		t.Fatal("read-only scan changed the tree")
 	}
 	for k := 1; k < 4096; k++ {
 		if !it.Next() || it.Key() != k || it.Value() != tr.Get(k) {

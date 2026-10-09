@@ -1,7 +1,7 @@
 // Package bufftree implements generic in-memory BP-trees with buffered,
 // partitioned leaves. Tree iterates by key.
-// Tree methods are safe for concurrent use. Ordered reads may sort or flush
-// leaves under exclusive access, then downgrade for shared reading. Iteration
+// Tree methods are safe for concurrent use. Writers publish sorted leaves;
+// reads never sort, flush, or modify tree metadata and use shared access. Iteration
 // is live, not a snapshot; callbacks run unlocked and may delete entries.
 // Each individual iterator requires external synchronization if shared.
 package bufftree

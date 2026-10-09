@@ -25,13 +25,13 @@ type bpa[K cmp.Ordered, V any] struct {
 	countedLog    int // log prefix whose membership has already been counted
 	accounted     int // contribution to the owning tree's cached length
 	dirty         bool
-	scanReady     bool // a previous scan has visited this leaf since redistribution
-	ordered       bool // entire leaf is sorted; guarded by the owning tree's lock
+	ordered       bool // blocks are sorted; log sortedness is tracked separately
 	nextDirty     *bpa[K, V]
 	prevDirty     *bpa[K, V]
 	counts        []int
 	sorted        []bool
 	logSorted     bool
+	logTailDirty  bool // only the last log entry can be out of order
 	rebuildBuffer *[]entry[K, V]
 }
 
@@ -63,6 +63,7 @@ func (p *bpa[K, V]) clearLog() {
 		p.dead[n/64] &^= (uint64(1) << uint(n%64)) - 1
 	}
 	p.logN, p.countedLog, p.size, p.logSorted = 0, 0, p.baseSize, true
+	p.logTailDirty = false
 }
 func (p *bpa[K, V]) capacity() int             { return p.cfg.NumBlocks * p.cfg.BlockSize }
 func (p *bpa[K, V]) log() []entry[K, V]        { return p.data[:p.logN] }
@@ -84,7 +85,7 @@ func (p *bpa[K, V]) updateValue(i int, v V) {
 	}
 }
 func (p *bpa[K, V]) scanBlock(i int) []entry[K, V] {
-	p.sortBlock(i)
+	// Read-only: the writer has already sorted this block.
 	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize
 	end := start + 1 + p.counts[i]
 	if p.isDead(p.cfg.LogSize + i) {
@@ -243,7 +244,9 @@ func (p *bpa[K, V]) del(k K) bool {
 
 // appendLog requires a live entry whose key is not already in the log.
 func (p *bpa[K, V]) appendLog(e entry[K, V]) {
-	p.ordered = false
+	// Eagerly sorted writers append to an already-sorted log. Remember that
+	// only the new tail needs insertion, rather than sorting the prefix again.
+	p.logTailDirty = p.logSorted
 	// Unused log slots have zero bits, established by newBPA/clearLog/load.
 	p.data[p.logN] = e
 	p.logN++
@@ -260,11 +263,23 @@ func (p *bpa[K, V]) sortLog() {
 			p.resolveSize()
 		}
 		if !p.logHasDead() {
-			sortEntries(p.log())
+			if p.logTailDirty && p.logN > 1 {
+				log := p.log()
+				e := log[len(log)-1]
+				j := len(log) - 1
+				for j > 0 && lessKey(e.key, log[j-1].key) {
+					log[j] = log[j-1]
+					j--
+				}
+				log[j] = e
+			} else {
+				sortEntries(p.log())
+			}
 		} else {
 			p.sortDeadLog()
 		}
 		p.logSorted = true
+		p.logTailDirty = false
 	}
 }
 
@@ -427,7 +442,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	clear(p.sorted)
 	p.logN, p.size, p.headerN = 0, len(es), min(len(es), p.cfg.NumBlocks)
 	p.logSorted = true
-	p.scanReady = false
+	p.logTailDirty = false
 	p.ordered = true
 	p.baseSize, p.countedLog = len(es), 0
 	pos := 0
@@ -442,12 +457,10 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	}
 }
 
-// prepareOrdered runs exclusively before publishing a leaf to shared scans.
-// Cursor methods may still call sortLog/sortBlock, but those calls become
-// read-only once all their sorted flags are set.
+// prepareOrdered runs exclusively on the write path before publishing a leaf.
 func (p *bpa[K, V]) prepareOrdered() {
+	p.sortLog()
 	if !p.ordered {
-		p.sortLog()
 		for i := 0; i < p.headerN; i++ {
 			p.sortBlock(i)
 		}
@@ -509,8 +522,8 @@ func (p *bpa[K, V]) collectInto(es []entry[K, V]) []entry[K, V] {
 	return es
 }
 
-// A cursor merges the log with the ordered header/block stream. Blocks are
-// sorted lazily as they are reached; a log version always wins a duplicate.
+// A cursor merges already-sorted log and block streams without writing the
+// leaf. A log version always wins a duplicate.
 type bpaCursor[K cmp.Ordered, V any] struct {
 	p                            *bpa[K, V]
 	logPos, blockIndex, blockPos int
@@ -522,14 +535,18 @@ type bpaCursor[K cmp.Ordered, V any] struct {
 }
 
 func (p *bpa[K, V]) cursor(k K, bounded, strict bool) bpaCursor[K, V] {
-	p.sortLog()
+	// Used only by mutation code and standalone BPA tests.
+	p.prepareOrdered()
+	return p.readCursor(k, bounded, strict)
+}
+
+func (p *bpa[K, V]) readCursor(k K, bounded, strict bool) bpaCursor[K, V] {
 	c := bpaCursor[K, V]{p: p, headerPending: true}
 	if bounded {
 		c.logPos = lower(p.log(), k, strict)
 		c.blockIndex = max(0, p.partition(k))
 	}
 	if c.blockIndex < p.headerN {
-		p.sortBlock(c.blockIndex)
 		c.block = p.block(c.blockIndex)
 		if bounded {
 			cmpKey := compareKey(p.header(c.blockIndex).key, k)
@@ -559,7 +576,6 @@ func (c *bpaCursor[K, V]) advanceBase() {
 		c.blockPos = 0
 		c.headerPending = true
 		if c.blockIndex < p.headerN {
-			p.sortBlock(c.blockIndex)
 			c.block = p.block(c.blockIndex)
 		}
 	}
@@ -597,7 +613,6 @@ type scanCursor[K cmp.Ordered, V any] struct {
 }
 
 func (p *bpa[K, V]) scanCursor(start K, bounded, strict bool) scanCursor[K, V] {
-	p.sortLog()
 	c := scanCursor[K, V]{p: p}
 	if bounded {
 		c.logPos = lower(p.log(), start, strict)
@@ -653,9 +668,9 @@ func (c *scanCursor[K, V]) nextRun() []entry[K, V] {
 	}
 }
 
-// mapEntries filters the unsorted block stream using sorted log membership.
+// mapEntries only reads leaf storage, using the writer-sorted log to filter
+// shadowed base records. out belongs exclusively to the calling scan.
 func (p *bpa[K, V]) mapEntries(start, end K, out []entry[K, V]) []entry[K, V] {
-	p.sortLog()
 	for j, e := range p.log() {
 		if !p.isDead(j) && !lessKey(e.key, start) && lessKey(e.key, end) {
 			out = append(out, e)

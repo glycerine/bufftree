@@ -140,9 +140,10 @@ func TestTreeCallbacksUnlocked(t *testing.T) {
 	for _, name := range []string{"Scan", "Range", "All", "MapRange"} {
 		t.Run(name, func(t *testing.T) {
 			callback := func(k, v int) bool {
-				if tr.mu.state.Load() != 0 {
+				if !tr.mu.TryLock() {
 					t.Fatal("tree lock held in callback")
 				}
+				tr.mu.Unlock()
 				tr.Del(k)
 				tr.Put(k, v)
 				tr.Get(k)
@@ -185,7 +186,15 @@ func TestTreeOverlappingWritersWait(t *testing.T) {
 				tr.Put(1, 1)
 				close(done)
 			}()
-			waitSingleWriter(t, func() bool { return tr.mu.state.Load() == singleWriterBit|1 })
+			// A waiting writer prevents new read acquisitions. TryRLock
+			// observes that without depending on sync.RWMutex internals.
+			waitSingleWriter(t, func() bool {
+				if tr.mu.TryRLock() {
+					tr.mu.RUnlock()
+					return false
+				}
+				return true
+			})
 			secondDone := make(chan struct{})
 			go func() {
 				switch op {

@@ -1,0 +1,78 @@
+finwrite: eager sorted writes and strictly read-only readers
+2026-10-09, Go 1.26.4, linux/amd64, AMD Ryzen Threadripper 3960X.
+
+Baseline commit: 67cd4827f360a249fdcd2de05c0aba1c4cfce7ea.
+The existing finwrite branch was clean before the experiment; no branch switch,
+commit, or rollback was performed. Baseline and experiment were compiled into
+separate immutable benchmark binaries before collecting these samples.
+
+Changes:
+- Tree uses the built-in sync.RWMutex instead of SingleWriterRWMutex.
+- Put/Del finish all changed leaves, including split/rebalance siblings, before
+  releasing exclusive access. Log and blocks are individually sorted; the BPA
+  buffer is retained, not flushed after every insertion.
+- Existing sorted log prefixes are preserved: insertion moves only the new tail.
+  Block readiness is independent of log readiness, so appending a log record
+  does not force a redundant scan of every block's sorted flag.
+- Exact membership/count reconciliation also happens on the writer side, so
+  Len is a genuinely read-only, constant-time RLock operation.
+- Read cursors contain no sorting/flush calls. Scans only select from sorted
+  runs into caller-local batches; no records or tree metadata are changed.
+- Get/Get2/Len/Scan/Range/All/iterator advancement use shared tree access only.
+- MapRange's reusable scratch pool uses its own mutex, independent of tree
+  data; checked-out buffers belong exclusively to their scan.
+- Callback deletion and reentry remain supported. No lock crosses callbacks.
+- No snapshots, transactions, per-node protocol, or geometry retuning added.
+- The standalone custom lock is retained, but Tree no longer uses it.
+
+Controlled fresh-Put comparison:
+Default geometry: fanout 256, log 42, 32 blocks, block size 34.
+Initial load: 65,536 even scrambled uint64 keys/values. Timed fresh insertions
+use disjoint odd keys and grow the tree to 131,072 entries, then reload outside
+the timer. Allocation/growth is included in the timed insertions.
+One benchmark goroutine, GOMAXPROCS=48 (same setting as the previous README).
+Five 300ms samples per variant; interleaved order B,S,S,B,B,S,S,B,B,S.
+Each sample also runs the unchanged bare tidwall Map as a control.
+No tests or other benchmarks ran concurrently with these measurements.
+
+Median ns/fresh Put:
+                                BP-tree      Tidwall control
+Before: lazy + custom lock        223.5          313.9
+Sorted writers + sync.RWMutex     356.5          307.8
+
+BP-tree samples before: 220.0, 226.1, 223.5, 219.9, 227.5 ns/op.
+BP-tree samples sorted: 343.0, 379.4, 350.8, 356.5, 365.3 ns/op.
+Elapsed time per Put rises 59.5%; reciprocal throughput drops 37.3%.
+The sorted variant is about 15.8% slower than its contemporaneous bare-tidwall
+control. Both BP-tree variants report 20-21 B/op of growth allocation, with
+allocation counts rounding to 0 allocs/op (not literally allocation-free).
+
+This is the combined effect of eager sorting, eager exact-count maintenance,
+and changing the mutex. It does not isolate those three costs. These are sample
+medians, not formal confidence intervals. Neither geometry nor spin thresholds
+were swept. No scan-throughput claim is made for this experimental branch.
+
+Reproduce after building the respective revisions into separate binaries:
+go -C bench test -c -o /tmp/CHOSEN_DIRECTORY/before.test
+go -C bench test -c -o /tmp/CHOSEN_DIRECTORY/sorted.test
+
+Run each binary with:
+-test.run '^$' -test.bench '^BenchmarkComparePoints$/^(Tree|Tidwall)$/^FreshPut$' -test.benchtime=300ms -test.cpu=48 -test.count=1
+Alternate the variants in the order above. See fresh-put-ab.txt for full output.
+The binaries used here were /tmp/bufftree-sorted-y3qMAd/{before,sorted}.test;
+these temporary artifacts are not required by the repository.
+
+Validation:
+- Full go test -race -count=1 ./... passed after the final algorithm changes.
+- go vet ./... passed before the final documentation/test-only changes.
+- TestEveryWritePublishesSortedCountedLeaves checks the invariant immediately
+  after each operation, before any read can repair it: all logs and blocks
+  sorted, no deferred membership, exact tree/leaf counts.
+- TestReadersDoNotWriteTree snapshots tree storage/metadata and verifies that
+  every read API leaves it unchanged. Eight readers execute each API while
+  another read lock stays held; no read can require an exclusive tree lock.
+- Existing race tests cover simultaneous scans/writers, splits, merges, Clear,
+  iterator deletion, callback deletion, callback panic/reentry, and P=1 progress.
+
+Historical benchmark tables in README are explicitly labeled pre-finwrite.
+This experimental implementation is intentionally left on finwrite for review.
