@@ -22,6 +22,7 @@ type bpa[K cmp.Ordered, V any] struct {
 	counts        []int
 	sorted        []bool
 	logSorted     bool
+	logMayShadow  bool // generic buffered updates/deletes may overlap the base
 	rebuildBuffer *[]entry[K, V]
 }
 
@@ -95,6 +96,18 @@ func (p *bpa[K, V]) get(k K) (V, bool) {
 	var zero V
 	return zero, false
 }
+
+// location includes tombstones so Put can reuse its lookup for both updates
+// and resurrection. A negative result proves the key is absent from the base
+// as well as the log, which lets a later flush skip duplicate searches.
+func (p *bpa[K, V]) location(k K) int {
+	for i := 0; i < p.logN; i++ {
+		if equalKey(p.data[i].key, k) {
+			return i
+		}
+	}
+	return p.baseLocation(k)
+}
 func (p *bpa[K, V]) set(k K, v V) (V, bool) {
 	old, found := p.get(k)
 	if !found {
@@ -107,21 +120,6 @@ func (p *bpa[K, V]) set(k K, v V) (V, bool) {
 	return old, found
 }
 
-// Updating an existing record cannot change occupancy or partition order.
-// Avoid introducing a duplicate log record and a later flush for overwrites.
-func (p *bpa[K, V]) overwrite(k K, v V) {
-	for i, e := range p.log() {
-		if equalKey(e.key, k) {
-			p.data[i] = entry[K, V]{key: k, value: v}
-			return
-		}
-	}
-	i := p.baseLocation(k)
-	if i < 0 || p.data[i].dead {
-		panic("bufftree: cannot overwrite an absent record")
-	}
-	p.data[i] = entry[K, V]{key: k, value: v}
-}
 func (p *bpa[K, V]) del(k K) (V, bool) {
 	old, found := p.get(k)
 	if !found {
@@ -132,12 +130,19 @@ func (p *bpa[K, V]) del(k K) (V, bool) {
 	return old, true
 }
 func (p *bpa[K, V]) writeLog(e entry[K, V]) {
+	p.logMayShadow = true
 	for i, old := range p.log() {
 		if equalKey(old.key, e.key) {
 			p.data[i] = e
 			return
 		}
 	}
+	p.appendLog(e)
+}
+
+// appendLog requires that e's key is not already in the log. Callers that
+// might shadow a base record must also set logMayShadow.
+func (p *bpa[K, V]) appendLog(e entry[K, V]) {
 	p.data[p.logN] = e
 	p.logN++
 	p.logSorted = false
@@ -147,14 +152,33 @@ func (p *bpa[K, V]) writeLog(e entry[K, V]) {
 }
 func (p *bpa[K, V]) sortLog() {
 	if !p.logSorted {
-		slices.SortFunc(p.log(), compareEntry[K, V])
+		sortEntries(p.log())
 		p.logSorted = true
 	}
 }
 func (p *bpa[K, V]) sortBlock(i int) {
 	if !p.sorted[i] {
-		slices.SortFunc(p.block(i), compareEntry[K, V])
+		sortEntries(p.block(i))
 		p.sorted[i] = true
+	}
+}
+
+// Logs and blocks are small and often almost sorted after a flush. Shift a
+// whole record per step and compare keys directly, avoiding comparator calls
+// and repeated swaps. Keep O(n log n) sorting for large custom configurations.
+func sortEntries[K cmp.Ordered, V any](es []entry[K, V]) {
+	if len(es) > 64 {
+		slices.SortFunc(es, compareEntry[K, V])
+		return
+	}
+	for i := 1; i < len(es); i++ {
+		e := es[i]
+		j := i
+		for j > 0 && lessKey(e.key, es[j-1].key) {
+			es[j] = es[j-1]
+			j--
+		}
+		es[j] = e
 	}
 }
 func (p *bpa[K, V]) flush() {
@@ -162,6 +186,10 @@ func (p *bpa[K, V]) flush() {
 		return
 	}
 	p.sortLog()
+	if !p.logMayShadow {
+		p.flushDistinct()
+		return
+	}
 	// Preflight net occupancy. Updates and deletions do not consume slots.
 	var local [64]int
 	var dest []int
@@ -193,20 +221,7 @@ func (p *bpa[K, V]) flush() {
 		}
 	}
 	if rebuild {
-		if p.rebuildBuffer == nil {
-			p.load(p.collect())
-		} else {
-			// Rebuilds are synchronous and have no callbacks. Leaves of a tree
-			// can share one buffer without retaining a spare array per leaf.
-			buf := *p.rebuildBuffer
-			if cap(buf) < p.size {
-				buf = make([]entry[K, V], 0, p.capacity())
-			}
-			es := p.collectInto(buf[:0])
-			p.load(es)
-			clear(es)
-			*p.rebuildBuffer = es[:0]
-		}
+		p.rebuild()
 		return
 	}
 	// Apply deletions first so a temporarily full block cannot overrun storage.
@@ -246,6 +261,56 @@ func (p *bpa[K, V]) flush() {
 	clear(p.log())
 	p.logN = 0
 	p.logSorted = true
+	p.logMayShadow = false
+}
+
+// With no shadow records, a merge of the sorted log and header suffices to
+// count and route inserts. If a later block overflows, rebuild merges away
+// the temporary duplicates in blocks already copied from the log.
+func (p *bpa[K, V]) flushDistinct() {
+	log := p.log()
+	if p.headerN == 0 || lessKey(log[0].key, p.header(0).key) {
+		p.rebuild()
+		return
+	}
+	pos := 0
+	for i := 0; i < p.headerN; i++ {
+		start := pos
+		for pos < len(log) && (i+1 == p.headerN || lessKey(log[pos].key, p.header(i+1).key)) {
+			pos++
+		}
+		if p.counts[i]+pos-start >= p.cfg.BlockSize {
+			p.rebuild()
+			return
+		}
+		if start == pos {
+			continue
+		}
+		dst := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + p.counts[i]
+		copy(p.data[dst:dst+pos-start], log[start:pos])
+		p.counts[i] += pos - start
+		p.sorted[i] = false
+	}
+	clear(log)
+	p.logN = 0
+	p.logSorted = true
+}
+
+func (p *bpa[K, V]) rebuild() {
+	if p.rebuildBuffer == nil {
+		p.load(p.collect())
+		return
+	}
+	// Rebuilds are synchronous and have no callbacks. Leaves of a tree
+	// can share one buffer without retaining a spare array per leaf.
+	buf := *p.rebuildBuffer
+	if cap(buf) < p.size {
+		buf = make([]entry[K, V], 0, p.capacity())
+	}
+	es := p.collectInto(buf[:0])
+	p.load(es)
+	clear(es)
+	*p.rebuildBuffer = es[:0]
 }
 
 // load redistributes sorted, unique, live entries across all available blocks.
@@ -258,6 +323,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	clear(p.sorted)
 	p.logN, p.size, p.headerN = 0, len(es), min(len(es), p.cfg.NumBlocks)
 	p.logSorted = true
+	p.logMayShadow = false
 	pos := 0
 	for i := 0; i < p.headerN; i++ {
 		n := (len(es) - pos) / (p.headerN - i)
@@ -272,9 +338,50 @@ func (p *bpa[K, V]) collect() []entry[K, V] {
 	return p.collectInto(make([]entry[K, V], 0, p.size))
 }
 func (p *bpa[K, V]) collectInto(es []entry[K, V]) []entry[K, V] {
-	c := p.cursor(*new(K), false, false)
-	for e, ok := c.next(); ok; e, ok = c.next() {
-		es = append(es, e)
+	p.sortLog()
+	log := p.log()
+	pos := 0
+	for i := 0; i < p.headerN; i++ {
+		h := *p.header(i)
+		for pos < len(log) && !lessKey(h.key, log[pos].key) {
+			e := log[pos]
+			pos++
+			if equalKey(e.key, h.key) {
+				h.dead = true // the log version wins, including tombstones
+			}
+			if !e.dead {
+				es = append(es, e)
+			}
+		}
+		if !h.dead {
+			es = append(es, h)
+		}
+		p.sortBlock(i)
+		block := p.block(i)
+		for len(block) > 0 && pos < len(log) {
+			// Copy a sorted run at once instead of driving the public cursor
+			// state machine once per record during every redistribution.
+			j := lower(block, log[pos].key, false)
+			es = append(es, block[:j]...)
+			block = block[j:]
+			if len(block) == 0 {
+				break
+			}
+			e := log[pos]
+			pos++
+			if equalKey(e.key, block[0].key) {
+				block = block[1:]
+			}
+			if !e.dead {
+				es = append(es, e)
+			}
+		}
+		es = append(es, block...)
+	}
+	for _, e := range log[pos:] {
+		if !e.dead {
+			es = append(es, e)
+		}
 	}
 	return es
 }

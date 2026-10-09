@@ -28,10 +28,10 @@ The Put row measures insertion of a fresh key.
 
 | Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |    109.2 |           16.7 |         116.2 |          201.1 |
-| Put                        |    682.4 |          178.7 |         307.4 |          599.8 |
-| Ordered scan               |     5.08 |  not supported |          4.14 |          15.62 |
-| Dict traversal             |     2.56 |          10.08 |          2.59 |          15.37 |
+| Get                        |    108.4 |           16.6 |         119.6 |          202.9 |
+| Put                        |    350.3 |          175.3 |         305.1 |          550.5 |
+| Ordered scan               |     5.13 |  not supported |          4.16 |          15.86 |
+| Dict traversal             |     2.81 |          10.11 |          2.51 |          15.70 |
 
 ~~~
 This compares:
@@ -42,7 +42,9 @@ d) https://github.com/glycerine/rbtree
 ~~~
 Use `make bench` to re-run on your machine.
 
-## Conclusion: the classic in memory b-tree tidwall.Btree remains the king of speed and space.
+Fresh-Put optimization substantially narrowed the gap with tidwall. See the
+[diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below;
+tidwall still leads these insertion benchmarks.
 
 
 ----------------------------
@@ -172,8 +174,9 @@ per-node concurrent locking scheme is not implemented here.
 
 Each BPA allocates one contiguous record array containing an insertion log,
 sorted header records, and fixed-size blocks. Log entries shadow older records;
-deletions use tombstones. Existing values are overwritten in place; new keys
-and tombstones go into the log. A full log flushes records into the corresponding
+deletions use tombstones. Existing values and resurrected tombstones are
+overwritten in place; entirely new keys and deletions go into the log.
+A full log flushes records into the corresponding
 blocks. Inserts append within blocks, and overflowing blocks trigger a sorted
 merge and global redistribution. Ordered scans merge the log with the header
 and block stream, sorting only encountered blocks and caching their sortedness.
@@ -284,6 +287,8 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Dict, Go map, tidwall/btree, and rbtree |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 | `BenchmarkFreshPut` (in `bench/`) | The same fresh-insert workload, with CPU-profile labels separating insertion from untimed fixture loading |
+| `BenchmarkFreshPutConfig` (in `bench/`) | Fresh-insert sweeps over internal fanout, log size, header size, and block size |
+| `BenchmarkFreshPutDistribution` (in `bench/`) | Independent random fresh keys, and ascending/descending growth from empty |
 
 YCSB A uses 50% reads/50% updates, B uses 95% reads/5% updates, and C is all
 reads. E uses 95% scans/5% new insertions with maximum scan length 100. X is all
@@ -340,14 +345,14 @@ Profile fresh insertion independently with:
 go -C bench test -v -run '^$' -bench '^BenchmarkFreshPut$/^(Tree|Dict)$' \
     -benchmem -benchtime=3s -cpuprofile=/tmp/bufftree-fresh.cpu \
     -memprofile=/tmp/bufftree-fresh.mem -o=/tmp/bufftree-fresh.test
-go tool pprof -top -relative_percentages -tagfocus=container=Tree \
+go tool pprof -top -relative_percentages '-tagfocus=container=^Tree$' \
     /tmp/bufftree-fresh.test /tmp/bufftree-fresh.cpu
 go tool pprof -top -alloc_space -ignore=loadComparisonPoints \
     /tmp/bufftree-fresh.test /tmp/bufftree-fresh.mem
 ```
 
 CPU profiles include fixture loading even though the benchmark timer excludes
-it. The container label selects the insertion phase; use `container=Dict`
+it. The container label selects the insertion phase; use `container=^Dict$`
 for Dict. Heap profiles use stack filtering to exclude fixture loading.
 
 [`bench/go.mod`](bench/go.mod) pins the published competitor versions and
@@ -359,9 +364,93 @@ reproduce the paper's 100M-entry, 48-hyperthread setup or compare against Masstr
 and OpenBw-tree. Comparisons use the same key/value data and workloads on this
 machine.
 
+## Fresh-Put diagnosis (2026-10-09)
+
+The implementation contains the paper's essential algorithms: a contiguous
+log/header/block BPA, buffered flushes, global redistribution on block overflow,
+lazy block sorting, and large leaves under smaller internal nodes. The slowdown
+was primarily implementation overhead, with additional differences in API and
+experimental setup; changing leaf sizes alone did not fix it.
+
+Before optimization, the labelled fresh-insert CPU profile spent about 53% in
+flushing. A fresh `Put` searched the log/header/block for the old value, searched
+the log again to append, then repeated block searches during flush preflight
+and application. Redistribution also drove the general cursor once per record,
+and small-array sorting used comparator callbacks and swaps.
+
+The optimized path reuses the lookup's location for overwrites and resurrection.
+When a key is absent from both log and base, its log append requires no second
+search. A leaf tracks whether buffered records might shadow base records;
+fresh-only logs can flush with one merge through the sorted log and header,
+without duplicate searches. If a later block overflows, redistribution merges
+away any copies already flushed. Buffered deletes/updates retain the general
+shadow-aware path. Small arrays use direct-key insertion sorting; redistribution
+copies sorted runs; leaf splits share the cleared redistribution scratch buffer.
+The public API, exact `Len`, deletion/iteration behavior, and defaults are preserved.
+
+Five fixed-size samples of the README fresh-key trace, each timing 1,048,576
+inserts in complete 65,536-key batches, gave these medians (ns/Put):
+
+| Container | Before | Optimized |
+| --- | ---: | ---: |
+| BP-tree | 622.7 | 321.2 |
+| tidwall | 300.8 | 309.0 |
+
+That is about 48% less time per BP-tree insertion, with allocation traffic
+falling from 77 to 41 B/Put. These are allocation bytes, not retained memory;
+the leaf record layout is unchanged. Raw results are in
+[fresh-before.txt](benchmark-results/2026-10-09/fresh-before.txt) and
+[fresh-final.txt](benchmark-results/2026-10-09/fresh-final.txt).
+
+CPU placement matters considerably on this Threadripper. With both versions
+pinned to CPU 6 and `-cpu=1`, the initial 1,048,576-key dataset growing to
+2,097,152 keys measured 583.3 -> 389.9 ns/Put for BP-tree, versus about
+352 ns/Put for tidwall. Independent random keys at the smaller size improved
+432.4 -> 203.1 ns/Put; ascending growth improved 339.7 -> 131.1, and descending
+growth 359.2 -> 166.9. These are medians of three samples. Tidwall still wins
+these cases, particularly sequential growth. Pinned and unpinned timings must
+not be compared directly.
+
+`perf stat` on equal pinned workloads measured 59% fewer instructions, 53%
+fewer cycles, 44% fewer branch misses, and 17% fewer L1 data-load misses.
+Those counters include fixture loading and benchmark resets; the labelled CPU
+profiles exclude fixture loading. The absolute L1 miss count fell even though
+the miss *rate* rose because so many redundant loads disappeared.
+
+A 35-configuration pinned sweep found the default 64/32/32/32 layout at
+178.8 ns/Put, with the best trial at 174.4. This small difference does not justify
+changing general-purpose defaults or reducing leaf sizes and scan locality.
+The large improvement came from reducing work, not finding a magic node size.
+
+In pinned regression measurements, Tree hits/misses and ordered scans remained
+essentially unchanged, while existing-key Tree `Put` improved from 157.6 to
+106.4 ns. Dict fresh inserts improved too, but its point reads/updates measured
+about 4-5% slower. Repeated Dict traversal samples varied between roughly 1.9
+and 2.6 ns/key in both versions; the cause of that variability was not established.
+The tables below retain their measured values rather than selecting fast samples.
+
+The paper's performance claims also need their original context:
+
+* Section 3's insert checks only the log before buffering. Section 5 permits
+  a leaf count that temporarily includes duplicates. Our `Put` must establish
+  membership immediately to return the old value and maintain an exact `Len`.
+  This touches the header/block on each absent insertion, reducing the paper's
+  cache-local buffering advantage.
+* The paper uses 16-byte uint64 key/value records. Our tombstone flag and padding
+  make these records 24 bytes: the default record array is 26,112 bytes rather
+  than 17,408, before metadata. Packing tombstones separately is a possible
+  future layout change; it has not been implemented or benchmarked here.
+* Section 6 compares concurrent C++ implementations, including TLX-based B+
+  trees, using 100M loaded keys and 48 hyperthreads. Its default BP-tree beats
+  its best insert-oriented B-tree by about 1.04x on random insertion; it does
+  not promise to beat every optimized single-threaded Go B-tree.
+
+See [summary.txt](benchmark-results/2026-10-09/summary.txt) for reproduction
+commands, validation, profile/counter files, and benchmark qualifications.
+
 ## Measured performance
 
-Measured on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
+Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
 65,536 uint64 keys/values and the default leaf layout. These are medians of
 five 250ms runs using identical data and uniform point-operation traces.
 The `bufftree` column uses the current implementation with its default
@@ -373,16 +462,16 @@ and growth costs.
 
 | Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    109.2 |           16.7 |         116.2 |          201.1 |
-| Tree `Get`, miss              |    111.5 |           15.6 |         117.8 |          221.8 |
-| Tree `Put`, existing key      |    172.1 |           28.7 |         123.8 |          202.9 |
-| Tree `Put`, fresh key         |    682.4 |          178.7 |         307.4 |          599.8 |
-| Dict `Get`, hit               |    103.5 |           16.7 |         116.2 |          201.1 |
-| Dict `Put`, existing key      |    103.3 |           28.7 |         123.8 |          202.9 |
-| Dict `Put`, fresh key         |    919.2 |          178.7 |         307.4 |          599.8 |
-| Ordered scan, maximum 10,000  |     5.19 |  not supported |          4.13 |          15.64 |
-| Ordered scan, maximum 100,000 |     5.08 |  not supported |          4.14 |          15.62 |
-| Dict traversal                |     2.56 |          10.08 |          2.59 |          15.37 |
+| Tree `Get`, hit               |    108.4 |           16.6 |         119.6 |          202.9 |
+| Tree `Get`, miss              |    108.4 |           16.1 |         117.3 |          225.1 |
+| Tree `Put`, existing key      |    115.7 |           28.9 |         124.5 |          207.0 |
+| Tree `Put`, fresh key         |    350.3 |          175.3 |         305.1 |          550.5 |
+| Dict `Get`, hit               |    117.4 |           16.6 |         119.6 |          202.9 |
+| Dict `Put`, existing key      |    118.6 |           28.9 |         124.5 |          207.0 |
+| Dict `Put`, fresh key         |    659.2 |          175.3 |         305.1 |          550.5 |
+| Ordered scan, maximum 10,000  |     5.06 |  not supported |          4.17 |          15.79 |
+| Ordered scan, maximum 100,000 |     5.13 |  not supported |          4.16 |          15.86 |
+| Dict traversal                |     2.81 |          10.11 |          2.51 |          15.70 |
 
 Go map updates include reading the old value before assignment, matching
 `Put`'s return-value contract. Point benchmarks use the same interface dispatch
@@ -398,9 +487,10 @@ the same scrambled keys for every container. Each batch grows from 65,536 to
 timer. This includes allocations, leaf splits, and BPA redistribution during
 insertion. The simplified table's Put row uses these fresh-insertion measurements.
 
-Fresh-Put profiling identified repeated temporary allocations during BPA
-redistribution. Leaves now reuse one buffer owned by their tree, reducing
-temporary allocation bytes. The buffer adds one leaf's capacity per tree
+Fresh-Put profiling identified repeated searches, sorting/merge overhead, and
+temporary allocations. Leaves now reuse one buffer owned by their tree for
+redistribution and splits, reducing temporary allocation bytes.
+The buffer adds one leaf's capacity per tree
 (24 KiB with the default uint64 layout), and its entries are cleared after use
 so it does not retain old keys or values.
 
@@ -417,10 +507,10 @@ in-place overwrites, bulk block traversal, cheaper log-shadow checks, and the
 shared redistribution buffer.
 
 Current benchmark runs and validation logs are saved in
-[benchmark-results/2026-10-01/bptree-only](benchmark-results/2026-10-01/bptree-only).
+[benchmark-results/2026-10-09](benchmark-results/2026-10-09).
 The tables use measured values from
-[readme.txt](benchmark-results/2026-10-01/bptree-only/readme.txt).
-Older reports in the parent directory describe earlier implementations.
+[readme.txt](benchmark-results/2026-10-09/readme.txt).
+The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency
 

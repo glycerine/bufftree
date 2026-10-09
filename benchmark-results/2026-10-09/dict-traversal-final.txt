@@ -1,0 +1,15 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkCompareIteration/Dict/Iterate         	     967	    169845 ns/op	 385857311 entries/s	         2.592 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     976	    124648 ns/op	 525770254 entries/s	         1.902 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     968	    172599 ns/op	 379700755 entries/s	         2.634 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     975	    123258 ns/op	 531695797 entries/s	         1.881 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     966	    125694 ns/op	 521393611 entries/s	         1.918 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     956	    170891 ns/op	 383495523 entries/s	         2.608 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     978	    123451 ns/op	 530866256 entries/s	         1.884 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     763	    172263 ns/op	 380441279 entries/s	         2.629 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     970	    169214 ns/op	 387297642 entries/s	         2.582 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate         	     975	    126475 ns/op	 518173237 entries/s	         1.930 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+PASS

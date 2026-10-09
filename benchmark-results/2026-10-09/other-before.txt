@@ -1,0 +1,38 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkComparePoints/Tree/GetHit         	 2932440	       102.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit         	 2923101	       102.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetHit         	 2913294	       103.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss        	 2950088	       101.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss        	 2947833	       101.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/GetMiss        	 2956107	       101.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update         	 1888158	       158.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update         	 1900437	       157.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/Update         	 1901720	       157.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/FreshPut       	  739722	       355.5 ns/op	      78 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/FreshPut       	  789008	       358.5 ns/op	      78 B/op	       0 allocs/op
+BenchmarkComparePoints/Tree/FreshPut       	  746808	       353.9 ns/op	      77 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit         	 2958711	       101.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit         	 2947940	       100.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetHit         	 2950630	       101.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss        	 3042332	        99.47 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss        	 3030268	        99.40 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/GetMiss        	 3039531	        99.67 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update         	 2951832	       101.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update         	 2942233	       101.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/Update         	 2964433	       101.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkComparePoints/Dict/FreshPut       	  416102	       687.7 ns/op	     129 B/op	       1 allocs/op
+BenchmarkComparePoints/Dict/FreshPut       	  460498	       635.3 ns/op	     131 B/op	       1 allocs/op
+BenchmarkComparePoints/Dict/FreshPut       	  462399	       670.5 ns/op	     131 B/op	       1 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000   	   13616	     22115 ns/op	 214462866 entries/s	         4.663 iter_ns/key	      4743 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000   	   13615	     22118 ns/op	 214445880 entries/s	         4.663 iter_ns/key	      4743 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000   	   13584	     22367 ns/op	 212044816 entries/s	         4.716 iter_ns/key	      4743 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000  	    2414	    119524 ns/op	 216213525 entries/s	         4.625 iter_ns/key	     25843 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000  	    2403	    120409 ns/op	 214618821 entries/s	         4.659 iter_ns/key	     25842 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000  	    2149	    120636 ns/op	 215214110 entries/s	         4.647 iter_ns/key	     25962 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate     	    2278	    125866 ns/op	 520679327 entries/s	         1.921 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate     	    2413	    125675 ns/op	 521473619 entries/s	         1.918 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Dict/Iterate     	    2424	    123763 ns/op	 529527055 entries/s	         1.888 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+PASS

@@ -1,0 +1,15 @@
+# started on Fri Oct  9 02:36:19 2026
+
+
+ Performance counter stats for 'taskset -c 6 /tmp/bufftree-final.test -test.run ^$ -test.bench ^BenchmarkFreshPut$/^Tree$ -test.benchtime=1048576x -test.cpu=1' (3 runs):
+
+     1,714,917,762      cycles                                                                  ( +-  0.56% )  (71.19%)
+     3,298,154,772      instructions                     #    1.92  insn per cycle              ( +-  0.14% )  (71.19%)
+       638,995,959      branches                                                                ( +-  0.28% )  (71.37%)
+        24,637,319      branch-misses                    #    3.86% of all branches             ( +-  0.57% )  (71.62%)
+     1,212,473,860      L1-dcache-loads                                                         ( +-  0.22% )  (71.69%)
+       122,650,870      L1-dcache-load-misses            #   10.12% of all L1-dcache accesses   ( +-  0.44% )  (71.76%)
+        35,789,843      cache-misses                                                            ( +-  0.23% )  (71.51%)
+
+           0.40002 +- 0.00248 seconds time elapsed  ( +-  0.62% )
+

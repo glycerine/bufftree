@@ -55,6 +55,13 @@ func checkBPA(t *testing.T, p *bpa[int, int], model map[int]int) {
 	if p.logN >= p.cfg.LogSize {
 		t.Fatal("log has no spare slot")
 	}
+	if !p.logMayShadow {
+		for _, e := range p.log() {
+			if e.dead || p.baseLocation(e.key) >= 0 {
+				t.Fatal("distinct log contains a tombstone or shadows the base")
+			}
+		}
+	}
 	for i, n := range p.counts {
 		if n >= p.cfg.BlockSize {
 			t.Fatalf("block %d has no spare slot", i)
@@ -90,5 +97,95 @@ func checkBPA(t *testing.T, p *bpa[int, int], model map[int]int) {
 	slices.Sort(want)
 	if !slices.Equal(keys, want) {
 		t.Fatalf("keys %v != %v", keys, want)
+	}
+}
+
+// Leave the tree unread between batches: inspecting it after every operation
+// sorts the blocks and can conceal bugs in fresh flushes and redistribution.
+func TestFreshPutMixedBatches(t *testing.T) {
+	for _, cfg := range []Config{
+		tinyConfig, {},
+		{Fanout: 5, LogSize: 16, NumBlocks: 3, BlockSize: 5},
+		{Fanout: 5, LogSize: 73, NumBlocks: 67, BlockSize: 71},
+	} {
+		tr := NewBPTree[int, int](&cfg)
+		model := map[int]int{}
+		rng := rand.New(rand.NewSource(891))
+		for i := 0; i < 30000; i++ {
+			k := rng.Intn(12000)
+			want, exists := model[k]
+			if rng.Intn(4) == 0 {
+				old, found := tr.Del2(k)
+				if old != want || found != exists {
+					t.Fatalf("delete %d: %d,%v want %d,%v", k, old, found, want, exists)
+				}
+				delete(model, k)
+			} else {
+				old, found := tr.Put(k, i)
+				if old != want || found != exists {
+					t.Fatalf("put %d: %d,%v want %d,%v", k, old, found, want, exists)
+				}
+				model[k] = i
+			}
+			if i%2000 == 0 {
+				checkTree(t, tr, model)
+			}
+		}
+		checkTree(t, tr, model)
+	}
+}
+
+func TestPutResurrectsFullLeafTombstone(t *testing.T) {
+	cfg := Config{LogSize: 2, NumBlocks: 2, BlockSize: 2}
+	tr := NewBPTree[int, int](&cfg)
+	for _, k := range []int{10, 20, 30, 40} {
+		tr.Put(k, k)
+	}
+	tr.Del(10)
+	tr.root.leaf.flush() // keep the deleted minimum as a header marker
+	tr.Put(35, 35)       // fill the leaf without removing that marker
+	if tr.root.leaf.size != tr.root.leaf.capacity() || tr.root.leaf.location(10) < 0 {
+		t.Fatal("expected a full leaf retaining the deleted header")
+	}
+	if old, found := tr.Put(10, 100); old != 0 || found {
+		t.Fatal("resurrection must report an absent key")
+	}
+	checkTree(t, tr, map[int]int{10: 100, 20: 20, 30: 30, 35: 35, 40: 40})
+}
+
+func TestDistinctFlushRebuildAfterPartialCopy(t *testing.T) {
+	p := newBPA[int, int](Config{LogSize: 4, NumBlocks: 3, BlockSize: 4})
+	var es []entry[int, int]
+	model := map[int]int{}
+	for _, k := range []int{0, 10, 20, 30, 40, 50} {
+		es = append(es, entry[int, int]{key: k, value: k})
+		model[k] = k
+	}
+	p.load(es)
+	// The first block accepts 5; the last block overflows. Redistribution
+	// must not count or emit the already-copied 5 twice.
+	for _, k := range []int{5, 41, 42, 43} {
+		p.size++
+		p.appendLog(entry[int, int]{key: k, value: k})
+		model[k] = k
+	}
+	checkBPA(t, p, model)
+}
+
+func TestSplitScratchDoesNotRetainValues(t *testing.T) {
+	tr := NewBPTree[int, *int](&tinyConfig)
+	for i := 0; i < 200; i++ {
+		v := i
+		tr.Put(i, &v)
+		for _, e := range tr.rebuildBuffer[:cap(tr.rebuildBuffer)] {
+			if e.value != nil {
+				t.Fatal("split or redistribution retained a value in scratch storage")
+			}
+		}
+	}
+	for i := 0; i < 200; i++ {
+		if v := tr.Get(i); v == nil || *v != i {
+			t.Fatal("clearing scratch storage changed a live value")
+		}
 	}
 }

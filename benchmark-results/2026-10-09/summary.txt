@@ -1,0 +1,175 @@
+Fresh-Put investigation, 2026-10-09
+
+Machine: AMD Ryzen Threadripper 3960X (24 cores / 48 logical CPUs), Linux/amd64.
+Go: go1.26.4. Baseline production source: f3a95df47d6fc79a254e99dc8c8521bfb52bc473.
+Competitors: tidwall/btree v1.8.1; glycerine/rbtree v0.2.2.
+Existing user changes to go.mod, go.sum, and turtle sources were preserved.
+
+Main result
+
+The paper's essential BPA algorithms are present. Expensive duplicate work and
+generic cursor/sort overhead were the main removable costs. The API also does
+more immediate work than the paper's insertion operation. See README's
+"Fresh-Put diagnosis" for the algorithm and experimental-setting comparison.
+
+Default geometry remains Fanout=64, LogSize=32, NumBlocks=32, BlockSize=32.
+Public Put still returns the old value/found flag and maintains an exact Len.
+No unsafe code, assembly, new dependency, or unchecked unique-key API was added.
+
+Retained changes
+
+1. Reuse the leaf lookup location for overwrites and tombstone resurrection.
+   An absent location proves absence from both log and base; append directly.
+2. Track whether the log may contain shadows. Distinct fresh inserts flush by
+   walking the sorted log and header together, without repeated block searches.
+   A later overflowing block rebuilds through the ordinary deduplicating merge,
+   safely handling copies already appended to earlier blocks.
+3. Direct-key insertion sort for logs/blocks up to 64 entries; retain the
+   standard O(n log n) sorter above that threshold for custom configurations.
+4. Collect sorted runs with bulk copies instead of driving a cursor per record.
+5. Reuse cleared tree scratch storage for leaf splits as well as redistribution.
+
+Timing qualifications
+
+FreshPut loads 65,536 scrambled even keys and inserts their unique odd neighbors,
+growing to 131,072 entries. Reloads are outside the benchmark timer. Fixed runs
+time 1,048,576 operations (16 complete batches), five samples per container.
+Unpinned medians, ns/Put:
+                         Before      Final
+  Tree                    622.7      321.2
+  Tidwall                 300.8      309.0
+  Tree allocated B/Put       77         41
+
+fresh-before.txt and fresh-final.txt contain these samples. The final run also
+collected a CPU profile; its initialization/shutdown is outside the timed loop.
+The independently regenerated README tables use five adaptive 250ms samples.
+Unpinned numbers vary with CPU scheduling and cache placement on this machine.
+
+Pinned experiments use taskset -c 6 and -test.cpu=1 for both implementations.
+Their absolute timings must not be compared with the unpinned numbers.
+At 1,048,576 initially loaded keys, growing to 2,097,152, three fixed samples:
+                         Before      Final
+  Tree                    583.3      389.9 ns/Put
+  Tidwall                 351.3      351.7 ns/Put
+  Tree allocated B/Put       75         40
+
+Additional distributions (pinned; 262,144 timed inserts; three samples):
+                         Before      Final    Tidwall final
+  Independent random      432.4      203.1          153.0 ns/Put
+  Ascending               339.7      131.1          43.97 ns/Put
+  Descending              359.2      166.9          53.14 ns/Put
+Independent random uses disjoint ranks of the same bijective key permutation.
+Ascending/descending tests grow from empty to 65,536 keys, resetting between
+batches, so they are different workloads from the preloaded random tests.
+
+The 35-configuration pinned sweep used three 262,144-operation samples.
+Default: 178.8 ns/Put; best trial: fanout 128 with the same leaf, 174.4.
+Smaller 16x32 leaves were similar (174.9 with log 32); 8x8 with log 8 was 210.0.
+The few-percent differences do not establish a general-purpose improvement
+across sizes and scans, so the defaults were retained.
+
+Profiles and counters
+
+cpu-before.txt and cpu-final.txt filter with container=^Tree$ and report relative
+percentages. An unanchored container=Tree also matches RBTree: avoid that filter
+when a profile contains both. before.cpu and final.cpu are the underlying Go
+CPU profiles; symbols are embedded, so go tool pprof can read them directly.
+The before profile includes other containers but the displayed report excludes
+them. Samples attributed to unlabelled GC workers are not in the filtered report.
+
+Baseline cumulative flush CPU: 53.11%; lookup get: 19.89%; findLeaf: 12.90%.
+Final cumulative location: 39.16%; findLeaf: 20.48%; flushDistinct: 25.30%.
+These percentages describe different amounts of total work, not absolute times.
+
+perf-before.txt and perf-final.txt measure equal whole-process workloads,
+including setup, fixture loads, resets, GC, and timers. They are NOT counters
+isolated to the benchmark's timed phase. Three runs, pinned to CPU 6, cpu=1:
+                                  Before          Final
+  Instructions                8,115,203,226   3,298,154,772  (-59.4%)
+  Cycles                      3,644,769,774   1,714,917,762  (-52.9%)
+  Branch misses                  43,610,158      24,637,319  (-43.5%)
+  L1 data-load misses           146,950,084     122,650,870  (-16.5%)
+Events were multiplexed (~71% running). L1 miss rate rose from 4.37% to 10.12%
+because total loads fell more than misses; absolute misses decreased. This
+supports reducing instruction/memory traffic as the main improvement, not an
+assertion that cache-line alignment alone explained the slowdown.
+
+Intermediate files: fresh-after.txt, fresh-pinned-after.txt, perf-after.txt,
+and config-sweep.txt are the earlier two-pass flush implementation. The final
+single-pass flush is measured in *final* files; onepass-trial.txt is its initial
+pinned trial. Do not mistake intermediate results for the final implementation.
+
+Reproduction (from repository root)
+
+  go test ./...
+  go test -race ./...
+  (cd bench && go test -race ./...)
+  (cd bench && go test -c -o=/tmp/bufftree-final.test .)
+
+  /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPut$/^(Tree|Tidwall)$' \
+    -test.benchtime=1048576x -test.count=5
+
+  /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPut$/^Tree$' -test.benchtime=3s \
+    -test.cpuprofile=/tmp/bufftree-final.cpu
+  go tool pprof -top -relative_percentages '-tagfocus=container=^Tree$' \
+    /tmp/bufftree-final.cpu
+
+  taskset -c 6 /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPutConfig$' -test.benchtime=262144x \
+    -test.count=3 -test.cpu=1
+  taskset -c 6 /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPutDistribution$/./^(Tree|Tidwall)$' \
+    -test.benchtime=262144x -test.count=3 -test.cpu=1
+  BUFFTREE_BENCH_N=1048576 taskset -c 6 /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPut$/^(Tree|Tidwall)$' \
+    -test.benchtime=1048576x -test.count=3 -test.cpu=1
+
+  perf stat -r 3 \
+    -e cycles,instructions,branches,branch-misses,L1-dcache-loads,L1-dcache-load-misses,cache-misses \
+    taskset -c 6 /tmp/bufftree-final.test -test.run '^$' \
+    -test.bench '^BenchmarkFreshPut$/^Tree$' -test.benchtime=1048576x -test.cpu=1
+
+  make bench BENCH_TIME=250ms BENCH_COUNT=5
+
+Build the baseline in a separate checkout of the revision above. To reproduce
+the new configuration/distribution benchmarks on the baseline, copy only the
+current bench/fresh_bench_test.go into that checkout before building its bench
+binary. That is how the baseline-expanded binary used here was produced.
+
+Validation
+
+Main package and benchmark module tests and race checks pass. Added regression
+coverage includes long unobserved mixed-operation batches (so reads cannot
+continually sort away the conditions being tested), irregular/large configs,
+resurrection of a tombstoned header in a full leaf, redistribution after a
+partially copied distinct log, and clearing pointer values from split scratch.
+Existing tests cover NaNs, signed zeros, ordered/live iteration, deletion
+rebalancing, randomized models, zero-allocation queries, and bulk splits.
+
+Other operations (other-before.txt / other-final.txt; pinned, three 250ms runs):
+Tree GetHit 102.4 -> 101.7 ns, GetMiss 101.6 -> 98.39 ns, existing-key Put
+157.6 -> 106.4 ns. Ordered scans remained about 4.65 ns/key. Dict fresh Put
+improved 670.5 -> 490.8 ns, but Dict GetHit/Update measured about 4-5% slower
+(101.0 -> 104.9 and 101.4 -> 106.2 ns). Do not interpret this change as a
+universal speedup for every operation or generic type.
+
+The initial three-sample Dict traversal comparison appeared slower. Ten
+additional samples per version (dict-traversal-before.txt / -final.txt) showed
+both versions varying between roughly 1.9 and 2.6 ns/key. This variability is
+present in the baseline too; its cause was not established. The regenerated
+README reports its measured 2.81 ns/key without substituting a faster sample.
+
+The final README table (readme.txt) measured fresh Tree Put at 350.3 ns/key
+against tidwall's 305.1 using five adaptive 250ms samples, without CPU pinning.
+That is a separate experiment from the fixed-work 321.2 vs 309.0 comparison.
+
+Remaining limitations
+
+Tidwall still leads the tested fresh-insert cases, especially sorted growth.
+The public old-value/exact-membership contract still requires a leaf lookup.
+Records remain 24 bytes for uint64/uint64 (tombstone flag plus padding), versus
+the paper's 16-byte records. No packed metadata layout or concurrent tree was
+implemented. Allocation traffic improvements do not imply smaller retained
+leaf storage. This is not a replication of the paper's 100M-key/48-thread study.

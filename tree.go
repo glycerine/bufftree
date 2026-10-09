@@ -89,9 +89,10 @@ func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 		}
 	}
 	n := t.findLeaf(k)
-	old, found := n.leaf.get(k)
-	if found {
-		n.leaf.overwrite(k, v)
+	loc := n.leaf.location(k)
+	if loc >= 0 && !n.leaf.data[loc].dead {
+		old := n.leaf.data[loc].value
+		n.leaf.data[loc] = entry[K, V]{key: k, value: v}
 		t.version++
 		return old, true
 	}
@@ -100,16 +101,22 @@ func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 		if compareKey(k, right.min) >= 0 {
 			n = right
 		}
+		loc = -1 // splitting discards tombstones and redistributes the base
 	}
 	n.leaf.size++
 	t.length++
-	n.leaf.writeLog(entry[K, V]{key: k, value: v})
+	if loc >= 0 {
+		n.leaf.data[loc] = entry[K, V]{key: k, value: v}
+	} else {
+		n.leaf.appendLog(entry[K, V]{key: k, value: v})
+	}
 	if lessKey(k, n.min) {
 		n.min = k
 		refreshUp(n.parent)
 	}
 	t.version++
-	return old, found
+	var zero V
+	return zero, false
 }
 func refresh[K cmp.Ordered, V any](n *node[K, V]) {
 	if n.leaf != nil {
@@ -142,12 +149,16 @@ func childIndex[K cmp.Ordered, V any](p, n *node[K, V]) int {
 	panic("bufftree: broken parent link")
 }
 func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
-	es := n.leaf.collect()
+	// Like redistribution, splitting has no callbacks and can borrow the
+	// tree's scratch space. Both loads copy their input before it is cleared.
+	es := n.leaf.collectInto(t.rebuildBuffer[:0])
 	mid := len(es) / 2
 	right := &node[K, V]{min: es[mid].key, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer), prev: n, next: n.next}
 	n.leaf.load(es[:mid])
 	n.min = es[0].key
 	right.leaf.load(es[mid:])
+	clear(es)
+	t.rebuildBuffer = es[:0]
 	if n.next != nil {
 		n.next.prev = right
 	}
