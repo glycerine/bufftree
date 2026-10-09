@@ -104,10 +104,6 @@ The tree provides these methods:
 | `All()` | `iter.Seq2[K,V]` for Go range loops |
 | `Iter()` | Explicit iterator; call `Next()` before `Key()`/`Value()` |
 
-This is a breaking API change: `Put` and `Del` no longer return previous values
-or membership booleans, and `Del2` has been removed, including on iterators.
-Call `Get2` before mutation if you need the previous value or membership.
-
 `Len()` remains exact. Its first call after writes reconciles buffered
 membership in changed leaves; subsequent calls without intervening writes are
 constant-time. Reconciliation allocates no memory and does not move records or
