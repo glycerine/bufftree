@@ -5,7 +5,7 @@
 package bufftree
 
 // Config measures node sizes in entries, not bytes. Zero numeric fields use defaults.
-// The defaults use a 32-slot log/header and 34-slot blocks. Fanout is
+// The defaults use a 42-slot log, 32-slot header, and 34-slot blocks. Fanout is
 // independent of the leaf size. Key/value sizes affect the actual byte footprint.
 type Config struct {
 	Fanout    int
@@ -19,7 +19,7 @@ func (c Config) normalized() Config {
 		c.Fanout = 256
 	}
 	if c.LogSize == 0 {
-		c.LogSize = 32
+		c.LogSize = 42
 	}
 	if c.NumBlocks == 0 {
 		c.NumBlocks = 32

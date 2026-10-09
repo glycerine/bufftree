@@ -42,7 +42,7 @@ func TestNewBPTreeNilConfig(t *testing.T) {
 		tr.Put(k, v)
 	}
 	checkTree(t, tr, model)
-	if tr.cfg.Fanout != 256 || tr.cfg.LogSize != 32 || tr.cfg.NumBlocks != 32 || tr.cfg.BlockSize != 34 {
+	if tr.cfg.Fanout != 256 || tr.cfg.LogSize != 42 || tr.cfg.NumBlocks != 32 || tr.cfg.BlockSize != 34 {
 		t.Fatal("nil config must use the defaults")
 	}
 }

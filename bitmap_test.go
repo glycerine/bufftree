@@ -12,8 +12,8 @@ func TestCompactRecordAndBitmap(t *testing.T) {
 		t.Fatalf("uint64 key/value record occupies %d bytes", n)
 	}
 	p := newBPA[uint64, uint64](Config{})
-	if len(p.dead) != 1 || len(p.data) != 1152 {
-		t.Fatal("default leaf must use 1,152 compact records and one bitmap word")
+	if len(p.dead) != 2 || len(p.data) != 1162 {
+		t.Fatal("default leaf must use 1,162 compact records and two bitmap words")
 	}
 }
 
@@ -179,6 +179,8 @@ func TestPartiallyCountedLogSort(t *testing.T) {
 	for i := 0; i < 256; i++ {
 		tr.Put(i*2, i)
 	}
+	// Start with an empty log independently of the configured log size.
+	tr.root.leaf.flush()
 	if tr.Len() != 256 {
 		t.Fatal("initial count")
 	}

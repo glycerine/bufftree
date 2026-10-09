@@ -110,6 +110,17 @@ func BenchmarkTuneSecondLeg(b *testing.B) {
 	benchmarkConfigurations(b, configs)
 }
 
+func BenchmarkTuneConfirm(b *testing.B) {
+	var configs []bufftree.Config
+	for _, fanout := range []int{128, 256, 384} {
+		configs = append(configs, bufftree.Config{Fanout: fanout, LogSize: 40, NumBlocks: 32, BlockSize: 34})
+	}
+	for _, logSize := range []int{32, 38, 42, 44, 46, 48} {
+		configs = append(configs, bufftree.Config{Fanout: 256, LogSize: logSize, NumBlocks: 32, BlockSize: 34})
+	}
+	benchmarkConfigurations(b, configs)
+}
+
 func benchmarkConfigurations(b *testing.B, configs []bufftree.Config) {
 	n := benchLoadSize()
 	keys := make([]uint64, n)

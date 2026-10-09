@@ -28,9 +28,9 @@ The Put row measures insertion of a fresh key.
 
 | Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |    101.1 |           16.6 |         118.6 |          204.7 |
-| Put                        |    229.6 |          169.3 |         309.9 |          575.1 |
-| Ordered scan               |     4.55 |  not supported |          4.11 |          15.75 |
+| Get                        |    101.4 |           16.5 |         116.7 |          199.7 |
+| Put                        |    212.6 |          168.8 |         319.1 |          583.4 |
+| Ordered scan               |     3.13 |  not supported |          4.17 |          16.11 |
 
 ~~~
 This compares:
@@ -41,8 +41,8 @@ d) https://github.com/glycerine/rbtree
 ~~~
 Use `make bench` to re-run on your machine.
 
-Compact records and log-only buffering now beat tidwall on the random fresh-Put
-workloads measured here. See the
+Compact records, log-only buffering, and run-based scans now beat tidwall on
+the random fresh-Put and repeated length-limited scan workloads measured here. See the
 [diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below,
 including the costs of frequent exact counting and sequential insertion.
 
@@ -166,8 +166,8 @@ Each BPA allocates one contiguous record array containing an insertion log,
 sorted header records, and fixed-size blocks. A separate bitmap tracks
 tombstones in the log and header; block deletions compact their block in place.
 A uint64 key/value record is 16 bytes, down from 24 bytes when it contained a
-boolean and alignment padding. The default log and header need one 8-byte
-bitmap word, so their flags do not enlarge every record.
+boolean and alignment padding. The default log and header need two 8-byte
+bitmap words, so their flags do not enlarge every record.
 
 The reserved first slot of each block mirrors its header record. After sorting,
 the header and block form one contiguous scan run; this uses existing storage,
@@ -201,7 +201,7 @@ until redistribution; their values are cleared.
 ```go
 cfg := bufftree.Config{
     Fanout:    256, // Maximum internal children.
-    LogSize:   32,
+    LogSize:   42,
     NumBlocks: 32,
     BlockSize: 34,
 }
@@ -216,12 +216,12 @@ affect the constructed container.
 Those are the defaults; zero numeric fields select defaults. Fanout must be at least 3;
 other fields must be at least 2. Invalid configurations panic. Sizes are measured
 in entries, so byte sizes depend on the generic types and Go struct padding.
-The default leaf allocates 1,152 record slots and holds up to 1,088 live keys,
+The default leaf allocates 1,162 record slots and holds up to 1,088 live keys,
 reserving one slot per block for its mirrored header and leaving at least one
 unused log slot after an operation.
 
 For uint64 keys and values, the default record array plus bitmap occupies
-18,440 bytes, versus 26,112 bytes for the original 32-slot-block record array alone; these
+18,608 bytes, versus 26,112 bytes for the original 32-slot-block record array alone; these
 figures exclude leaf metadata and shared tree buffers.
 
 Adaptations to the paper include an exact (lazily reconciled) `Len` and a
@@ -261,15 +261,14 @@ Run the standalone 100,000-entry memory comparison with:
 make memory
 # Or directly:
 go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
+```
 
 | Container         | Heap bytes | MiB  | B/key |
 | ----------------- | ---------: | ---: | ----: |
 | glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+| bufftree.BPTree   |    2560376 | 2.44 | 25.60 |
 | tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
-| bufftree.BPTree   |    2474184 | 2.36 | 24.74 |
 | builtin Go map    |    2364576 | 2.26 | 23.65 |
-
-```
 
 It reports retained heap bytes, MiB, and bytes per key for BPTree,
 the built-in Go map, tidwall's generic Map, and rbtree. It shares the timing
@@ -281,9 +280,12 @@ temporary allocations; they measure live Go heap, rather than process RSS or
 heap reserved by the runtime. `make memory` and `make bench` run separately,
 and the memory test never invokes `testing.Benchmark`.
 An example report is saved in
-[memory-final.txt](benchmark-results/2026-10-09-bitmap/memory-final.txt).
+[memory-tuned.txt](benchmark-results/2026-10-09-scan/memory-tuned.txt).
 The compact layout reduced BPTree retained memory from 36.10 to 24.74 B/key
-on this workload, including metadata and tree buffers.
+before retuning. The fresh-put-focused defaults use 25.60 B/key on this workload,
+including metadata and tree buffers: 3.5% above the previous geometry, but 29%
+below the original layout. The longer log crosses a Go allocation-size boundary;
+record width is still 16 bytes.
 
 The benchmark families adapt the paper's experiments to Go:
 
@@ -296,7 +298,8 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkComparePoints` (in `bench/`) | Identical uint64 lookup/update/fresh-insert workloads for Tree, Go map, tidwall/btree, and rbtree |
 | `BenchmarkCompareIteration` (in `bench/`) | Ordered scans and full traversal for the same containers; Go map supports full traversal only |
 | `BenchmarkFreshPut` (in `bench/`) | The same fresh-insert workload, with CPU-profile labels separating insertion from untimed fixture loading |
-| `BenchmarkFreshPutConfig` (in `bench/`) | Fresh-insert sweeps over internal fanout, log size, header size, and block size |
+| `BenchmarkFreshPutConfig` (in `bench/`) | Original fresh-insert sweep over internal fanout, log size, header size, and block size |
+| `BenchmarkTuneGeometry`, `BenchmarkTuneRefine`, `BenchmarkTuneNeighborhood`, `BenchmarkTuneFinalists`, `BenchmarkTuneSecondLeg`, `BenchmarkTuneConfirm` (in `bench/`) | Successive configuration sweeps, with fresh adjacent/independent keys and ordered scans measured separately |
 | `BenchmarkFreshPutDistribution` (in `bench/`) | Independent random fresh keys, and ascending/descending growth from empty |
 | `BenchmarkFreshPutWithLen` (in `bench/`) | Fresh inserts including exact Len after every write, every 32 writes, or a complete batch |
 | `BenchmarkScanFirst` (in `bench/`) | First scan after loading, including lazy sorting and scan preparation |
@@ -470,6 +473,44 @@ The paper's performance claims also need their original context:
 See [summary.txt](benchmark-results/2026-10-09-bitmap/summary.txt) for reproduction
 commands, validation, profile/counter files, and benchmark qualifications.
 
+## Ordered scans and retuning (2026-10-09)
+
+Ordered traversal now visits contiguous header/block runs instead of advancing a
+merge cursor for every key. Header mirrors occupy the blocks' already-reserved
+slots. Repeated long scans can settle buffered writes once; first visits and
+narrow ranges retain lazy merging. `All` uses the same run-based path. Live
+mutation checks remain, including safe reseeking after nested scan preparation.
+
+With the final defaults, five pinned samples measured ordered scans at 3.003 and
+3.089 ns/key for maximum lengths 10,000 and 100,000, versus tidwall's 3.802 and
+3.785. The old BP-tree measured 4.216 and 4.179 on the same traces. Fresh puts
+improved from 121.5 to 108.4 ns, versus tidwall's 152.3 in the final run. These
+CPU-6, single-thread timings are separate from the unpinned README tables.
+
+First scans still pay for lazy sorting, and the write-focused defaults make
+them slower: a first full scan measured 5.133 ns/key versus tidwall's 3.747.
+Native full traversal improved from 8.099 to 3.885 ns/key, but tidwall's native
+`Map.Scan` remains faster at 2.376. It has no length-limit adapter. These are
+workload-specific gains, not a claim that every ordered traversal wins.
+
+The fresh-put sweep covered 237 distinct configurations in successive rounds.
+After selecting a promising geometry, separator storage was changed to grow
+geometrically and clear only removed keys, then the neighborhood was swept again.
+The final default is **fanout 256, log 42, 32 blocks, block size 34**.
+Selection prioritizes fresh puts: equal-weight geometric mean of median insertion
+times for adjacent and independent fresh keys at 65,536 and 1,048,576 loaded keys.
+Scans do not contribute to that score. The final confirmation used five samples
+of 1,048,576 timed inserts per workload.
+
+The winning score was 153.97 ns versus 154.66 for the intermediate 32-entry-log
+configuration, a further 0.4% reduction. The nearest candidate scored 154.07:
+these tiny differences are not statistically established wins, but the best
+observed configuration is applied rather than discarded. Results are specific
+to this machine, key/value sizes, and these traces—not a universal optimum.
+
+See the [scan and tuning report](benchmark-results/2026-10-09-scan/summary.txt)
+for controlled comparisons, caveats, sweep results, and reproduction commands.
+
 ## Measured performance
 
 Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
@@ -484,12 +525,12 @@ and growth costs.
 
 | Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
 | ----------------------------- | -------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    101.1 |           16.6 |         118.6 |          204.7 |
-| Tree `Get`, miss              |     98.5 |           15.8 |         118.8 |          217.6 |
-| Tree `Put`, existing key      |    100.4 |           27.1 |         123.8 |          206.3 |
-| Tree `Put`, fresh key         |    229.6 |          169.3 |         309.9 |          575.1 |
-| Ordered scan, maximum 10,000  |     4.68 |  not supported |          4.10 |          15.90 |
-| Ordered scan, maximum 100,000 |     4.55 |  not supported |          4.11 |          15.75 |
+| Tree `Get`, hit               |    101.4 |           16.5 |         116.7 |          199.7 |
+| Tree `Get`, miss              |     98.4 |           16.1 |         118.4 |          221.4 |
+| Tree `Put`, existing key      |     97.2 |           27.1 |         126.9 |          207.0 |
+| Tree `Put`, fresh key         |    212.6 |          168.8 |         319.1 |          583.4 |
+| Ordered scan, maximum 10,000  |     3.11 |  not supported |          4.13 |          15.80 |
+| Ordered scan, maximum 100,000 |     3.13 |  not supported |          4.17 |          16.11 |
 
 Go map updates are plain assignments, matching the new void `Put` contract.
 Point benchmarks use the same interface dispatch
@@ -523,9 +564,9 @@ log-only buffering, bulk block traversal, cheaper log-shadow checks, and the
 shared redistribution buffer.
 
 Current benchmark runs and validation logs are saved in
-[benchmark-results/2026-10-09-bitmap](benchmark-results/2026-10-09-bitmap).
+[benchmark-results/2026-10-09-scan](benchmark-results/2026-10-09-scan).
 The tables use measured values from
-[readme.txt](benchmark-results/2026-10-09-bitmap/readme.txt).
+[readme-tuned.txt](benchmark-results/2026-10-09-scan/readme-tuned.txt).
 The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency

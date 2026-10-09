@@ -4,7 +4,8 @@ import "testing"
 
 func TestFirstScanDefersLogFlush(t *testing.T) {
 	tr := NewBPTree[int, int](nil)
-	for i := 0; i < 261; i++ {
+	n := 8*tr.cfg.LogSize + 5
+	for i := 0; i < n; i++ {
 		tr.Put(i, i)
 	}
 	p := tr.root.leaf
@@ -21,7 +22,7 @@ func TestFirstScanDefersLogFlush(t *testing.T) {
 			count++
 			return true
 		})
-		if count != 261 {
+		if count != n {
 			t.Fatal("cold/prepared scan count")
 		}
 		if pass == 0 && (p.logN != 5 || tr.version != version) {
