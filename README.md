@@ -682,10 +682,11 @@ lock's contention and the callback contract matter in this comparison.
 
 Eight competing update writers measure 267.6 ns/op for BP-tree versus 585.8 for
 the locked tidwall adapter. In the separate one-writer/eight-reader workload,
-BP-tree measures 366.0 ns/write with about 0.206 reads/write; tidwall measures
-6,855 ns/write with about 12.42 reads/write. The writer advantage comes with
+BP-tree measures 352.2 ns/write with about 0.010 reads/write; tidwall measures
+7,347 ns/write with about 10.16 reads/write. The writer advantage comes with
 much less reader progress: this is not evidence of a fair or balanced workload
-win. Spin/yield waiting also consumes CPU that these wall-clock timings do not
+win; sustained writers can severely starve readers. Spin/yield waiting also
+consumes CPU that these wall-clock timings do not
 quantify. Per-node locking and waiter fairness remain follow-up work.
 
 Raw results and reproduction commands:

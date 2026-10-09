@@ -29,23 +29,28 @@ Concurrent medians at GOMAXPROCS=8, BP-tree vs tidwall with an external sync.RWM
 - Parallel Get: 129.8 vs 130.0 aggregate ns/op.
 - Parallel Scan1000: 2.300 vs 0.5213 aggregate ns/visited key.
 - Eight contending writers, existing-key updates: 267.6 vs 585.8 aggregate ns/op.
-- One writer + eight lookup readers: 366.0 vs 6855 ns/write;
-  median reader progress is 0.2055 vs 12.42 reads/write.
+- One writer + eight lookup readers: 352.2 vs 7347 ns/write;
+  median reader progress is 0.009829 vs 10.16 reads/write.
+  This rerun gates reader startup on the benchmark timer, excluding setup work.
 The tidwall scan adapter holds one read lock across non-reentrant benchmark callbacks;
 it does not offer BP-tree's deleting-callback contract. Shared tree-lock contention
-and batch copying limit scan scaling. Writer throughput is not reader fairness.
+and batch copying limit scan scaling. Writer throughput is not reader fairness;
+sustained writers severely starve readers in this spin-first design.
 The mixed workload does not hold its read/write ratio fixed and does not measure CPU
 consumption or tail latency. The spin threshold is not claimed to be optimal.
 
 Files:
 before.txt            Pre-integration benchmark output, captured before code edits.
 readme-after.txt      Current integrated tree; generated README tables.
-concurrent-after.txt  Concurrent read, contending writer, and mixed workloads.
+concurrent-after.txt  Concurrent read and contending writer workloads. Its mixed
+                      rows include pre-timer reader work and are superseded below.
+mixed-after.txt       Corrected mixed workload, gating reader startup on the timer.
 
 Reproduce from repository root (run benchmarks without other tests concurrently):
 go -C bench test -run '^$' -bench 'BenchmarkCompare(Points|Iteration)/(Tree|Tidwall)/(GetHit|FreshPut|Scan10000|Scan100000)$' -benchtime=200ms -count=3
 go -C bench test -v -run '^TestReadmeBenchmarkTable$' -count=1 -benchtime=200ms -timeout=5m -args -bench-table -bench-table-count=3
 go -C bench test -run '^$' -bench '^BenchmarkConcurrent' -benchtime=200ms -cpu=1,4,8 -count=3
+go -C bench test -run '^$' -bench '^BenchmarkConcurrentUpdate$' -benchtime=200ms -cpu=1,4,8 -count=3
 
 Validation:
 go test -race -count=1 ./...

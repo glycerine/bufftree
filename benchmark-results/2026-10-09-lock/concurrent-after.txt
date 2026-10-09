@@ -1,3 +1,6 @@
+# The mixed BenchmarkConcurrentUpdate rows below include reader setup work.
+# They are superseded by mixed-after.txt, which counts only after the timer starts.
+# The parallel-read and competing-write rows are unaffected.
 goos: linux
 goarch: amd64
 pkg: github.com/glycerine/bufftree/bench
