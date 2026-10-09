@@ -67,7 +67,8 @@ func TestDictInsertionOrderAndDeletion(t *testing.T) {
 	d.Put(8, "eight")
 	d.Put(2, "two")
 	d.Put(6, "six")
-	if old, ok := d.Put(2, "TWO"); !ok || old != "two" {
+	d.Put(2, "TWO")
+	if got := d.Get(2); got != "TWO" {
 		t.Fatal("replace")
 	}
 	var keys []int
@@ -99,10 +100,10 @@ func TestDictRandomAgainstModel(t *testing.T) {
 	rng := rand.New(rand.NewSource(23))
 	for i := 0; i < 20000; i++ {
 		k := rng.Intn(500)
-		want, exists := model[k]
+		_, exists := model[k]
 		if rng.Intn(3) == 0 {
-			old, ok := d.Del2(k)
-			if old != want || ok != exists {
+			d.Del(k)
+			if _, ok := d.Get2(k); ok {
 				t.Fatal("delete")
 			}
 			if exists {
@@ -111,8 +112,8 @@ func TestDictRandomAgainstModel(t *testing.T) {
 				order = slices.Delete(order, j, j+1)
 			}
 		} else {
-			old, ok := d.Put(k, i)
-			if old != want || ok != exists {
+			d.Put(k, i)
+			if got, ok := d.Get2(k); !ok || got != i {
 				t.Fatal("set")
 			}
 			if !exists {
@@ -152,7 +153,8 @@ func TestDictIteratorDeletesAheadAndSeesNewInsertions(t *testing.T) {
 	var got []int
 	for it.Next() {
 		got = append(got, it.Key())
-		if !it.Del() {
+		it.Del()
+		if _, ok := d.Get2(it.Key()); ok {
 			t.Fatal("iterator delete")
 		}
 	}
@@ -175,7 +177,8 @@ func TestDictIteratorDeletesAheadAndSeesNewInsertions(t *testing.T) {
 		t.Fatal("NaN duplicate")
 	}
 	for k := range empty.All() {
-		if !empty.Del(k) {
+		empty.Del(k)
+		if _, ok := empty.Get2(k); ok {
 			t.Fatal("NaN delete")
 		}
 	}

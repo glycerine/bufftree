@@ -108,9 +108,7 @@ func measureContainerHeap(t *testing.T, name string) memoryResult {
 	runtime.ReadMemStats(&before)
 	container := makeContainer()
 	for i := 0; i < memoryEntries; i++ {
-		if old, replaced := container.Put(benchKey(i), uint64(i)); replaced || old != 0 {
-			t.Fatalf("%s: insertion %d replaced an existing key", name, i)
-		}
+		container.Put(benchKey(i), uint64(i))
 	}
 	counted, ok := container.(interface{ Len() int })
 	if !ok || counted.Len() != memoryEntries {

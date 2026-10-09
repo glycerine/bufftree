@@ -13,29 +13,27 @@ import (
 
 type benchUint64Points interface {
 	Get(uint64) uint64
-	Put(uint64, uint64) (uint64, bool)
+	Put(uint64, uint64)
 }
 
 type benchUint64Map map[uint64]uint64
 
 func (m benchUint64Map) Get(k uint64) uint64 { return m[k] }
 func (m benchUint64Map) Len() int            { return len(m) }
-func (m benchUint64Map) Put(k, v uint64) (uint64, bool) {
-	old, found := m[k]
+func (m benchUint64Map) Put(k, v uint64) {
 	m[k] = v
-	return old, found
 }
 
 // Use tidwall's generic ordered Map with its default degree (32), without
-// copies or path hints. Its Set already returns the old value and found flag.
+// copies or path hints. Discard Set's results to match the void Put contract.
 type benchTidwallMap struct{ tree btree.Map[uint64, uint64] }
 
 func (m *benchTidwallMap) Get(k uint64) uint64 {
 	v, _ := m.tree.Get(k)
 	return v
 }
-func (m *benchTidwallMap) Put(k, v uint64) (uint64, bool) { return m.tree.Set(k, v) }
-func (m *benchTidwallMap) Len() int                       { return m.tree.Len() }
+func (m *benchTidwallMap) Put(k, v uint64) { m.tree.Set(k, v) }
+func (m *benchTidwallMap) Len() int        { return m.tree.Len() }
 func (m *benchTidwallMap) Scan(start uint64, length int, visit func(uint64, uint64) bool) {
 	if length <= 0 {
 		return
@@ -71,17 +69,15 @@ func (m *benchRBTree) Get(k uint64) uint64 {
 	return 0
 }
 func (m *benchRBTree) Len() int { return m.tree.Len() }
-func (m *benchRBTree) Put(k, v uint64) (uint64, bool) {
+func (m *benchRBTree) Put(k, v uint64) {
 	*m.probe = benchKV{key: k, value: v}
 	added, it := m.tree.InsertGetIt(m.probe)
 	if added {
 		m.probe = &benchKV{}
-		return 0, false
+		return
 	}
 	item := it.Item().(*benchKV)
-	old := item.value
 	item.value = v
-	return old, true
 }
 func (m *benchRBTree) Scan(start uint64, length int, visit func(uint64, uint64) bool) {
 	if length <= 0 {
@@ -99,7 +95,7 @@ func (m *benchRBTree) Scan(start uint64, length int, visit func(uint64, uint64) 
 
 // Compare identical uint64 data, uniform lookup/update traces, and unique
 // scrambled insertions. All point operations use the same interface dispatch.
-// Map updates also read the previous value, matching Put's return-value contract.
+// Map writes use assignment alone, matching Put's void return contract.
 func BenchmarkComparePoints(b *testing.B) {
 	for _, bc := range comparisonPointCases(benchLoadSize()) {
 		b.Run(bc.name, bc.run)
@@ -173,7 +169,7 @@ func comparisonPointCases(n int) []comparisonBenchmark {
 }
 
 type benchOrderedScan interface {
-	Put(uint64, uint64) (uint64, bool)
+	Put(uint64, uint64)
 	Scan(uint64, int, func(uint64, uint64) bool)
 }
 
@@ -345,12 +341,14 @@ func TestComparisonPointAdapters(t *testing.T) {
 			t.Fatal("missing key")
 		}
 		for i := uint64(0); i < 100; i++ {
-			if old, ok := idx.Put(i, i+1); ok || old != 0 {
+			idx.Put(i, i+1)
+			if idx.Get(i) != i+1 {
 				t.Fatal("new key")
 			}
 		}
 		for i := uint64(0); i < 100; i++ {
-			if old, ok := idx.Put(i, i+100); !ok || old != i+1 {
+			idx.Put(i, i+100)
+			if idx.Get(i) != i+100 {
 				t.Fatal("update")
 			}
 			if idx.Get(i) != i+100 || idx.Get(i+1000) != 0 {
@@ -373,9 +371,7 @@ func TestComparisonFreshPuts(t *testing.T) {
 			}
 			for i := 0; i < n; i++ {
 				key := benchKey(i) | 1
-				if old, replaced := idx.Put(key, uint64(n+i)); replaced || old != 0 {
-					t.Fatalf("fresh Put %d replaced an existing key", i)
-				}
+				idx.Put(key, uint64(n+i))
 			}
 			if idx.(interface{ Len() int }).Len() != 2*n {
 				t.Fatal("fresh puts must grow the container")

@@ -49,18 +49,11 @@ func TestBPARandom(t *testing.T) {
 
 func checkBPA(t *testing.T, p *bpa[int, int], model map[int]int) {
 	t.Helper()
-	if p.size != len(model) {
+	if p.resolveSize() != len(model) {
 		t.Fatalf("size %d != %d", p.size, len(model))
 	}
 	if p.logN >= p.cfg.LogSize {
 		t.Fatal("log has no spare slot")
-	}
-	if !p.logMayShadow {
-		for _, e := range p.log() {
-			if e.dead || p.baseLocation(e.key) >= 0 {
-				t.Fatal("distinct log contains a tombstone or shadows the base")
-			}
-		}
 	}
 	for i, n := range p.counts {
 		if n >= p.cfg.BlockSize {
@@ -113,17 +106,16 @@ func TestFreshPutMixedBatches(t *testing.T) {
 		rng := rand.New(rand.NewSource(891))
 		for i := 0; i < 30000; i++ {
 			k := rng.Intn(12000)
-			want, exists := model[k]
 			if rng.Intn(4) == 0 {
-				old, found := tr.Del2(k)
-				if old != want || found != exists {
-					t.Fatalf("delete %d: %d,%v want %d,%v", k, old, found, want, exists)
+				tr.Del(k)
+				if _, found := tr.Get2(k); found {
+					t.Fatalf("delete retained %d", k)
 				}
 				delete(model, k)
 			} else {
-				old, found := tr.Put(k, i)
-				if old != want || found != exists {
-					t.Fatalf("put %d: %d,%v want %d,%v", k, old, found, want, exists)
+				tr.Put(k, i)
+				if got, found := tr.Get2(k); !found || got != i {
+					t.Fatalf("put lost %d", k)
 				}
 				model[k] = i
 			}
@@ -147,9 +139,7 @@ func TestPutResurrectsFullLeafTombstone(t *testing.T) {
 	if tr.root.leaf.size != tr.root.leaf.capacity() || tr.root.leaf.location(10) < 0 {
 		t.Fatal("expected a full leaf retaining the deleted header")
 	}
-	if old, found := tr.Put(10, 100); old != 0 || found {
-		t.Fatal("resurrection must report an absent key")
-	}
+	tr.Put(10, 100)
 	checkTree(t, tr, map[int]int{10: 100, 20: 20, 30: 30, 35: 35, 40: 40})
 }
 

@@ -28,7 +28,7 @@ func reportIteration(b *testing.B, keys uint64) {
 type benchIndex interface {
 	Get(uint64) uint64
 	Get2(uint64) (uint64, bool)
-	Put(uint64, uint64) (uint64, bool)
+	Put(uint64, uint64)
 	Scan(uint64, int, func(uint64, uint64) bool)
 	MapRange(uint64, uint64, func(uint64, uint64) bool)
 }
@@ -389,16 +389,15 @@ func (t *benchSortedTree) Get(k uint64) uint64 {
 	v, _ := t.Get2(k)
 	return v
 }
-func (t *benchSortedTree) Put(k, v uint64) (uint64, bool) {
+func (t *benchSortedTree) Put(k, v uint64) {
 	if t.root == nil {
 		t.root = &benchSortedNode{items: make([]benchKV, 0, t.slots+1)}
 	}
-	old, found, right := t.insert(t.root, k, v)
+	_, _, right := t.insert(t.root, k, v)
 	if right != nil {
 		t.root = &benchSortedNode{children: []*benchSortedNode{t.root, right}}
 		benchSortedRefresh(t.root)
 	}
-	return old, found
 }
 func (t *benchSortedTree) insert(n *benchSortedNode, k, v uint64) (uint64, bool, *benchSortedNode) {
 	var old uint64

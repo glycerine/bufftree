@@ -54,8 +54,8 @@ func TestGetAndGet2(t *testing.T) {
 	for _, idx := range []interface {
 		Get(int) string
 		Get2(int) (string, bool)
-		Put(int, string) (string, bool)
-		Del(int) bool
+		Put(int, string)
+		Del(int)
 	}{&tr, &d} {
 		if idx.Get(7) != "" {
 			t.Fatal("Get on empty container")
@@ -110,15 +110,15 @@ func TestTreeRandomAgainstMap(t *testing.T) {
 				want, exists := model[k]
 				switch rng.Intn(3) {
 				case 0:
-					old, ok := tr.Del2(k)
-					if ok != exists || old != want {
-						t.Fatalf("delete %d: %d,%v want %d,%v", k, old, ok, want, exists)
+					tr.Del(k)
+					if _, ok := tr.Get2(k); ok {
+						t.Fatalf("delete retained %d", k)
 					}
 					delete(model, k)
 				case 1:
-					old, ok := tr.Put(k, i)
-					if ok != exists || old != want {
-						t.Fatalf("set %d: %d,%v want %d,%v", k, old, ok, want, exists)
+					tr.Put(k, i)
+					if got, ok := tr.Get2(k); !ok || got != i {
+						t.Fatalf("put lost %d", k)
 					}
 					model[k] = i
 				case 2:
@@ -441,7 +441,8 @@ func TestTreeBulkSplitAndCollapse(t *testing.T) {
 		}
 		checkTree(t, tr, model)
 		for i, k := range rng.Perm(n) {
-			if !tr.Del(k) {
+			tr.Del(k)
+			if _, ok := tr.Get2(k); ok {
 				t.Fatal("bulk delete")
 			}
 			delete(model, k)
@@ -488,7 +489,7 @@ func TestTreeIteratorsAndEarlyStop(t *testing.T) {
 	if !it.Seek(-10) || it.Key() != 1 {
 		t.Fatal("seek below minimum")
 	}
-	if it.Seek(100) || it.Valid() || it.Del() {
+	if it.Seek(100) || it.Valid() {
 		t.Fatal("seek past end")
 	}
 	if !it.Seek(49) || it.Key() != 49 {

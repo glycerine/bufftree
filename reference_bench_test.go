@@ -8,7 +8,7 @@ import (
 type stringBenchIndex interface {
 	Get(string) uint64
 	Get2(string) (uint64, bool)
-	Put(string, uint64) (uint64, bool)
+	Put(string, uint64)
 	Clear()
 }
 
@@ -16,10 +16,8 @@ type benchStringMap map[string]uint64
 
 func (m benchStringMap) Get(k string) uint64          { return m[k] }
 func (m benchStringMap) Get2(k string) (uint64, bool) { v, ok := m[k]; return v, ok }
-func (m benchStringMap) Put(k string, v uint64) (uint64, bool) {
-	old, ok := m[k]
+func (m benchStringMap) Put(k string, v uint64) {
 	m[k] = v
-	return old, ok
 }
 func (m benchStringMap) Clear() { clear(m) }
 

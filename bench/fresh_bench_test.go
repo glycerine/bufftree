@@ -98,6 +98,49 @@ func BenchmarkFreshPut(b *testing.B) {
 	}
 }
 
+// Include exact counting in the timed workload, exposing the cost of calling
+// Len after every write versus amortizing reconciliation across a batch.
+func BenchmarkFreshPutWithLen(b *testing.B) {
+	n := benchLoadSize()
+	for _, interval := range []int{1, 32, n} {
+		for _, layout := range comparisonPointLayouts(n) {
+			b.Run(fmt.Sprintf("Every%d/%s", interval, layout.name), func(b *testing.B) {
+				idx := loadComparisonPoints(layout, n)
+				counted := idx.(interface{ Len() int })
+				counted.Len() // fixture counting is outside the timer
+				inserted, pending := 0, 0
+				b.ReportAllocs()
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					if inserted == n {
+						if pending != 0 {
+							benchSink = uint64(counted.Len())
+							pending = 0
+						}
+						b.StopTimer()
+						idx = loadComparisonPoints(layout, n)
+						counted = idx.(interface{ Len() int })
+						counted.Len()
+						inserted = 0
+						b.StartTimer()
+					}
+					idx.Put(benchKey(inserted)|1, uint64(i))
+					inserted++
+					pending++
+					if pending == interval {
+						benchSink = uint64(counted.Len())
+						pending = 0
+					}
+				}
+				if pending != 0 {
+					benchSink = uint64(counted.Len())
+				}
+				b.StopTimer()
+			})
+		}
+	}
+}
+
 func benchmarkFreshPut(b *testing.B, layout benchPointLayout, n int, keys []uint64, profile bool) {
 	idx := loadComparisonPoints(layout, n)
 	inserted := 0

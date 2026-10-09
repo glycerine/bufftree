@@ -13,16 +13,19 @@ type Tree[K cmp.Ordered, V any] struct {
 	root          *node[K, V]
 	cfg           Config
 	length        int
+	pending       *bpa[K, V]
 	version       uint64
 	mapBuffers    [][]entry[K, V]
 	rebuildBuffer []entry[K, V]
 }
 type node[K cmp.Ordered, V any] struct {
-	min        K
-	parent     *node[K, V]
+	// Keep the fields used by internal descent together, ahead of metadata
+	// needed only during mutation or leaf-to-leaf traversal.
+	leaf       *bpa[K, V]
 	keys       []K
 	children   []*node[K, V]
-	leaf       *bpa[K, V]
+	min        K
+	parent     *node[K, V]
 	prev, next *node[K, V]
 }
 
@@ -36,19 +39,59 @@ func NewBPTree[K cmp.Ordered, V any](cfg *Config) *Tree[K, V] {
 	}
 	return &Tree[K, V]{cfg: internal.normalized()}
 }
-func (t *Tree[K, V]) Len() int { return t.length }
-func (t *Tree[K, V]) Clear()   { t.root = nil; t.length = 0; t.version++ }
+
+// Len returns the exact number of keys. The first call after writes reconciles
+// buffered membership in changed leaves; subsequent calls take constant time.
+// Reconciliation does not move records or invalidate live iterator positions.
+func (t *Tree[K, V]) Len() int {
+	for t.pending != nil {
+		t.reconcile(t.pending)
+	}
+	return t.length
+}
+func (t *Tree[K, V]) reconcile(p *bpa[K, V]) {
+	n := p.resolveSize()
+	t.length += n - p.accounted
+	p.accounted = n
+	if !p.dirty {
+		return
+	}
+	if p.prevDirty != nil {
+		p.prevDirty.nextDirty = p.nextDirty
+	} else {
+		t.pending = p.nextDirty
+	}
+	if p.nextDirty != nil {
+		p.nextDirty.prevDirty = p.prevDirty
+	}
+	p.dirty, p.prevDirty, p.nextDirty = false, nil, nil
+}
+func (t *Tree[K, V]) markDirty(p *bpa[K, V]) {
+	if !p.dirty {
+		if t.pending != nil {
+			t.pending.prevDirty = p
+		}
+		p.dirty, p.nextDirty, t.pending = true, t.pending, p
+	}
+}
+func (t *Tree[K, V]) Clear() {
+	t.root, t.pending = nil, nil
+	t.length = 0
+	t.version++
+}
 func (t *Tree[K, V]) findLeaf(k K) *node[K, V] {
 	n := t.root
 	for n != nil && n.leaf == nil {
-		lo, hi := 0, len(n.keys)
-		for lo < hi {
-			mid := lo + (hi-lo)/2
-			if !lessKey(k, n.keys[mid]) {
-				lo = mid + 1
-			} else {
-				hi = mid
+		lo, width := 0, len(n.keys)
+		for width > 1 {
+			half := width / 2
+			if !lessKey(k, n.keys[lo+half-1]) {
+				lo += half
 			}
+			width -= half
+		}
+		if width > 0 && !lessKey(k, n.keys[lo]) {
+			lo++
 		}
 		n = n.children[lo]
 	}
@@ -78,9 +121,9 @@ func (t *Tree[K, V]) Get2(k K) (V, bool) {
 	return zero, false
 }
 
-// Put inserts or replaces a value, returning the old value and whether it existed.
-// Replacing an existing value does not increase Len.
-func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
+// Put inserts or replaces a value. Writes are buffered without looking up the
+// previous value in the leaf's blocks.
+func (t *Tree[K, V]) Put(k K, v V) {
 	if t.root == nil {
 		t.cfg = t.cfg.normalized()
 		t.root = &node[K, V]{min: k, leaf: newBPA[K, V](t.cfg, &t.rebuildBuffer)}
@@ -89,34 +132,29 @@ func (t *Tree[K, V]) Put(k K, v V) (V, bool) {
 		}
 	}
 	n := t.findLeaf(k)
-	loc := n.leaf.location(k)
-	if loc >= 0 && !n.leaf.data[loc].dead {
-		old := n.leaf.data[loc].value
-		n.leaf.data[loc] = entry[K, V]{key: k, value: v}
-		t.version++
-		return old, true
-	}
-	if n.leaf.size == n.leaf.capacity() {
-		right := t.splitLeaf(n)
-		if compareKey(k, right.min) >= 0 {
-			n = right
+	t.markDirty(n.leaf)
+	if !n.leaf.trySet(k, v) {
+		// Buffered duplicates can overestimate occupancy by at most logN.
+		// Resolve them before deciding whether a real split is necessary.
+		n.leaf.flush()
+		if n.leaf.size == n.leaf.capacity() {
+			if loc := n.leaf.baseLocation(k); loc >= 0 && !n.leaf.isDead(loc) {
+				n.leaf.data[loc].value = v
+				t.version++
+				return
+			}
+			right := t.splitLeaf(n)
+			if !lessKey(k, right.min) {
+				n = right
+			}
 		}
-		loc = -1 // splitting discards tombstones and redistributes the base
-	}
-	n.leaf.size++
-	t.length++
-	if loc >= 0 {
-		n.leaf.data[loc] = entry[K, V]{key: k, value: v}
-	} else {
-		n.leaf.appendLog(entry[K, V]{key: k, value: v})
+		n.leaf.trySet(k, v)
 	}
 	if lessKey(k, n.min) {
 		n.min = k
 		refreshUp(n.parent)
 	}
 	t.version++
-	var zero V
-	return zero, false
 }
 func refresh[K cmp.Ordered, V any](n *node[K, V]) {
 	if n.leaf != nil {
@@ -157,6 +195,7 @@ func (t *Tree[K, V]) splitLeaf(n *node[K, V]) *node[K, V] {
 	n.leaf.load(es[:mid])
 	n.min = es[0].key
 	right.leaf.load(es[mid:])
+	t.markDirty(right.leaf)
 	clear(es)
 	t.rebuildBuffer = es[:0]
 	if n.next != nil {
@@ -198,22 +237,22 @@ func (t *Tree[K, V]) insertSibling(left, right *node[K, V]) {
 	}
 }
 
-// Del2 removes a key and returns its previous value and whether it existed.
-func (t *Tree[K, V]) Del2(k K) (V, bool) {
+// Del removes k. Deleting an absent key has no effect.
+func (t *Tree[K, V]) Del(k K) {
 	n := t.findLeaf(k)
 	if n == nil {
-		var zero V
-		return zero, false
+		return
 	}
-	old, found := n.leaf.del(k)
-	if !found {
-		return old, false
+	if !n.leaf.del(k) {
+		return
 	}
-	t.length--
+	t.markDirty(n.leaf)
 	t.version++
 	if n == t.root && n.leaf.size == 0 {
+		n.leaf.load(nil)
+		t.reconcile(n.leaf)
 		t.root = nil
-		return old, true
+		return
 	}
 	changedMin := n.leaf.size > 0 && equalKey(k, n.min)
 	if changedMin {
@@ -226,11 +265,7 @@ func (t *Tree[K, V]) Del2(k K) (V, bool) {
 	} else if changedMin {
 		refreshUp(n.parent)
 	}
-	return old, true
 }
-
-// Del is the boolean-only form of Del2.
-func (t *Tree[K, V]) Del(k K) bool { _, ok := t.Del2(k); return ok }
 func (t *Tree[K, V]) underfull(n *node[K, V]) bool {
 	if n.leaf != nil {
 		return n.leaf.size < n.leaf.capacity()/2
@@ -249,10 +284,14 @@ func (t *Tree[K, V]) rebalance(n *node[K, V]) {
 		}
 		merge := false
 		if n.leaf != nil {
+			t.markDirty(left.leaf)
+			t.markDirty(right.leaf)
 			es := append(left.leaf.collect(), right.leaf.collect()...)
 			merge = len(es) <= left.leaf.capacity()
 			if merge {
 				left.leaf.load(es)
+				right.leaf.load(nil)
+				t.reconcile(right.leaf)
 				left.min = es[0].key
 				left.next = right.next
 				if right.next != nil {
@@ -371,15 +410,12 @@ func (it *Iterator[K, V]) Seek(start K) bool {
 func (it *Iterator[K, V]) Valid() bool { return it.valid }
 func (it *Iterator[K, V]) Key() K      { return it.key }
 func (it *Iterator[K, V]) Value() V    { return it.value }
-func (it *Iterator[K, V]) Del() bool   { _, ok := it.Del2(); return ok }
 
-// Del2 deletes the current key, returning its old value and whether it existed.
-func (it *Iterator[K, V]) Del2() (V, bool) {
+// Del deletes the current key. An unpositioned iterator has no effect.
+func (it *Iterator[K, V]) Del() {
 	if it.valid {
-		return it.tree.Del2(it.key)
+		it.tree.Del(it.key)
 	}
-	var zero V
-	return zero, false
 }
 
 // All can be used with Go's range-over-function syntax. Deleting yielded keys
@@ -430,7 +466,7 @@ scan:
 			if bounded && !lessKey(e.key, end) {
 				return
 			}
-			if !e.dead {
+			if !c.baseDead {
 				length--
 				if !visit(e.key, e.value) || length == 0 {
 					return

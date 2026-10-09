@@ -50,13 +50,12 @@ func (d *Dict[K, V]) Get2(k K) (V, bool) {
 	return zero, false
 }
 
-// Put inserts or replaces a value, returning the old value and whether it existed.
+// Put inserts or replaces a value.
 // Replacing a value preserves its position; a new key is appended at the end.
-func (d *Dict[K, V]) Put(k K, v V) (V, bool) {
+func (d *Dict[K, V]) Put(k K, v V) {
 	if e, ok := d.index.Get2(k); ok {
-		old := e.value
 		e.value = v
-		return old, true
+		return
 	}
 	// Promote the current end marker into the new entry. Iterators waiting at
 	// that marker will see the append, even if their previous entry was deleted.
@@ -74,15 +73,15 @@ func (d *Dict[K, V]) Put(k K, v V) (V, bool) {
 	}
 	d.tail = e
 	d.end = end
-	var zero V
-	return zero, false
 }
-func (d *Dict[K, V]) Del2(k K) (V, bool) {
-	e, ok := d.index.Del2(k)
+
+// Del removes k. Deleting an absent key has no effect.
+func (d *Dict[K, V]) Del(k K) {
+	e, ok := d.index.Get2(k)
 	if !ok {
-		var zero V
-		return zero, false
+		return
 	}
+	d.index.Del(k)
 	if e.prev != nil {
 		e.prev.next = e.next
 	} else if e.next == d.end {
@@ -95,15 +94,12 @@ func (d *Dict[K, V]) Del2(k K) (V, bool) {
 	} else {
 		d.tail = e.prev
 	}
-	old := e.value
 	var zero V
 	e.value = zero
 	e.prev, e.live = nil, false
 	// Keep the removed node's successor so an iterator already pointing to it
 	// can skip it. Live nodes do not retain removed nodes.
-	return old, true
 }
-func (d *Dict[K, V]) Del(k K) bool { _, ok := d.Del2(k); return ok }
 func (d *Dict[K, V]) Clear() {
 	d.index.Clear()
 	d.head, d.tail, d.end = nil, nil, nil
@@ -155,15 +151,12 @@ func (it *DictIterator[K, V]) Next() bool {
 func (it *DictIterator[K, V]) Valid() bool { return it.valid }
 func (it *DictIterator[K, V]) Key() K      { return it.key }
 func (it *DictIterator[K, V]) Value() V    { return it.value }
-func (it *DictIterator[K, V]) Del() bool   { _, ok := it.Del2(); return ok }
 
-// Del2 deletes the current key, returning its old value and whether it existed.
-func (it *DictIterator[K, V]) Del2() (V, bool) {
+// Del deletes the current key. An unpositioned iterator has no effect.
+func (it *DictIterator[K, V]) Del() {
 	if it.valid {
-		return it.dict.Del2(it.key)
+		it.dict.Del(it.key)
 	}
-	var zero V
-	return zero, false
 }
 func (d *Dict[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {

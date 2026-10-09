@@ -188,37 +188,32 @@ func TestScanMutationWithinBlock(t *testing.T) {
 	}
 }
 
-func TestDel2OnContainersAndIterators(t *testing.T) {
+func TestDelOnContainersAndIterators(t *testing.T) {
 	tr := NewBPTree[int, string](nil)
 	d := NewDict[int, string](nil)
 	tr.Put(1, "one")
 	d.Put(1, "one")
 	tit, dit := tr.Iter(), d.Iter()
-	if v, ok := tit.Del2(); ok || v != "" {
-		t.Fatal("unpositioned tree iterator")
-	}
-	if v, ok := dit.Del2(); ok || v != "" {
-		t.Fatal("unpositioned dictionary iterator")
+	tit.Del()
+	dit.Del()
+	if tr.Len() != 1 || d.Len() != 1 {
+		t.Fatal("unpositioned iterator deleted an entry")
 	}
 	tit.Next()
 	dit.Next()
-	if v, ok := tit.Del2(); !ok || v != "one" {
-		t.Fatal("tree iterator Del2")
-	}
-	if v, ok := dit.Del2(); !ok || v != "one" {
-		t.Fatal("dictionary iterator Del2")
-	}
-	if v, ok := tr.Del2(1); ok || v != "" {
-		t.Fatal("absent tree Del2")
-	}
-	if v, ok := d.Del2(1); ok || v != "" {
-		t.Fatal("absent dictionary Del2")
+	tit.Del()
+	dit.Del()
+	tr.Del(1)
+	d.Del(1)
+	if tr.Len() != 0 || d.Len() != 0 {
+		t.Fatal("iterator deletion")
 	}
 	d.Put(2, "two")
 	if !dit.Next() || dit.Key() != 2 {
-		t.Fatal("append after iterator Del2")
+		t.Fatal("append after iterator deletion")
 	}
-	if v, ok := d.Del2(2); !ok || v != "two" {
-		t.Fatal("dictionary Del2")
+	d.Del(2)
+	if d.Len() != 0 {
+		t.Fatal("dictionary deletion")
 	}
 }
