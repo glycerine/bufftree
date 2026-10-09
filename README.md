@@ -31,9 +31,10 @@ ns/key; multiply the first-scan value by 65,536 for total nanoseconds per scan.
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
 | -------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
-| Get                        |  100.2 |           16.5 |         115.6 |          199.1 |         25.5 |
-| Put                        |  214.6 |          166.5 |         313.6 |          622.7 |        150.1 |
-| Ordered scan               |   3.20 |  not supported |          4.15 |          15.73 |         7.46 |
+| Get                        |  101.0 |           16.7 |         123.9 |          205.0 |         21.6 |
+| Put                        |  211.7 |          169.4 |         310.2 |          589.0 |        135.2 |
+| Ordered scan               |   3.10 |  not supported |          4.14 |          15.63 |         5.58 |
+| First ordered scan         |  10.30 |  not supported |          7.73 |          32.77 |       301.11 |
 
 ~~~
 This compares:
@@ -577,14 +578,15 @@ full scan of all 65,536 entries, including lazy index allocation and sorting.
 This row reports total scan time divided by the number of entries; preparation
 is paid in full for every scan and never reused between iterations.
 
-| Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
-| ----------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
-| Tree `Get`, hit               |  100.2 |           16.5 |         115.6 |          199.1 |         22.1 |
-| Tree `Get`, miss              |   98.9 |           15.6 |         115.7 |          222.2 |         19.0 |
-| Tree `Put`, existing key      |   97.1 |           27.1 |         125.9 |          210.5 |         23.9 |
-| Tree `Put`, fresh key         |  214.6 |          166.5 |         313.6 |          622.7 |        138.8 |
-| Ordered scan, maximum 10,000  |   3.18 |  not supported |          4.19 |          15.68 |         5.62 |
-| Ordered scan, maximum 100,000 |   3.20 |  not supported |          4.15 |          15.73 |         5.56 |
+| Operation (showing ns/key)     | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
+| ------------------------------ | -----: | -------------: | ------------: | -------------: | -----------: |
+| Tree `Get`, hit                |  101.0 |           16.7 |         123.9 |          205.0 |         21.6 |
+| Tree `Get`, miss               |  104.7 |           16.0 |         117.7 |          220.9 |         19.2 |
+| Tree `Put`, existing key       |   95.8 |           26.9 |         124.5 |          210.3 |         23.7 |
+| Tree `Put`, fresh key          |  211.7 |          169.4 |         310.2 |          589.0 |        135.2 |
+| Ordered scan, maximum 10,000   |   3.22 |  not supported |          4.12 |          15.71 |         5.64 |
+| Ordered scan, maximum 100,000  |   3.10 |  not supported |          4.14 |          15.63 |         5.58 |
+| First ordered scan, full table |  10.30 |  not supported |          7.73 |          32.77 |       301.11 |
 
 Go map updates are plain assignments, matching the new void `Put` contract.
 Point benchmarks use the same interface dispatch
@@ -618,8 +620,9 @@ that index. These repeated-scan figures therefore mostly measure cached traversa
 `BenchmarkScanFirst/Insdict` measures the first scan's sorting cost, and
 `BenchmarkScanMixed/Insdict` measures existing-key updates plus scans. Inserting
 new keys invalidates insdict's index and requires sorting again on the next scan.
-A separate three-sample 100ms run measured about 20 ms for its first scan after
-loading 65,536 entries, including roughly 512 KiB for the sorted index; see
+The first full scan above costs insdict 301.11 ns/key, or about 19.73 ms for
+65,536 entries, compared with 0.68 ms for BPTree. The separate allocation run
+records roughly 512 KiB for insdict's sorted index; see
 [insdict-scans.txt](benchmark-results/2026-10-09-insdict/insdict-scans.txt).
 
 Separate reference-style benchmarks cover 16-byte string keys and new
