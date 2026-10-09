@@ -46,18 +46,16 @@ the random fresh-Put and repeated length-limited scan workloads measured here. S
 [diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below,
 including the costs of frequent exact counting and sequential insertion.
 
-# the caveat
+# the caveat: no concurrency
 
 The big caveat here is concurrency. The bufftree.Tree here only allows
-one accessor (one reader, or one write) at a time. There can be no support
-for multiple readers concurrently because the reader must modify the
+one goroutine access (one reader, or one writer) at a time. There can be no support
+for multiple readers concurrently (like tidwall.BTree allows) because the reader must modify the
 tree data to answer its queries. If we add transactions to support
 multiple readers, the advantage over tidwall reverses and we lose badly.
 See branch tx for that experiment.
 
-~~~
-with read and write transactions to support 
-controlled concurrency (see branch tx):
+With read and write transactions to support controlled concurrency (see branch tx):
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
 | -------------------------- | -----: | -------------: | ------------: | -------------: |
@@ -65,8 +63,26 @@ controlled concurrency (see branch tx):
 | Put                        | 1117.4 |          167.3 |         317.0 |          629.9 |
 | Put batch (amortized 1024) |  705.7 |          166.8 |         313.3 |          648.3 |
 | Ordered scan               |   5.91 |  not supported |          4.88 |          17.77 |
-~~~
 
+Details about the current mutations that a Scan (in key order, full table read) does:
+
+- Ordered scans sort the insertion log and leaf blocks in place. They 
+move key/value records and set sortedness flags. Sorting the log also
+moves tombstone bits with their records so deletion markers still
+identify the correct entries.
+
+- Len() reconciles buffered duplicates. It updates cached leaf counts, 
+the tree’s total count, and the list of leaves awaiting reconciliation.
+
+- Some long scans flush buffered entries into blocks. This changes
+storage layout and associated metadata. Scans also update scanReady;
+scan-triggered flushing increments the version used to invalidate
+existing cursors. This flushing is a performance optimization.
+
+- MapRange sorts the log and borrows shared scratch buffers, 
+modifying the tree’s buffer-pool bookkeeping.
+
+Ordinary point Get does not need these mutations.
 
 ----------------------------
 This package provides a BP-tree with sorted key-order iteration.
