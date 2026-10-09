@@ -1,0 +1,84 @@
+package bench
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/glycerine/bufftree"
+)
+
+// Separate fixed-work subbenchmarks let a sweep give fresh puts and scans
+// appropriate iteration counts without changing their measured operations.
+func BenchmarkTuneGeometry(b *testing.B) {
+	var configs []bufftree.Config
+	for _, fanout := range []int{16, 32, 48, 64, 96, 128, 192, 256, 384, 512} {
+		configs = append(configs, bufftree.Config{Fanout: fanout, LogSize: 32, NumBlocks: 32, BlockSize: 32})
+	}
+	for _, pair := range [][2]int{{16, 16}, {16, 32}, {24, 32}, {32, 16}, {32, 24}, {32, 32}, {32, 48}, {32, 64}, {48, 32}, {64, 16}, {64, 32}, {64, 64}} {
+		for _, logSize := range []int{8, 16, 24, 32, 48, 64} {
+			if pair == [2]int{32, 32} && logSize == 32 {
+				continue
+			}
+			configs = append(configs, bufftree.Config{Fanout: 64, LogSize: logSize, NumBlocks: pair[0], BlockSize: pair[1]})
+		}
+	}
+	benchmarkConfigurations(b, configs)
+}
+
+func BenchmarkTuneRefine(b *testing.B) {
+	var configs []bufftree.Config
+	for _, fanout := range []int{64, 128, 192, 256, 384, 512} {
+		for _, shape := range [][3]int{{32, 32, 32}, {16, 16, 32}, {32, 16, 32}, {32, 64, 32}, {32, 32, 64}} {
+			configs = append(configs, bufftree.Config{Fanout: fanout, LogSize: shape[0], NumBlocks: shape[1], BlockSize: shape[2]})
+		}
+	}
+	for _, fanout := range []int{160, 224, 320, 448, 640} {
+		configs = append(configs, bufftree.Config{Fanout: fanout, LogSize: 32, NumBlocks: 32, BlockSize: 32})
+	}
+	for _, logSize := range []int{20, 24, 28, 36, 40, 48} {
+		configs = append(configs, bufftree.Config{Fanout: 384, LogSize: logSize, NumBlocks: 32, BlockSize: 32})
+	}
+	for _, size := range []int{24, 28, 36, 40} {
+		configs = append(configs,
+			bufftree.Config{Fanout: 384, LogSize: 32, NumBlocks: size, BlockSize: 32},
+			bufftree.Config{Fanout: 384, LogSize: 32, NumBlocks: 32, BlockSize: size})
+	}
+	benchmarkConfigurations(b, configs)
+}
+
+func benchmarkConfigurations(b *testing.B, configs []bufftree.Config) {
+	n := benchLoadSize()
+	keys := make([]uint64, n)
+	for i := range keys {
+		keys[i] = benchKey(i) | 1
+	}
+	ops := benchTrace(n, 8192, 100000)
+	for _, cfg := range configs {
+		name := fmt.Sprintf("f%d-l%d-h%d-b%d", cfg.Fanout, cfg.LogSize, cfg.NumBlocks, cfg.BlockSize)
+		b.Run(name, func(b *testing.B) {
+			b.Run("FreshPut", func(b *testing.B) {
+				layout := benchPointLayout{name, func() benchUint64Points {
+					return bufftree.NewBPTree[uint64, uint64](&cfg)
+				}}
+				benchmarkFreshPut(b, layout, n, keys, false)
+			})
+			b.Run("Scan100000", func(b *testing.B) {
+				tr := bufftree.NewBPTree[uint64, uint64](&cfg)
+				for i := 0; i < n; i++ {
+					tr.Put(benchKey(i), uint64(i))
+				}
+				var sum, visited uint64
+				visit := func(k, v uint64) bool { sum += v; visited++; return true }
+				b.ReportAllocs()
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					o := ops[i%len(ops)]
+					tr.Scan(o.key, o.length, visit)
+				}
+				b.StopTimer()
+				benchSink = sum
+				reportIteration(b, visited)
+			})
+		})
+	}
+}

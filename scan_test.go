@@ -2,6 +2,37 @@ package bufftree
 
 import "testing"
 
+func TestFirstScanDefersLogFlush(t *testing.T) {
+	tr := NewBPTree[int, int](nil)
+	for i := 0; i < 261; i++ {
+		tr.Put(i, i)
+	}
+	p := tr.root.leaf
+	if p.logN != 5 || p.scanReady {
+		t.Fatal("unexpected cold-scan fixture")
+	}
+	version := tr.version
+	for pass := 0; pass < 2; pass++ {
+		count := 0
+		tr.Scan(0, 1000, func(k, v int) bool {
+			if k != count || v != k {
+				t.Fatal("cold/prepared scan mismatch")
+			}
+			count++
+			return true
+		})
+		if count != 261 {
+			t.Fatal("cold/prepared scan count")
+		}
+		if pass == 0 && (p.logN != 5 || tr.version != version) {
+			t.Fatal("first scan eagerly flushed its log")
+		}
+	}
+	if p.logN != 0 || tr.version == version {
+		t.Fatal("repeat long scan did not prepare its leaf")
+	}
+}
+
 func TestHeaderMirrorsOverwriteAndDelete(t *testing.T) {
 	cfg := Config{Fanout: 3, LogSize: 7, NumBlocks: 3, BlockSize: 5}
 	tr := NewBPTree[int, *int](&cfg)

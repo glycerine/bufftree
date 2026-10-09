@@ -64,6 +64,7 @@ New entries accumulate in the insert buffer and move into blocks in batches.
 This avoids the cost of keeping the entire leaf sorted after every insertion. 
 Point lookups check the buffer and use the header to select a block.
 Ordered scans sort blocks as needed and merge in buffered entries. 
+Later long scans can flush the buffer to avoid repeating that merge work.
 When blocks fill unevenly, the BPA redistributes entries across them,
 combining inexpensive writes with efficient sequential scans.
 This does mean that a full table scan will re-write your data, which
@@ -176,7 +177,8 @@ result. A half-open range ending at NaN excludes NaN; `IterFrom(NaN)` and
 `Scan(NaN, ...)` start at the NaN entry.
 
 Containers and iterators require external synchronization across goroutines.
-Ordered traversal can write to leaves by sorting their log and blocks, so it
+Ordered traversal can write to leaves by sorting their log and blocks or
+flushing buffered entries, so it
 also needs exclusive synchronization against other operations. The paper's
 per-node concurrent locking scheme is not implemented here.
 
@@ -189,14 +191,24 @@ A uint64 key/value record is 16 bytes, down from 24 bytes when it contained a
 boolean and alignment padding. The default log and header need one 8-byte
 bitmap word, so their flags do not enlarge every record.
 
+The reserved first slot of each block mirrors its header record. After sorting,
+the header and block form one contiguous scan run; this uses existing storage,
+not a second scan array. Header overwrites and deletion synchronize the mirror,
+including clearing deleted pointer values.
+
 `Put` searches only the log before buffering, whether the key is new or already
 in a block. Log entries shadow older records. A full log flushes records into the corresponding
 blocks. Inserts append within blocks, and overflowing blocks trigger a sorted
 merge and global redistribution. Ordered scans merge the log with the header
 and block stream, sorting only encountered blocks and caching their sortedness.
 Unordered maps filter the block stream against the log without sorting blocks.
-Ordered scans process contiguous block segments directly when no log entry can
-shadow them, while checking for callback mutations to preserve live traversal.
+Ordered scans process contiguous runs directly when no log entry can shadow
+them, with a separate fast path for an empty log. `Scan`, `Range`, and `All`
+share this traversal; explicit iterators keep their own cursors. After a leaf
+has been visited, a later sufficiently long scan may flush its log. Narrow
+ranges and first visits retain the merge path. Scan-driven rearrangement advances
+the tree version, so existing live cursors reseek safely. Every callback still
+checks for mutation before reading another borrowed record.
 
 Point lookups descend through the internal separators, check the leaf's
 insertion log, and use its sorted header to select a block. Updates and deletion
@@ -231,7 +243,8 @@ Those are the defaults; zero numeric fields select defaults. Fanout must be at l
 other fields must be at least 2. Invalid configurations panic. Sizes are measured
 in entries, so byte sizes depend on the generic types and Go struct padding.
 The default leaf allocates 1,088 record slots and holds up to 1,024 live keys,
-leaving at least one spare slot in each block and in the log after an operation.
+reserving one slot per block for its mirrored header and leaving at least one
+unused log slot after an operation.
 
 For uint64 keys and values, the default record array plus bitmap occupies
 17,416 bytes, versus 26,112 bytes for the previous record array alone; these
@@ -314,6 +327,9 @@ The benchmark families adapt the paper's experiments to Go:
 | `BenchmarkFreshPutConfig` (in `bench/`) | Fresh-insert sweeps over internal fanout, log size, header size, and block size |
 | `BenchmarkFreshPutDistribution` (in `bench/`) | Independent random fresh keys, and ascending/descending growth from empty |
 | `BenchmarkFreshPutWithLen` (in `bench/`) | Fresh inserts including exact Len after every write, every 32 writes, or a complete batch |
+| `BenchmarkScanFirst` (in `bench/`) | First scan after loading, including lazy sorting and scan preparation |
+| `BenchmarkScanMixed` (in `bench/`) | 32 existing-key writes followed by a random scan; both phases timed |
+| `BenchmarkOrderedAll` (in `bench/`) | Native full ordered traversal, without a length-limit adapter for tidwall |
 
 YCSB A uses 50% reads/50% updates, B uses 95% reads/5% updates, and C is all
 reads. E uses 95% scans/5% new insertions with maximum scan length 100. X is all
