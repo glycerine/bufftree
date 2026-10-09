@@ -174,6 +174,60 @@ func TestLenDoesNotMoveIteratorRecords(t *testing.T) {
 	}
 }
 
+func TestPartiallyCountedLogSort(t *testing.T) {
+	tr := NewBPTree[int, int](nil)
+	for i := 0; i < 256; i++ {
+		tr.Put(i*2, i)
+	}
+	if tr.Len() != 256 {
+		t.Fatal("initial count")
+	}
+	// Count some buffered overwrites, then append both duplicates and fresh
+	// keys before a traversal reorders the partially counted log prefix.
+	tr.Put(400, -1)
+	tr.Put(200, -2)
+	if tr.Len() != 256 {
+		t.Fatal("overwrite count")
+	}
+	tr.Put(100, -3)
+	tr.Put(301, -4)
+	tr.Put(201, -5)
+	if p := tr.root.leaf; p == nil || p.countedLog != 2 || p.logN != 5 {
+		t.Fatal("fixture must contain a partially counted log")
+	}
+	count := 0
+	for range tr.All() {
+		count++
+	}
+	if count != 258 || tr.Len() != count {
+		t.Fatal("sorting changed deferred membership", count, tr.Len())
+	}
+	tr.Del(200)
+	tr.Put(200, 999)
+	if tr.Len() != 258 || tr.Get(200) != 999 {
+		t.Fatal("counted log resurrection")
+	}
+}
+
+func TestDeferredLenDoesNotAllocate(t *testing.T) {
+	tr := NewBPTree[int, int](nil)
+	for i := 0; i < 2000; i++ {
+		tr.Put(i, i)
+	}
+	tr.Len()
+	i := 0
+	allocs := testing.AllocsPerRun(1000, func() {
+		tr.Put(i%2000, -i)
+		i++
+		if tr.Len() != 2000 {
+			t.Fatal("overwrite changed count")
+		}
+	})
+	if allocs != 0 {
+		t.Fatalf("Put/Len on existing keys allocated %g times", allocs)
+	}
+}
+
 func TestDeferredNaNAndPointerTombstones(t *testing.T) {
 	tr := NewBPTree[float64, *int](nil)
 	a, b := 11, 22

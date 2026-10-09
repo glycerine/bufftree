@@ -1,0 +1,23 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkFreshPutDistribution/Independent/Tree         	  262144	       141.9 ns/op	      27 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Independent/Tree         	  262144	       140.8 ns/op	      27 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Independent/Tree         	  262144	       140.8 ns/op	      27 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Independent/Tidwall      	  262144	       152.7 ns/op	      47 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Independent/Tidwall      	  262144	       151.6 ns/op	      47 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Independent/Tidwall      	  262144	       153.3 ns/op	      47 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tree           	  262144	        94.98 ns/op	      38 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tree           	  262144	        94.38 ns/op	      38 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tree           	  262144	        94.44 ns/op	      38 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tidwall        	  262144	        45.45 ns/op	      35 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tidwall        	  262144	        45.22 ns/op	      35 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Ascending/Tidwall        	  262144	        45.24 ns/op	      35 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tree          	  262144	       139.2 ns/op	      37 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tree          	  262144	       137.7 ns/op	      37 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tree          	  262144	       137.9 ns/op	      37 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tidwall       	  262144	        52.49 ns/op	      35 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tidwall       	  262144	        54.75 ns/op	      35 B/op	       0 allocs/op
+BenchmarkFreshPutDistribution/Descending/Tidwall       	  262144	        54.51 ns/op	      35 B/op	       0 allocs/op
+PASS

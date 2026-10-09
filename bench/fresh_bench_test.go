@@ -102,6 +102,10 @@ func BenchmarkFreshPut(b *testing.B) {
 // Len after every write versus amortizing reconciliation across a batch.
 func BenchmarkFreshPutWithLen(b *testing.B) {
 	n := benchLoadSize()
+	keys := make([]uint64, n)
+	for i := range keys {
+		keys[i] = benchKey(i) | 1
+	}
 	for _, interval := range []int{1, 32, n} {
 		for _, layout := range comparisonPointLayouts(n) {
 			b.Run(fmt.Sprintf("Every%d/%s", interval, layout.name), func(b *testing.B) {
@@ -124,7 +128,7 @@ func BenchmarkFreshPutWithLen(b *testing.B) {
 						inserted = 0
 						b.StartTimer()
 					}
-					idx.Put(benchKey(inserted)|1, uint64(i))
+					idx.Put(keys[inserted], uint64(i))
 					inserted++
 					pending++
 					if pending == interval {

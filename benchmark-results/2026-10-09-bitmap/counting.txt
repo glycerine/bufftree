@@ -1,0 +1,23 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkFreshPutWithLen/Every1/Tree         	  524288	       183.9 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every1/Tree         	  524288	       183.3 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every1/Tree         	  524288	       183.4 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every1/Tidwall      	  524288	       153.6 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every1/Tidwall      	  524288	       154.4 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every1/Tidwall      	  524288	       154.4 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tree        	  524288	       182.4 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tree        	  524288	       187.2 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tree        	  524288	       184.8 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tidwall     	  524288	       154.4 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tidwall     	  524288	       155.5 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every32/Tidwall     	  524288	       153.7 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tree     	  524288	       126.8 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tree     	  524288	       123.8 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tree     	  524288	       124.0 ns/op	      28 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tidwall  	  524288	       150.3 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tidwall  	  524288	       153.0 ns/op	      45 B/op	       0 allocs/op
+BenchmarkFreshPutWithLen/Every65536/Tidwall  	  524288	       153.9 ns/op	      45 B/op	       0 allocs/op
+PASS
