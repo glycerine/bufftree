@@ -14,13 +14,15 @@ type entry[K cmp.Ordered, V any] struct {
 // All records reside in one allocation: log, header, then fixed-size blocks.
 // Header records also serve as partition markers, including when tombstoned.
 type bpa[K cmp.Ordered, V any] struct {
-	cfg                 Config
-	data                []entry[K, V]
-	logN, headerN, size int
-	counts              []int
-	sorted              []bool
-	logSorted           bool
-	rebuildBuffer       *[]entry[K, V]
+	cfg           Config
+	data          []entry[K, V]
+	logN          int
+	headerN       int
+	size          int
+	counts        []int
+	sorted        []bool
+	logSorted     bool
+	rebuildBuffer *[]entry[K, V]
 }
 
 func newBPA[K cmp.Ordered, V any](cfg Config, shared ...*[]entry[K, V]) *bpa[K, V] {
