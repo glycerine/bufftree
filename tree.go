@@ -139,7 +139,7 @@ func (t *Tree[K, V]) Put(k K, v V) {
 		n.leaf.flush()
 		if n.leaf.size == n.leaf.capacity() {
 			if loc := n.leaf.baseLocation(k); loc >= 0 && !n.leaf.isDead(loc) {
-				n.leaf.data[loc].value = v
+				n.leaf.updateValue(loc, v)
 				t.version++
 				return
 			}
@@ -422,11 +422,9 @@ func (it *Iterator[K, V]) Del() {
 // is supported; breaking the loop stops traversal immediately.
 func (t *Tree[K, V]) All() iter.Seq2[K, V] {
 	return func(yield func(K, V) bool) {
-		it := t.Iter()
-		for it.Next() {
-			if !yield(it.Key(), it.Value()) {
-				return
-			}
+		if n := t.firstLeaf(); n != nil {
+			var end K
+			t.walk(n.min, end, false, int(^uint(0)>>1), yield)
 		}
 	}
 }
@@ -448,89 +446,69 @@ func (t *Tree[K, V]) Scan(start K, length int, visit func(K, V) bool) {
 	t.walk(start, end, false, length, visit)
 }
 
-// Keep the common scan path local; only reconstruct its position when the
-// callback mutates the tree. Explicit iterators retain their own state.
+// Long scans settle a leaf's log once instead of repeatedly merging its runs.
+// This can move records, so other live cursors must notice the new version.
+// Only compact an already sorted base: the first scan should not pay both
+// initial sorting and eager log redistribution. Avoid preparing a narrow Range
+// or allocating scratch for a tiny new tree.
+func (t *Tree[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, bounded bool, length int) scanCursor[K, V] {
+	if n.leaf.logN > 0 && length >= n.leaf.size && cap(t.rebuildBuffer) >= n.leaf.size && n.leaf.sortedBase() &&
+		(!bounded || (n.next != nil && !lessKey(end, n.next.min))) {
+		n.leaf.flush()
+		t.version++
+	}
+	return n.leaf.scanCursor(start, seek, strict)
+}
+
+// Walk contiguous runs; only reconstruct the cursor when a callback mutates
+// the tree. Run boundaries handle log merging separately from the hot visit loop.
 func (t *Tree[K, V]) walk(start, end K, bounded bool, length int, visit func(K, V) bool) {
 	n := t.findLeaf(start)
 	if n == nil {
 		return
 	}
-	c := n.leaf.cursor(start, true, false)
+	c := t.prepareScan(n, start, end, true, false, bounded, length)
 	version := t.version
 scan:
 	for length > 0 {
-		// Consume a contiguous part of a sorted block directly when no log
-		// version can shadow it. This avoids cursor calls for every record.
-		if c.hasBase && (c.logPos == c.p.logN || lessKey(c.base.key, c.p.data[c.logPos].key)) {
-			e := c.base
-			if bounded && !lessKey(e.key, end) {
-				return
-			}
-			if !c.baseDead {
-				length--
-				if !visit(e.key, e.value) || length == 0 {
-					return
-				}
-				if version != t.version {
-					n = t.findLeaf(e.key)
-					if n == nil {
-						return
-					}
-					c = n.leaf.cursor(e.key, true, true)
-					version = t.version
-					continue scan
-				}
-			}
-			block := c.block[c.blockPos:]
-			count := min(length, len(block))
-			if c.logPos < c.p.logN {
-				count = min(count, lower(block, c.p.data[c.logPos].key, false))
-			}
-			if bounded {
-				count = min(count, lower(block, end, false))
-			}
-			for _, e := range block[:count] {
-				length--
-				if !visit(e.key, e.value) || length == 0 {
-					return
-				}
-				if version != t.version {
-					n = t.findLeaf(e.key)
-					if n == nil {
-						return
-					}
-					c = n.leaf.cursor(e.key, true, true)
-					version = t.version
-					continue scan
-				}
-			}
-			c.blockPos += count
-			c.advanceBase()
-			continue scan
-		}
-		e, ok := c.next()
-		if !ok {
+		run := c.nextRun()
+		if len(run) == 0 {
 			n = n.next
 			if n == nil {
 				return
 			}
-			c = n.leaf.cursor(start, false, false)
+			c = t.prepareScan(n, start, end, false, false, bounded, length)
+			version = t.version
 			continue
 		}
-		if bounded && !lessKey(e.key, end) {
-			return
-		}
-		length--
-		if !visit(e.key, e.value) {
-			return
-		}
-		if version != t.version {
-			n = t.findLeaf(e.key)
-			if n == nil {
+		count := min(length, len(run))
+		if bounded && !lessKey(run[count-1].key, end) {
+			count = lower(run[:count], end, false)
+			if count == 0 {
 				return
 			}
-			c = n.leaf.cursor(e.key, true, true)
-			version = t.version
+		}
+		for i, e := range run[:count] {
+			if !visit(e.key, e.value) {
+				return
+			}
+			if version != t.version {
+				length -= i + 1
+				if length == 0 {
+					return
+				}
+				n = t.findLeaf(e.key)
+				if n == nil {
+					return
+				}
+				c = t.prepareScan(n, e.key, end, true, true, bounded, length)
+				version = t.version
+				continue scan
+			}
+		}
+		length -= count
+		if count < len(run) {
+			return
 		}
 	}
 }

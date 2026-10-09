@@ -12,6 +12,8 @@ type entry[K cmp.Ordered, V any] struct {
 
 // All records reside in one allocation: log, header, then fixed-size blocks.
 // Header records also serve as partition markers, including when tombstoned.
+// Each block's reserved first slot mirrors its header, making the live header
+// and sorted block one contiguous scan run without increasing the allocation.
 type bpa[K cmp.Ordered, V any] struct {
 	cfg           Config
 	data          []entry[K, V]
@@ -64,8 +66,37 @@ func (p *bpa[K, V]) capacity() int             { return p.cfg.NumBlocks * p.cfg.
 func (p *bpa[K, V]) log() []entry[K, V]        { return p.data[:p.logN] }
 func (p *bpa[K, V]) header(i int) *entry[K, V] { return &p.data[p.cfg.LogSize+i] }
 func (p *bpa[K, V]) block(i int) []entry[K, V] {
-	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize
+	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + 1
 	return p.data[start : start+p.counts[i]]
+}
+func (p *bpa[K, V]) mirrorHeader(i int) {
+	p.data[p.cfg.LogSize+p.cfg.NumBlocks+i*p.cfg.BlockSize] = *p.header(i)
+}
+
+// All in-place base-value updates must keep header mirrors synchronized, both
+// for scan correctness and to avoid retaining an obsolete pointer-valued V.
+func (p *bpa[K, V]) updateValue(i int, v V) {
+	p.data[i].value = v
+	if i >= p.cfg.LogSize && i < p.cfg.LogSize+p.cfg.NumBlocks {
+		p.mirrorHeader(i - p.cfg.LogSize)
+	}
+}
+func (p *bpa[K, V]) scanBlock(i int) []entry[K, V] {
+	p.sortBlock(i)
+	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize
+	end := start + 1 + p.counts[i]
+	if p.isDead(p.cfg.LogSize + i) {
+		start++
+	}
+	return p.data[start:end]
+}
+func (p *bpa[K, V]) sortedBase() bool {
+	for _, sorted := range p.sorted[:p.headerN] {
+		if !sorted {
+			return false
+		}
+	}
+	return true
 }
 func compareEntry[K cmp.Ordered, V any](a, b entry[K, V]) int { return compareKey(a.key, b.key) }
 func lower[K cmp.Ordered, V any](es []entry[K, V], k K, strict bool) int {
@@ -102,7 +133,7 @@ func (p *bpa[K, V]) baseLocation(k K) int {
 	if equalKey(p.header(i).key, k) {
 		return p.cfg.LogSize + i
 	}
-	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize
+	start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + 1
 	for j, e := range p.block(i) {
 		if equalKey(e.key, k) {
 			return start + j
@@ -165,7 +196,7 @@ func (p *bpa[K, V]) set(k K, v V) {
 	p.flush()
 	if p.size == p.capacity() {
 		if i := p.baseLocation(k); i >= 0 && !p.isDead(i) {
-			p.data[i].value = v
+			p.updateValue(i, v)
 			return
 		}
 		panic("bufftree: full BPA")
@@ -200,6 +231,7 @@ func (p *bpa[K, V]) del(k K) bool {
 		p.setDead(i, true)
 		var zero V
 		p.data[i].value = zero
+		p.mirrorHeader(i - p.cfg.LogSize)
 		p.baseSize--
 	} else {
 		b := (i - p.cfg.LogSize - p.cfg.NumBlocks) / p.cfg.BlockSize
@@ -331,10 +363,11 @@ func (p *bpa[K, V]) flush() {
 				p.baseSize--
 			}
 			p.data[h] = e
+			p.mirrorHeader(i)
 			p.setDead(h, dead)
 			continue
 		}
-		start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize
+		start := p.cfg.LogSize + p.cfg.NumBlocks + i*p.cfg.BlockSize + 1
 		block := p.block(i)
 		loc := -1
 		for k := range block {
@@ -402,6 +435,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	for i := 0; i < p.headerN; i++ {
 		n := (len(es) - pos) / (p.headerN - i)
 		*p.header(i) = es[pos]
+		p.mirrorHeader(i)
 		p.counts[i] = n - 1
 		copy(p.block(i), es[pos+1:pos+n])
 		p.sorted[i] = true
@@ -540,6 +574,71 @@ func (c *bpaCursor[K, V]) next() (entry[K, V], bool) {
 		}
 	}
 	return entry[K, V]{}, false
+}
+
+// A scanCursor merges contiguous runs instead of advancing one base record at
+// a time. It borrows leaf storage; callback mutations require a fresh cursor.
+type scanCursor[K cmp.Ordered, V any] struct {
+	p                  *bpa[K, V]
+	base               []entry[K, V]
+	logPos, blockIndex int
+}
+
+func (p *bpa[K, V]) scanCursor(start K, bounded, strict bool) scanCursor[K, V] {
+	p.sortLog()
+	c := scanCursor[K, V]{p: p}
+	if bounded {
+		c.logPos = lower(p.log(), start, strict)
+		c.blockIndex = max(0, p.partition(start))
+		if c.blockIndex < p.headerN {
+			block := p.scanBlock(c.blockIndex)
+			c.base = block[lower(block, start, strict):]
+			c.blockIndex++
+		}
+	}
+	return c
+}
+
+func (c *scanCursor[K, V]) nextRun() []entry[K, V] {
+	p := c.p
+	if p.logN == 0 {
+		if len(c.base) != 0 {
+			run := c.base
+			c.base = nil
+			return run
+		}
+		for c.blockIndex < p.headerN {
+			run := p.scanBlock(c.blockIndex)
+			c.blockIndex++
+			if len(run) != 0 {
+				return run
+			}
+		}
+		return nil
+	}
+	for {
+		for len(c.base) == 0 && c.blockIndex < p.headerN {
+			c.base = p.scanBlock(c.blockIndex)
+			c.blockIndex++
+		}
+		if c.logPos < p.logN && (len(c.base) == 0 || !lessKey(c.base[0].key, p.data[c.logPos].key)) {
+			i := c.logPos
+			c.logPos++
+			if len(c.base) != 0 && equalKey(p.data[i].key, c.base[0].key) {
+				c.base = c.base[1:]
+			}
+			if !p.isDead(i) {
+				return p.data[i : i+1]
+			}
+			continue
+		}
+		run := c.base
+		if len(run) != 0 && c.logPos < p.logN && !lessKey(run[len(run)-1].key, p.data[c.logPos].key) {
+			run = run[:lower(run, p.data[c.logPos].key, false)]
+		}
+		c.base = c.base[len(run):]
+		return run
+	}
 }
 
 // mapEntries filters the unsorted block stream using sorted log membership.

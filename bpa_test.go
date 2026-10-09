@@ -63,6 +63,10 @@ func checkBPA(t *testing.T, p *bpa[int, int], model map[int]int) {
 			t.Fatal("unordered headers")
 		}
 		if i < p.headerN {
+			mirror := p.data[p.cfg.LogSize+p.cfg.NumBlocks+i*p.cfg.BlockSize]
+			if mirror != *p.header(i) {
+				t.Fatal("stale scan header mirror", i)
+			}
 			for _, e := range p.block(i) {
 				if cmp.Compare(e.key, p.header(i).key) <= 0 || (i+1 < p.headerN && cmp.Compare(e.key, p.header(i+1).key) >= 0) {
 					t.Fatal("block outside header bounds")
