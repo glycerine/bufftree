@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/glycerine/bufftree"
+	"github.com/tidwall/btree"
 )
 
 func scanComparisonLayouts() []benchScanLayout {
@@ -12,6 +13,45 @@ func scanComparisonLayouts() []benchScanLayout {
 		{"Tree", func() benchOrderedScan { return bufftree.NewBPTree[uint64, uint64](nil) }},
 		{"Tidwall", func() benchOrderedScan { return &benchTidwallMap{} }},
 	}
+}
+
+// Compare native full ordered traversal, without tidwall's length-limit adapter.
+func BenchmarkOrderedAll(b *testing.B) {
+	n := benchLoadSize()
+	b.Run("Tree", func(b *testing.B) {
+		tr := bufftree.NewBPTree[uint64, uint64](nil)
+		for i := 0; i < n; i++ {
+			tr.Put(benchKey(i), uint64(i))
+		}
+		var sum, visited uint64
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			for _, v := range tr.All() {
+				sum += v
+				visited++
+			}
+		}
+		b.StopTimer()
+		benchSink = sum
+		reportIteration(b, visited)
+	})
+	b.Run("Tidwall", func(b *testing.B) {
+		var tr btree.Map[uint64, uint64]
+		for i := 0; i < n; i++ {
+			tr.Set(benchKey(i), uint64(i))
+		}
+		var sum, visited uint64
+		visit := func(k, v uint64) bool { sum += v; visited++; return true }
+		b.ReportAllocs()
+		b.ResetTimer()
+		for i := 0; i < b.N; i++ {
+			tr.Scan(visit)
+		}
+		b.StopTimer()
+		benchSink = sum
+		reportIteration(b, visited)
+	})
 }
 
 // Include lazy sorting/scan preparation in the first query after loading.
