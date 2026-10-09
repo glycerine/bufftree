@@ -46,6 +46,27 @@ the random fresh-Put and repeated length-limited scan workloads measured here. S
 [diagnosis and controlled comparisons](#fresh-put-diagnosis-2026-10-09) below,
 including the costs of frequent exact counting and sequential insertion.
 
+# the caveat
+
+The big caveat here is concurrency. The bufftree.Tree here only allows
+one accessor (one reader, or one write) at a time. There can be no support
+for multiple readers concurrently because the reader must modify the
+tree data to answer its queries. If we add transactions to support
+multiple readers, the advantage over tidwall reverses and we lose badly.
+See branch tx for that experiment.
+
+~~~
+with read and write transactions to support 
+controlled concurrency (see branch tx):
+
+| Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
+| -------------------------- | -----: | -------------: | ------------: | -------------: |
+| Get                        |  322.1 |           19.9 |         133.2 |          229.7 |
+| Put                        | 1117.4 |          167.3 |         317.0 |          629.9 |
+| Put batch (amortized 1024) |  705.7 |          166.8 |         313.3 |          648.3 |
+| Ordered scan               |   5.91 |  not supported |          4.88 |          17.77 |
+~~~
+
 
 ----------------------------
 This package provides a BP-tree with sorted key-order iteration.
