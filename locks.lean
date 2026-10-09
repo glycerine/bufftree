@@ -17,6 +17,23 @@ callbacks, and the concrete RW-lock implementation are outside this model.
 The paper's parent upgrade is a *try* upgrade: it must not block while keeping
 the read lock. Its scan upgrade explicitly releases R before requesting W.
 These distinctions are essential, and are modeled separately below.
+
+EXTENDED FINDINGS (Go primitives, starvation, and whole-scan snapshots):
+* GoPrimitives: upgrade-free Lock/RLock/Unlock/RUnlock safety and deadlock proof.
+* SnapshotCounterexample: a legal three-leaf scan returns a state that NEVER
+  existed. The paper's hand-over-hand discipline is insufficient for snapshot
+  semantics, even without a split or upgrade gap.
+* SnapshotGate: an additional RWMutex gate freezes the entire logical map for
+  a scan and gives a snapshot-consistency proof for its emitted observations.
+* Starvation: a valid infinite execution separates deadlock freedom from
+  starvation freedom in the lock safety abstraction.
+* FIFO: an explicit admission queue has post-enqueue starvation freedom under
+  stated scheduling and finite-owner hypotheses. This is not an unconditional
+  progress proof for Go's runtime, nor a verified Go channel implementation.
+
+The original model is retained to audit the paper, including its try-upgrade;
+the new GoPrimitives model deliberately has no such primitive. No Go tree
+implementation is changed by this file.
 -/
 
 namespace BPTreeLocks
@@ -603,7 +620,7 @@ theorem split_during_scan_gap :
 theorem gap_still_has_no_deadlock (ts : List Thread) : ¬ Deadlocked g9.locks ts :=
   no_finite_deadlock (gap_locks_reachable gap_execution) ts
 
-/- Assessment and remaining proof obligations
+/- Original lock-only assessment (extended below)
 
 1. PROVED: the explicit ordered lock machine preserves mutual exclusion and
    has no wait cycle / finite closed lock deadlock. Atomic try-upgrade succeeds
@@ -616,7 +633,8 @@ theorem gap_still_has_no_deadlock (ts : List Thread) : ¬ Deadlocked g9.locks ts
    the successor between a scan's R unlock and W acquisition. Using cached
    topology after this gap is unjustified. This witness alone does not refute
    the paper's scan: rereading the current leaf and following its current next
-   pointer handles this example. No snapshot/linearizability claim is proved.
+   pointer handles this example. This original model does not prove snapshots;
+   the extensions below refute them for hand-over-hand scans and prove a repair.
 4. CONDITIONAL MAPPING TO A REAL TREE: all blocking acquisitions must respect
    one strict order across locks held by the same thread. A fixed rank models
    a fixed finite allocation; dynamic splits/root replacement must preserve
@@ -647,6 +665,645 @@ the prose alone is insufficient for an unconditional proof of the full tree.
 #print axioms blocking_upgrade_deadlocks
 #print axioms blocking_parent_upgrade_deadlocks
 #print axioms split_during_scan_gap
+
+/-!
+## Standard Go primitives: no upgrade operation
+
+Go sources checked against the installed go1.26.4 and official documentation:
+https://pkg.go.dev/sync#RWMutex
+https://go.dev/src/internal/sync/mutex.go
+
+RWMutex has no atomic R-to-W upgrade. TryLock is not an upgrade while holding R.
+The following transition system has ONLY blocking lock requests, completed
+acquisitions, and matching unlocks. Mode.write alone also models sync.Mutex.
+There is no CAS, spin loop, atomic upgrade, or atomic "release all" operation.
+
+Implementation policy:
+* Find: RLock coupling down the tree.
+* Insert: optimistic RLock descent, leaf Lock. If an ancestor must change,
+  release every held node lock individually, then restart at the root with
+  Lock acquired top-down. Keep the ancestors needed for split propagation.
+  Do not reacquire a parent while holding its child. Alternatively use this
+  pessimistic descent from the start; it avoids retry starvation.
+* Scan: take each leaf's Lock directly if sorting might be needed, or RUnlock
+  before Lock and rebuild its cursor. Never upgrade a held RLock.
+* New allocation and root publication still require an implementation-level
+  order/lifetime proof. This is a protocol change, not an implementation of
+  the paper's atomic parent try-upgrade using RWMutex.
+
+Request/grant separation abstracts blocking Lock/RLock. Grant order is left
+unspecified. Go's writer preference can remove grants from this abstraction;
+it does not weaken mutual exclusion. Internal queue progress is a property
+required of the lock primitive, not a theorem about the Go runtime here.
+-/
+namespace GoPrimitives
+
+inductive Step : State → State → Prop where
+  | request (s : State) (t : Thread) (r : Request)
+      (idle : s.waiting t = none)
+      (order : ∀ n m, s.held t n = some m → n < r.node) :
+      Step s (setWait s t (some r))
+  | grant (s : State) (t : Thread) (r : Request)
+      (pending : s.waiting t = some r) (available : Compatible s r) :
+      Step s (setWait (setHeld s t r.node (some r.mode)) t none)
+  | unlock (s : State) (t : Thread) (n : Node) (m : Mode)
+      (owns : s.held t n = some m) (idle : s.waiting t = none) :
+      Step s (setHeld s t n none)
+
+theorem step_refines (h : Step s s') : BPTreeLocks.Step s s' := by
+  cases h with
+  | request t r idle order => exact BPTreeLocks.Step.request _ t r idle order
+  | grant t r pending available => exact BPTreeLocks.Step.grant _ t r pending available
+  | unlock t n m owns idle => exact BPTreeLocks.Step.release _ t n
+
+inductive Reachable : State → Prop where
+  | initial : Reachable empty
+  | next : Reachable s → Step s s' → Reachable s'
+
+theorem reachable_refines (h : Reachable s) : BPTreeLocks.Reachable s := by
+  induction h with
+  | initial => exact BPTreeLocks.Reachable.initial
+  | next _ step ih => exact BPTreeLocks.Reachable.next ih (step_refines step)
+
+theorem race_free (h : Reachable s) : Safe s := reachable_safe (reachable_refines h)
+
+theorem deadlock_free (h : Reachable s) (ts : List Thread) : ¬ Deadlocked s ts :=
+  no_finite_deadlock (reachable_refines h) ts
+
+/- RWMutex's pending writers can block new readers even without a conflicting
+CURRENT holder. Account for these queue dependencies explicitly. Within one
+primitive, a waiter may depend on an earlier admission stage of that same
+primitive. `priority` increases toward that stage; it need not be arrival FIFO.
+The primitive must supply an acyclic local admission order. Go's internal
+queues are not reimplemented here. Crucially, all their waiters have already
+passed our no-recursion/ascending-acquisition guard.
+
+A holder dependency strictly increases the requested NODE rank. A local queue
+dependency keeps the node rank equal and increases admission priority. Thus
+neither writer preference nor orderly mutex queues create a new inter-node
+deadlock. Fairness is still a separate issue.
+-/
+def QueueDependency (s : State) (priority : Thread → Nat) (a b : Thread) : Prop :=
+  ∃ ra rb, s.waiting a = some ra ∧ s.waiting b = some rb ∧
+    ra.node = rb.node ∧ priority a < priority b
+
+def WaitsWithQueues (s : State) (priority : Thread → Nat) (a b : Thread) : Prop :=
+  WaitsFor s a b ∨ QueueDependency s priority a b
+
+def DeadlockedWithQueues (s : State) (priority : Thread → Nat) (ts : List Thread) : Prop :=
+  ts ≠ [] ∧ ∀ t ∈ ts, ∃ u ∈ ts, WaitsWithQueues s priority t u
+
+private theorem dependency_pending (edge : WaitsWithQueues s priority a b) :
+    ∃ r, s.waiting a = some r := by
+  rcases edge with holder | queued
+  · obtain ⟨r, _, pending, _, _⟩ := holder
+    exact ⟨r, pending⟩
+  · obtain ⟨ra, _, pending, _, _, _⟩ := queued
+    exact ⟨ra, pending⟩
+
+def requestWeight (s : State) (priority : Thread → Nat) (bound : Nat) (t : Thread) : Nat :=
+  waitRank s t * (bound + 1) + priority t
+
+private theorem dependency_increases (ordered : Ordered s)
+    (edge : WaitsWithQueues s priority a b)
+    (wa : s.waiting a = some ra) (wb : s.waiting b = some rb)
+    (bounded : priority a ≤ bound) :
+    requestWeight s priority bound a < requestWeight s priority bound b := by
+  simp only [requestWeight, waitRank, wa, wb]
+  rcases edge with holder | queued
+  · have inc := wait_rank_increases ordered holder wa wb
+    have product := Nat.mul_le_mul_right (bound + 1) (Nat.succ_le_of_lt inc)
+    simp only [Nat.succ_mul] at product
+    omega
+  · obtain ⟨qa, qb, ha, hb, same, inc⟩ := queued
+    have ea : qa = ra := Option.some.inj (ha.symm.trans wa)
+    have eb : qb = rb := Option.some.inj (hb.symm.trans wb)
+    subst qa qb
+    rw [same]
+    exact Nat.add_lt_add_left inc _
+
+theorem deadlock_free_with_queues (h : Reachable s) (priority : Thread → Nat)
+    (ts : List Thread) : ¬ DeadlockedWithQueues s priority ts := by
+  rintro ⟨nonempty, closed⟩
+  obtain ⟨p, _, priorities⟩ := finite_max priority ts nonempty
+  obtain ⟨t, ht, maximal⟩ := finite_max (requestWeight s priority (priority p)) ts nonempty
+  obtain ⟨u, hu, edge⟩ := closed t ht
+  obtain ⟨v, _, next⟩ := closed u hu
+  obtain ⟨ra, wa⟩ := dependency_pending edge
+  obtain ⟨rb, wb⟩ := dependency_pending next
+  have inc := dependency_increases (reachable_ordered (reachable_refines h))
+    edge wa wb (priorities t ht)
+  exact Nat.not_lt_of_ge (maximal u hu) inc
+
+end GoPrimitives
+
+/-!
+## Hand-over-hand scans do NOT guarantee a snapshot
+
+Three leaves are important: adjacent lock overlap alone can protect a two-leaf
+example. Here the scanner correctly couples A->B->C without any upgrade gap.
+Initially the three values are (0,0,0). The scan reads A=0, locks B, unlocks A.
+A writer sets A=1, then sets C=1 in two separate completed point updates.
+The scanner then reads B=0, locks C, unlocks B, and reads C=1.
+The returned (0,0,1) never existed: the only database states are (0,0,0),
+(1,0,0), and (1,0,1). Thus it is not a linearizable snapshot scan.
+
+The following executable transition system checks EVERY lock and data access
+in that history. Leaves have fixed keys; only their associated values change.
+No splits, deletion, dirty blocks, memory reclamation, or API callbacks are
+needed. Descent is abstracted away on this fixed topology; each writer can
+perform an ordinary descent to its leaf before its lock acquisition.
+-/
+namespace SnapshotCounterexample
+
+abbrev T := Fin 2
+abbrev L := Fin 3
+
+structure Machine where
+  held : T → L → Option Mode
+  value : L → Nat
+  observed : L → Option Nat
+
+def initial : Machine := ⟨fun _ _ => none, fun _ => 0, fun _ => none⟩
+
+inductive Action where
+  | lock (t : T) (n : L) (mode : Mode)
+  | unlock (t : T) (n : L)
+  | read (n : L)
+  | write (n : L) (value : Nat)
+
+def exec (s : Machine) : Action → Option Machine
+  | .lock t n mode =>
+    if (∀ k : L, s.held t k ≠ none → k.val < n.val) ∧
+       (∀ u : T, ∀ m : Mode, s.held u n = some m →
+         ¬ (mode = .write ∨ m = .write)) then
+      some { s with held := fun u k => if u = t ∧ k = n then some mode else s.held u k }
+    else none
+  | .unlock t n =>
+    if s.held t n ≠ none then
+      some { s with held := fun u k => if u = t ∧ k = n then none else s.held u k }
+    else none
+  | .read n =>
+    if s.held 0 n ≠ none then
+      some { s with observed := fun k => if k = n then some (s.value n) else s.observed k }
+    else none
+  | .write n v =>
+    if s.held 1 n = some .write then
+      some { s with value := fun k => if k = n then v else s.value k }
+    else none
+
+def view (s : Machine) : List Nat := [s.value 0, s.value 1, s.value 2]
+
+-- Record every state, including the initial and final states of the scan.
+def run (s : Machine) : List Action → Option (Machine × List (List Nat))
+  | [] => some (s, [view s])
+  | a :: rest => do
+    let next ← exec s a
+    let (final, history) ← run next rest
+    pure (final, view s :: history)
+
+def schedule : List Action := [
+  .lock 0 0 .read, .read 0,
+  .lock 0 1 .read, .unlock 0 0,
+  .lock 1 0 .write, .write 0 1, .unlock 1 0,
+  .lock 1 2 .write, .write 2 1, .unlock 1 2,
+  .read 1, .lock 0 2 .read, .unlock 0 1, .read 2, .unlock 0 2]
+
+def result := run initial schedule
+def finalState : Machine := (result.getD (initial, [])).1
+def history : List (List Nat) := (result.getD (initial, [])).2
+
+theorem legal_execution : result = some (finalState, history) := by rfl
+
+theorem observed_values :
+    finalState.observed 0 = some 0 ∧ finalState.observed 1 = some 0 ∧
+    finalState.observed 2 = some 1 := by decide
+
+theorem no_snapshot_in_entire_history : ∀ values ∈ history, values ≠ [0, 0, 1] := by
+  decide
+
+theorem hand_over_hand_not_snapshot :
+    result = some (finalState, history) ∧
+    [finalState.observed 0, finalState.observed 1, finalState.observed 2] =
+      [some 0, some 0, some 1] ∧
+    ¬ ∃ values ∈ history, values = [0, 0, 1] := by
+  refine ⟨legal_execution, by decide, ?_⟩
+  rintro ⟨values, member, eq⟩
+  exact no_snapshot_in_entire_history values member eq
+
+end SnapshotCounterexample
+
+/-!
+## A snapshot repair using only sync.RWMutex and ordinary node locks
+
+Add an admission gate of rank 0; all tree nodes have higher ranks.
+
+  Point operation:
+      gate.RLock()
+      ... acquire/release ordered node locks; perform the whole operation ...
+      gate.RUnlock()  // AFTER releasing all node locks
+
+  Snapshot range operation:
+      gate.Lock()     // acquire directly, never while holding gate.RLock()
+      ... traverse, sort, copy the complete result ...
+      gate.Unlock()   // AFTER releasing all node locks
+      ... deliver copied results / invoke user callbacks ...
+
+Different point operations can still run concurrently using the node locks.
+A snapshot excludes point operations and other snapshots for its full span.
+This is an added protocol, NOT a claim about the paper's throughput. Replacing
+the whole scheme with one sync.Mutex around each operation is an even simpler
+fully serialized implementation of the same isolation idea.
+
+All logical mutations (including inserts, deletes, and root replacement) must
+be inside the point-operation gate RLock interval. Sorting under a scan's gate
+Lock changes only physical layout; its preservation of the logical map is a
+separate sequential data-structure obligation. Do not call user callbacks
+under the gate if they may reenter the tree. Copies must not expose mutable
+internal storage after unlocking.
+
+The proof below freezes the entire logical map while the snapshot holds the
+gate, and proves every emitted observation agrees with the map at acquisition.
+It works for arbitrary keys, present/absent values, mutations, and scan lengths.
+The proof does not establish that a concrete tree traversal enumerates every
+key in a requested interval: that is a separate sequential-correctness proof.
+-/
+namespace SnapshotGate
+
+abbrev Store := Nat → Option Nat
+
+structure Machine where
+  locks : State
+  data : Store
+  output : List (Nat × Option Nat)
+
+def initial (data : Store) : Machine := ⟨empty, data, []⟩
+
+inductive Step (scanner : Thread) : Machine → Machine → Prop where
+  | lock (g : Machine) (h : GoPrimitives.Step g.locks locks') :
+      Step scanner g { g with locks := locks' }
+  | mutate (g : Machine) (t : Thread) (node : Node) (newData : Store)
+      (gate : g.locks.held t 0 = some .read)
+      (nodeLock : MayWrite g.locks t node) (treeNode : 0 < node) :
+      Step scanner g { g with data := newData }
+  | sample (g : Machine) (key : Nat)
+      (gate : MayWrite g.locks scanner 0) :
+      Step scanner g { g with output := g.output ++ [(key, g.data key)] }
+
+inductive Reachable (scanner : Thread) (start : Store) : Machine → Prop where
+  | initial : Reachable scanner start (initial start)
+  | next : Reachable scanner start g → Step scanner g g' → Reachable scanner start g'
+
+theorem locks_reachable (h : Reachable scanner start g) : GoPrimitives.Reachable g.locks := by
+  induction h with
+  | initial => exact GoPrimitives.Reachable.initial
+  | next _ step ih =>
+    cases step with
+    | lock _ h => exact GoPrimitives.Reachable.next ih h
+    | mutate => exact ih
+    | sample => exact ih
+
+theorem gate_excludes_mutators (safe : Safe s) (held : MayWrite s scanner 0)
+    (reader : s.held t 0 = some .read) : False := by
+  have eq : t = scanner := safe t scanner 0 .read .write reader held (Or.inr rfl)
+  subst t
+  rw [held] at reader
+  contradiction
+
+theorem step_safe (safe : Safe g.locks) (h : Step scanner g g') : Safe g'.locks := by
+  cases h with
+  | lock _ h => exact BPTreeLocks.step_safe safe (GoPrimitives.step_refines h)
+  | mutate => exact safe
+  | sample => exact safe
+
+theorem step_freezes_data (safe : Safe g.locks) (held : MayWrite g.locks scanner 0)
+    (h : Step scanner g g') : g'.data = g.data := by
+  cases h with
+  | lock => rfl
+  | mutate _ t node newData gate _ _ => exact False.elim (gate_excludes_mutators safe held gate)
+  | sample => rfl
+
+-- Every state in this segment retains the gate continuously, including its end.
+inductive Segment (scanner : Thread) : Machine → Machine → Prop where
+  | nil (g : Machine) (held : MayWrite g.locks scanner 0) : Segment scanner g g
+  | cons (held : MayWrite g.locks scanner 0) (step : Step scanner g g')
+      (rest : Segment scanner g' finish) : Segment scanner g finish
+
+theorem whole_map_frozen (safe : Safe g.locks) (h : Segment scanner g finish) :
+    finish.data = g.data := by
+  induction h with
+  | nil => rfl
+  | cons held step rest ih =>
+    exact (ih (step_safe safe step)).trans (step_freezes_data safe held step)
+
+def OutputMatches (snapshot : Store) (out : List (Nat × Option Nat)) : Prop :=
+  ∀ pair ∈ out, pair.2 = snapshot pair.1
+
+theorem step_output_matches (safe : Safe g.locks) (held : MayWrite g.locks scanner 0)
+    (h : Step scanner g g') (frozen : g.data = snapshot)
+    (before : OutputMatches snapshot g.output) : OutputMatches snapshot g'.output := by
+  cases h with
+  | lock => exact before
+  | mutate _ t node newData gate _ _ => exact False.elim (gate_excludes_mutators safe held gate)
+  | sample g key gate =>
+    intro pair member
+    simp only [List.mem_append, List.mem_singleton] at member
+    rcases member with old | rfl
+    · exact before pair old
+    · exact congrFun frozen key
+
+theorem segment_output_matches (safe : Safe g.locks) (h : Segment scanner g finish)
+    (frozen : g.data = snapshot) (before : OutputMatches snapshot g.output) :
+    OutputMatches snapshot finish.output := by
+  induction h with
+  | nil => exact before
+  | cons held step rest ih =>
+    apply ih (step_safe safe step)
+    · exact (step_freezes_data safe held step).trans frozen
+    · exact step_output_matches safe held step frozen before
+
+theorem snapshot_consistent (reachable : Reachable scanner start g)
+    (h : Segment scanner g finish) (freshOutput : g.output = []) :
+    finish.data = g.data ∧ OutputMatches g.data finish.output := by
+  have safe := GoPrimitives.race_free (locks_reachable reachable)
+  refine ⟨whole_map_frozen safe h, segment_output_matches safe h rfl ?_⟩
+  simp [OutputMatches, freshOutput]
+
+theorem gate_no_lock_deadlock (reachable : Reachable scanner start g) (ts : List Thread) :
+    ¬ Deadlocked g.locks ts := GoPrimitives.deadlock_free (locks_reachable reachable) ts
+
+theorem gate_no_queue_deadlock (reachable : Reachable scanner start g)
+    (priority : Thread → Nat) (ts : List Thread) :
+    ¬ GoPrimitives.DeadlockedWithQueues g.locks priority ts :=
+  GoPrimitives.deadlock_free_with_queues (locks_reachable reachable) priority ts
+
+end SnapshotGate
+
+/-!
+## Starvation is not excluded by the lock safety specification
+
+The infinite execution below uses only exclusive mutex requests. Thread 0
+waits forever while thread 1 acquires/releases repeatedly. Every transition
+satisfies our standard-primitive SAFETY abstraction and no state is deadlocked.
+This establishes that safety plus lock ordering is insufficient for liveness.
+It is NOT a claim that Go's actual starvation-mode implementation admits this
+infinite run: that implementation adds scheduling/handoff behavior not modeled
+by the safety specification. Go's Mutex documentation does not promise strict
+FIFO, and the runtime implementation is not verified by this Lean file.
+
+RWMutex blocks new readers once a writer is waiting in its reader-drain phase;
+that is useful protection, not a proof that every whole tree operation finishes.
+Avoid recursive RLock, and prefer a single pessimistic insertion attempt over
+an unbounded sequence of optimistic retries when seeking an operation-level
+starvation bound.
+-/
+namespace Starvation
+
+def waiting : State := setWait empty 0 (some ⟨0, .write⟩)
+def competing : State := setWait waiting 1 (some ⟨0, .write⟩)
+def owned : State := setWait (setHeld competing 1 0 (some .write)) 1 none
+
+private theorem state_ext {a b : State} (held : a.held = b.held)
+    (pending : a.waiting = b.waiting) : a = b := by
+  cases a
+  cases b
+  simp_all
+
+theorem unlock_returns_to_waiting : setHeld owned 1 0 none = waiting := by
+  apply state_ext
+  · funext t n
+    simp only [setHeld, owned, competing, waiting, setWait, empty]
+    split <;> simp_all
+  · funext t
+    by_cases ht : t = 1
+    · subst t
+      rfl
+    · simp [setHeld, owned, competing, waiting, setWait, ht]
+
+theorem request_competitor : GoPrimitives.Step waiting competing := by
+  apply GoPrimitives.Step.request
+  · rfl
+  · simp [waiting, setWait, empty]
+
+theorem grant_competitor : GoPrimitives.Step competing owned := by
+  apply GoPrimitives.Step.grant competing 1 ⟨0, .write⟩
+  · rfl
+  · simp [Compatible, competing, waiting, setWait, empty]
+
+theorem release_competitor : GoPrimitives.Step owned waiting := by
+  rw [← unlock_returns_to_waiting]
+  exact GoPrimitives.Step.unlock _ 1 0 .write rfl rfl
+
+def execution (n : Nat) : State :=
+  match n % 3 with
+  | 0 => waiting
+  | 1 => competing
+  | _ => owned
+
+theorem execution_legal (n : Nat) : GoPrimitives.Step (execution n) (execution (n + 1)) := by
+  have bound := Nat.mod_lt n (by decide : 0 < 3)
+  have cases : n % 3 = 0 ∨ n % 3 = 1 ∨ n % 3 = 2 := by omega
+  rcases cases with h | h | h
+  · have hn : (n + 1) % 3 = 1 := by omega
+    simpa [execution, h, hn] using request_competitor
+  · have hn : (n + 1) % 3 = 2 := by omega
+    simpa [execution, h, hn] using grant_competitor
+  · have hn : (n + 1) % 3 = 0 := by omega
+    simpa [execution, h, hn] using release_competitor
+
+theorem execution_reachable (n : Nat) : GoPrimitives.Reachable (execution n) := by
+  induction n with
+  | zero =>
+    exact GoPrimitives.Reachable.next GoPrimitives.Reachable.initial
+      (GoPrimitives.Step.request empty 0 ⟨0, .write⟩ rfl (by simp [empty]))
+  | succ n ih => exact GoPrimitives.Reachable.next ih (execution_legal n)
+
+theorem always_waiting_never_owner (n : Nat) :
+    (execution n).waiting 0 = some ⟨0, .write⟩ ∧ (execution n).held 0 0 = none := by
+  unfold execution
+  split <;> exact ⟨rfl, rfl⟩
+
+theorem starvation_without_deadlock :
+    (∀ n, GoPrimitives.Step (execution n) (execution (n + 1))) ∧
+    (∀ n, (execution n).waiting 0 = some ⟨0, .write⟩ ∧ (execution n).held 0 0 = none) ∧
+    (∀ n ts, ¬ Deadlocked (execution n) ts) := by
+  exact ⟨execution_legal, always_waiting_never_owner,
+    fun n ts => GoPrimitives.deadlock_free (execution_reachable n) ts⟩
+
+end Starvation
+
+/-!
+## Optional explicit FIFO admission: conditional starvation freedom
+
+An implementable alternative is an explicit queue protected by sync.Mutex,
+with one private ready channel per request. Enqueue under the queue mutex;
+reserve ownership for the queue head and signal ONLY that request (close its
+private channel, or send a buffered token). Unlock the queue mutex before
+waiting on a channel. Release hands ownership to the next queued request.
+Do not implement this as many waiters racing to receive from a shared token
+channel: the channel API alone is not a FIFO lock admission specification.
+
+The model below is exclusive FIFO admission, suitable as a conservative
+whole-operation gate (serializing all operations, including snapshot scans).
+A batching reader/writer variant would need additional proofs. This queue
+model is separate from the standard RWMutex gate above; it does not magically
+give that gate a FIFO contract.
+
+Tickets count successful ENQUEUE events, not call start times. The bound is
+post-enqueue: new arrivals cannot increase the number of predecessors. Getting
+the queue mutex to enqueue still requires progress from that mutex/scheduler.
+Finite critical sections and fair dispatch are explicit hypotheses. There is
+no unconditional fairness proof for Go's scheduler or channel implementation.
+Counters are mathematical naturals; an implementation needs a queue or an
+overflow-safe ticket representation. Cancellation/crashes are not modeled.
+-/
+namespace FIFO
+
+structure Queue where
+  issued : Nat
+  front : Nat
+  busy : Bool
+  deriving DecidableEq, Repr
+
+def initial : Queue := ⟨0, 0, false⟩
+
+inductive Step : Queue → Queue → Prop where
+  | enqueue (q : Queue) : Step q { q with issued := q.issued + 1 }
+  | admit (q : Queue) (free : q.busy = false) (pending : q.front < q.issued) :
+      Step q { q with busy := true }
+  | release (q : Queue) (owner : q.busy = true) :
+      Step q { q with front := q.front + 1, busy := false }
+  | idle (q : Queue) : Step q q
+
+def WellFormed (q : Queue) : Prop :=
+  q.front ≤ q.issued ∧ (q.busy = true → q.front < q.issued)
+
+theorem step_wellFormed (wf : WellFormed q) (step : Step q q') : WellFormed q' := by
+  rcases wf with ⟨bound, busyBound⟩
+  cases step with
+  | enqueue => simp only [WellFormed]; omega
+  | admit free pending => exact ⟨bound, fun _ => pending⟩
+  | release owner =>
+    have h := busyBound owner
+    exact ⟨Nat.succ_le_of_lt h, by simp⟩
+  | idle => exact ⟨bound, busyBound⟩
+
+theorem issued_nondecreasing (step : Step q q') : q.issued ≤ q'.issued := by
+  cases step <;> simp
+
+theorem front_nondecreasing (step : Step q q') : q.front ≤ q'.front := by
+  cases step <;> simp
+
+-- No release skips an earlier ticket; admissions always reserve the front.
+theorem no_ticket_skipped (step : Step q q') : q'.front ≤ q.front + 1 := by
+  cases step <;> simp
+
+def ahead (q : Queue) (ticket : Nat) : Nat := ticket - q.front
+
+theorem arrivals_cannot_increase_wait (q : Queue) (ticket : Nat) :
+    ahead { q with issued := q.issued + 1 } ticket = ahead q ticket := rfl
+
+theorem predecessor_completion_reduces_wait (before : q.front < ticket) :
+    ahead { q with front := q.front + 1, busy := false } ticket + 1 = ahead q ticket := by
+  simp only [ahead]
+  omega
+
+def Valid (run : Nat → Queue) : Prop := ∀ n, Step (run n) (run (n + 1))
+
+-- When the queue has work and no owner, the head is eventually admitted.
+def FairDispatch (run : Nat → Queue) : Prop :=
+  ∀ n, (run n).busy = false → (run n).front < (run n).issued →
+    ∃ m, n ≤ m ∧ (run m).busy = true ∧ (run m).front = (run n).front
+
+-- An admitted owner eventually finishes and releases its reservation.
+def OwnersFinish (run : Nat → Queue) : Prop :=
+  ∀ n, (run n).busy = true → ∃ m, n < m ∧ (run n).front < (run m).front
+
+theorem issued_monotone (valid : Valid run) (order : n ≤ m) :
+    (run n).issued ≤ (run m).issued := by
+  induction order with
+  | refl => exact Nat.le_refl _
+  | @step m order ih => exact Nat.le_trans ih (issued_nondecreasing (valid m))
+
+theorem pending_head_progress (dispatch : FairDispatch run) (finish : OwnersFinish run)
+    (pending : (run n).front < (run n).issued) :
+    ∃ m, n < m ∧ (run n).front < (run m).front := by
+  cases busy : (run n).busy with
+  | true => exact finish n busy
+  | false =>
+    obtain ⟨m, hm, owner, same⟩ := dispatch n busy pending
+    obtain ⟨k, hk, advanced⟩ := finish m owner
+    refine ⟨k, by omega, ?_⟩
+    rw [same] at advanced
+    exact advanced
+
+/- Each queued ticket completes eventually, even with indefinitely many new
+arrivals. The induction is on the finite number of earlier tickets plus self,
+not on a bound on future arrivals. This is a temporal liveness theorem, with
+the scheduler/owner assumptions visible in its type. -/
+theorem starvation_free_after_enqueue (valid : Valid run)
+    (dispatch : FairDispatch run) (finish : OwnersFinish run)
+    (queued : ticket < (run n).issued) :
+    ∃ m, n ≤ m ∧ ticket < (run m).front := by
+  have aux : ∀ distance n, ticket + 1 - (run n).front = distance →
+      ticket < (run n).issued → ∃ m, n ≤ m ∧ ticket < (run m).front := by
+    intro distance
+    induction distance using Nat.strongRecOn with
+    | ind distance ih =>
+      intro n eq issued
+      by_cases done : ticket < (run n).front
+      · exact ⟨n, Nat.le_refl _, done⟩
+      · have pending : (run n).front < (run n).issued := by omega
+        obtain ⟨m, later, advance⟩ := pending_head_progress dispatch finish pending
+        have smaller : ticket + 1 - (run m).front < distance := by omega
+        have issuedLater := issued_monotone valid (Nat.le_of_lt later)
+        obtain ⟨k, hk, served⟩ := ih _ smaller m rfl (Nat.lt_of_lt_of_le issued issuedLater)
+        exact ⟨k, Nat.le_trans (Nat.le_of_lt later) hk, served⟩
+  exact aux _ n rfl queued
+
+private theorem crossing_requires_owner (step : Step q q')
+    (before : q.front ≤ ticket) (after : ticket < q'.front) :
+    q.front = ticket ∧ q.busy = true := by
+  cases step with
+  | enqueue => exact False.elim (Nat.not_lt_of_ge before after)
+  | admit => exact False.elim (Nat.not_lt_of_ge before after)
+  | idle => exact False.elim (Nat.not_lt_of_ge before after)
+  | release owner =>
+    change ticket < q.front + 1 at after
+    exact ⟨by omega, owner⟩
+
+-- Strengthen eventual completion to an explicit state owning this very ticket.
+theorem eventually_owns_its_ticket (valid : Valid run)
+    (dispatch : FairDispatch run) (finish : OwnersFinish run)
+    (notYetServed : (run n).front ≤ ticket) (queued : ticket < (run n).issued) :
+    ∃ m, n ≤ m ∧ (run m).front = ticket ∧ (run m).busy = true := by
+  have crossing : ∀ m, n ≤ m → ticket < (run m).front →
+      ∃ k, n ≤ k ∧ (run k).front = ticket ∧ (run k).busy = true := by
+    intro m later
+    induction later with
+    | refl => intro past; exact False.elim (Nat.not_lt_of_ge notYetServed past)
+    | @step m later ih =>
+      intro past
+      by_cases already : ticket < (run m).front
+      · exact ih already
+      · have owner := crossing_requires_owner (valid m) (Nat.le_of_not_gt already) past
+        exact ⟨m, later, owner⟩
+  obtain ⟨m, later, past⟩ := starvation_free_after_enqueue valid dispatch finish queued
+  exact crossing m later past
+
+end FIFO
+
+-- New proof dependency audit, including temporal liveness and snapshot failure.
+#print axioms GoPrimitives.race_free
+#print axioms GoPrimitives.deadlock_free
+#print axioms GoPrimitives.deadlock_free_with_queues
+#print axioms SnapshotCounterexample.hand_over_hand_not_snapshot
+#print axioms SnapshotGate.snapshot_consistent
+#print axioms SnapshotGate.gate_no_lock_deadlock
+#print axioms SnapshotGate.gate_no_queue_deadlock
+#print axioms Starvation.starvation_without_deadlock
+#print axioms FIFO.starvation_free_after_enqueue
+#print axioms FIFO.eventually_owns_its_ticket
 
 end BPTreeLocks
 
