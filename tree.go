@@ -448,15 +448,16 @@ func (t *Tree[K, V]) Scan(start K, length int, visit func(K, V) bool) {
 
 // Long scans settle a leaf's log once instead of repeatedly merging its runs.
 // This can move records, so other live cursors must notice the new version.
-// Only compact an already sorted base: the first scan should not pay both
+// Only compact a previously scanned leaf: its first scan should not pay both
 // initial sorting and eager log redistribution. Avoid preparing a narrow Range
 // or allocating scratch for a tiny new tree.
 func (t *Tree[K, V]) prepareScan(n *node[K, V], start, end K, seek, strict, bounded bool, length int) scanCursor[K, V] {
-	if n.leaf.logN > 0 && length >= n.leaf.size && cap(t.rebuildBuffer) >= n.leaf.size && n.leaf.sortedBase() &&
+	if n.leaf.scanReady && n.leaf.logN > 0 && length >= n.leaf.size && cap(t.rebuildBuffer) >= n.leaf.size &&
 		(!bounded || (n.next != nil && !lessKey(end, n.next.min))) {
 		n.leaf.flush()
 		t.version++
 	}
+	n.leaf.scanReady = true
 	return n.leaf.scanCursor(start, seek, strict)
 }
 

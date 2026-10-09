@@ -25,6 +25,7 @@ type bpa[K cmp.Ordered, V any] struct {
 	countedLog    int // log prefix whose membership has already been counted
 	accounted     int // contribution to the owning tree's cached length
 	dirty         bool
+	scanReady     bool // a previous scan has visited this leaf since redistribution
 	nextDirty     *bpa[K, V]
 	prevDirty     *bpa[K, V]
 	counts        []int
@@ -89,14 +90,6 @@ func (p *bpa[K, V]) scanBlock(i int) []entry[K, V] {
 		start++
 	}
 	return p.data[start:end]
-}
-func (p *bpa[K, V]) sortedBase() bool {
-	for _, sorted := range p.sorted[:p.headerN] {
-		if !sorted {
-			return false
-		}
-	}
-	return true
 }
 func compareEntry[K cmp.Ordered, V any](a, b entry[K, V]) int { return compareKey(a.key, b.key) }
 func lower[K cmp.Ordered, V any](es []entry[K, V], k K, strict bool) int {
@@ -430,6 +423,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	clear(p.sorted)
 	p.logN, p.size, p.headerN = 0, len(es), min(len(es), p.cfg.NumBlocks)
 	p.logSorted = true
+	p.scanReady = false
 	p.baseSize, p.countedLog = len(es), 0
 	pos := 0
 	for i := 0; i < p.headerN; i++ {
