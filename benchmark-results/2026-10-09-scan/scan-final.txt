@@ -1,0 +1,25 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkCompareIteration/Tree/Scan10000-48         	   22951	     15120 ns/op	 313204112 entries/s	         3.193 iter_ns/key	      4736 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000-48         	   21272	     14624 ns/op	 324527727 entries/s	         3.081 iter_ns/key	      4746 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000-48         	   22437	     15721 ns/op	 301435780 entries/s	         3.317 iter_ns/key	      4739 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000-48         	   21636	     15715 ns/op	 301779954 entries/s	         3.314 iter_ns/key	      4742 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000-48         	   24510	     15751 ns/op	 300859938 entries/s	         3.324 iter_ns/key	      4739 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000-48        	    4510	     85301 ns/op	 305222088 entries/s	         3.276 iter_ns/key	     26036 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000-48        	    4034	     83480 ns/op	 310416005 entries/s	         3.221 iter_ns/key	     25913 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000-48        	    4052	     84233 ns/op	 307860600 entries/s	         3.248 iter_ns/key	     25932 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000-48        	    4104	     85832 ns/op	 302151109 entries/s	         3.310 iter_ns/key	     25934 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000-48        	    4060	     84126 ns/op	 308460864 entries/s	         3.242 iter_ns/key	     25949 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000-48      	   17914	     19613 ns/op	 241657864 entries/s	         4.138 iter_ns/key	      4740 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000-48      	   18033	     18861 ns/op	 251188500 entries/s	         3.981 iter_ns/key	      4738 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000-48      	   20472	     19235 ns/op	 246749786 entries/s	         4.053 iter_ns/key	      4746 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000-48      	   17600	     19005 ns/op	 249428083 entries/s	         4.009 iter_ns/key	      4740 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000-48      	   17652	     19342 ns/op	 245098191 entries/s	         4.080 iter_ns/key	      4741 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000-48     	    3698	    104795 ns/op	 248276566 entries/s	         4.028 iter_ns/key	     26018 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000-48     	    3214	    107652 ns/op	 241713927 entries/s	         4.137 iter_ns/key	     26021 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000-48     	    3270	    103652 ns/op	 251312762 entries/s	         3.979 iter_ns/key	     26049 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000-48     	    3334	    106239 ns/op	 244863806 entries/s	         4.084 iter_ns/key	     26014 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000-48     	    3723	    103355 ns/op	 251666505 entries/s	         3.974 iter_ns/key	     26011 keys/op	       0 B/op	       0 allocs/op
+PASS

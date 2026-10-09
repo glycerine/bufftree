@@ -1,0 +1,17 @@
+=== RUN   TestMemoryUsage100K
+
+go1.26.4 linux/amd64; 100,000 entries; uint64 keys and values
+Retained heap: post-GC HeapAlloc minus pre-load baseline; each row uses a fresh process with GOMAXPROCS=1.
+Go map is pre-sized to 100,000 entries.
+
+| Container         | Heap bytes | MiB  | B/key |
+| ----------------- | ---------: | ---: | ----: |
+| bufftree.Dict     |    7278376 | 6.94 | 72.78 |
+| bufftree.BPTree   |    2474184 | 2.36 | 24.74 |
+| builtin Go map    |    2364576 | 2.26 | 23.65 |
+| tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
+| glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+
+
+--- PASS: TestMemoryUsage100K (0.19s)
+PASS

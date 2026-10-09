@@ -26,11 +26,15 @@ Benchmarks comparing our implementation (bufftree) against common alternatives:
 
 The Put row measures insertion of a fresh key.
 
-| Operation (showing ns/key) | BPtree   | builtin Go map | tidwall/btree | red-black tree |
-| -------------------------- | -------: | -------------: | ------------: | -------------: |
-| Get                        |    101.4 |           16.5 |         116.7 |          199.7 |
-| Put                        |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan               |     3.13 |  not supported |          4.17 |          16.11 |
+| Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree |
+| -------------------------- | -----: | -------------: | ------------: | -------------: |
+| Get                        |  107.3 |           17.2 |         120.4 |          207.5 |
+| Put                        |  224.4 |          168.4 |         307.2 |          638.4 |
+| Ordered scan               |   3.83 |  not supported |          4.19 |          16.32 |
+
+These single-goroutine measurements include BP-tree's internal synchronization;
+the competitors in this table have no added locks. Concurrent comparisons use
+an external `sync.RWMutex` around tidwall and are discussed below.
 
 ~~~
 This compares:
@@ -107,8 +111,8 @@ The tree provides these methods:
 `Len()` remains exact. Its first call after writes reconciles buffered
 membership in changed leaves; subsequent calls without intervening writes are
 constant-time. Reconciliation allocates no memory and does not move records or
-disturb live iterator positions. It does update metadata, so it requires the
-same external synchronization as writes. Counting after every insertion loses
+disturb live iterator positions. It updates metadata under an internal exclusive
+lock. Counting after every insertion loses
 the benefit of deferring membership checks; batch your counts when possible.
 
 `Tree` also provides:
@@ -138,7 +142,7 @@ position have since been inserted.
 the tree unchanged; use `Range` for general live traversal. It copies matching
 entries one leaf at a time so deletion-induced merges cannot invalidate the
 visitor's progress. A leaf-sized buffer is prepared during the first insertion
-and reused, so ordinary range queries allocate no heap memory. Recursive
+and reused, so ordinary range queries allocate no heap memory. Recursive or concurrent
 `MapRange` calls borrow separate buffers; deeper nesting can allocate another
 buffer on its first use. Buffers are cleared when returned so they do not retain
 values from deleted entries.
@@ -150,11 +154,12 @@ A stored nil value is distinguished from an absent key by `Get2`'s `found`
 result. A half-open range ending at NaN excludes NaN; `IterFrom(NaN)` and
 `Scan(NaN, ...)` start at the NaN entry.
 
-Containers and iterators require external synchronization across goroutines.
-Ordered traversal can write to leaves by sorting their log and blocks or
-flushing buffered entries, so it
-also needs exclusive synchronization against other operations. The paper's
-per-node concurrent locking scheme is not implemented here.
+Tree methods are safe for concurrent callers. Writers wait for exclusive access;
+lookups and prepared scan batches share read access. Each individual iterator
+must be used by only one goroutine at a time. Callbacks run without tree locks:
+deleting while iterating and nested tree calls remain supported. Iteration is
+live, not a snapshot, and values containing pointers are not deep-copied.
+The initial integration uses a tree-wide guard, not the paper's per-node protocol.
 
 ## Layout and configuration
 
@@ -511,7 +516,7 @@ for controlled comparisons, caveats, sweep results, and reproduction commands.
 
 Measured on 2026-10-09 on an AMD Ryzen Threadripper 3960X, Linux/amd64, Go 1.26.4, with
 65,536 uint64 keys/values and the default leaf layout. These are medians of
-five 250ms runs using identical data and uniform point-operation traces.
+three 200ms runs using identical data and uniform point-operation traces.
 The `bufftree` column uses the current implementation with its default
 configuration. Baselines are
 published `github.com/tidwall/btree v1.8.1` and `github.com/glycerine/rbtree v0.2.2`;
@@ -519,14 +524,14 @@ neither competitor has a local module replacement. Reads, existing-key updates,
 and traversals report `0 B/op` and `0 allocs/op`; fresh puts include allocation
 and growth costs.
 
-| Operation (showing ns/key)    |   BPtree | builtin Go map | tidwall/btree | red-black tree |
-| ----------------------------- | -------: | -------------: | ------------: | -------------: |
-| Tree `Get`, hit               |    101.4 |           16.5 |         116.7 |          199.7 |
-| Tree `Get`, miss              |     98.4 |           16.1 |         118.4 |          221.4 |
-| Tree `Put`, existing key      |     97.2 |           27.1 |         126.9 |          207.0 |
-| Tree `Put`, fresh key         |    212.6 |          168.8 |         319.1 |          583.4 |
-| Ordered scan, maximum 10,000  |     3.11 |  not supported |          4.13 |          15.80 |
-| Ordered scan, maximum 100,000 |     3.13 |  not supported |          4.17 |          16.11 |
+| Operation (showing ns/key)    | BPTree | builtin Go map | tidwall/btree | red-black tree |
+| ----------------------------- | -----: | -------------: | ------------: | -------------: |
+| Tree `Get`, hit               |  107.3 |           17.2 |         120.4 |          207.5 |
+| Tree `Get`, miss              |  106.0 |           16.3 |         122.4 |          228.9 |
+| Tree `Put`, existing key      |  110.5 |           27.5 |         129.5 |          211.5 |
+| Tree `Put`, fresh key         |  224.4 |          168.4 |         307.2 |          638.4 |
+| Ordered scan, maximum 10,000  |   3.80 |  not supported |          4.27 |          16.19 |
+| Ordered scan, maximum 100,000 |   3.83 |  not supported |          4.19 |          16.32 |
 
 Go map updates are plain assignments, matching the new void `Put` contract.
 Point benchmarks use the same interface dispatch
@@ -559,16 +564,18 @@ reads and updates to existing keys have different costs. CPU profiling guided
 log-only buffering, bulk block traversal, cheaper log-shadow checks, and the
 shared redistribution buffer.
 
-Current benchmark runs and validation logs are saved in
-[benchmark-results/2026-10-09-scan](benchmark-results/2026-10-09-scan).
+Current locking benchmark results are saved in
+[benchmark-results/2026-10-09-lock](benchmark-results/2026-10-09-lock).
 The tables use measured values from
-[readme-tuned.txt](benchmark-results/2026-10-09-scan/readme-tuned.txt).
+[readme-after.txt](benchmark-results/2026-10-09-lock/readme-after.txt).
+The earlier tuning runs remain in
+[benchmark-results/2026-10-09-scan](benchmark-results/2026-10-09-scan).
 The 2026-10-01 reports describe earlier implementations.
 
 ## notes on concurrency
 
-Be aware: we do no locking at present. The paper discusses approaches,
-but they have pretty severe sounding trade offs. This is because
+`Tree` now has internal locking, initially through a tree-wide guard. The paper
+discusses finer-grained approaches, but these have important tradeoffs because
 **an ordered scan can rearrange stored records in memory**, 
 while preserving their logical key/value contents. 
 
@@ -582,11 +589,107 @@ Here is the scary part: it is a classic hazard to try and upgrade from a read lo
 to a write lock! Other readers or even other writers may have priority, and so the writer may have to
 yield to them! The opportunities for deadlock or livelock are multidinous, and
 this would need very careful conconcurrency modeling to get right and work well.
-Thus it is out of scope for now.
+The paper's per-node protocol remains out of scope for this initial integration.
 
 In the paper, traversal uses hand-over-hand locking: acquire the next node’s lock before releasing the previous one, with locks acquired top-down and then left-to-right to prevent deadlock. Thus synchronization follows the traversal through individual nodes rather than holding the entire tree exclusively. [Section 2.1](https://itshelenxu.github.io/files/papers/bptree-vldb-23.pdf#page=4). [jea note: I'm not convinced this would not stall or confuse the first writer badly... what if there is rebalancing and the node is no longer even the right node...!]
 
-Our Go implementation currently requires external synchronization; shared ordered scans need an exclusive lock.
+Our initial protocol protects topology, deferred length bookkeeping, and shared
+scratch buffers with one tree-wide reader/writer lock. A scan checks readiness
+under shared access. If preparation is needed, it releases shared access,
+acquires exclusive access, and checks the tree version before using its old
+node pointer. After sorting/flushing it atomically downgrades to shared access.
+The entire visited leaf is prepared before shared cursor use; this can increase
+first-scan work for short scans compared with sorting only encountered blocks.
+
+`Scan`, `Range`, and `All` copy up to 128 key/value pairs into a local batch, then
+release the lock **before invoking callbacks**. For uint64 pairs the batch is
+2 KiB and the measured scan path allocates no heap memory. These are bounded
+shallow copies, not copy-on-write leaves. A callback mutation invalidates the
+unvisited portion of the batch, and traversal re-seeks after its last visited
+key. Concurrent writes can make a copied value stale before its callback runs;
+scans remain ordered but do not provide a transaction snapshot. `MapRange`
+retains its existing per-leaf copy and restricted mutation contract. `Iterator`
+copies out one current entry and holds no tree lock between calls.
+
+Any goroutine may call `Put`, `Del`, or `Clear`, including from callbacks.
+Overlapping writers wait; callers need no separate writer-admission protocol.
+`Len` reconciliation and iterator advancement currently take exclusive access.
+No transaction isolation, snapshots, or `WriteTx` API is implemented. This is a
+correctness and benchmark baseline, not a claim that tree-wide locking scales
+like a finished per-node protocol.
+
+### Single-writer downgradeable lock
+
+`SingleWriterRWMutex` is a four-byte, zero-value-ready lock, also used by `Tree`. It
+supports `Lock`, `Unlock`, `RLock`, `RUnlock`, and `Downgrade`. Downgrade atomically
+changes exclusive ownership to one read hold, with no unlocked interval; release
+that hold with `RUnlock`. This lets a caller prepare data exclusively and then
+read it while allowing other readers to join.
+
+"Single writer" means **one admitted writer at a time**, not one goroutine
+permitted to call `Lock`. Any number of readers or writers may contend. Like
+`sync.RWMutex`, writers wait for exclusive access; they do not panic merely
+because another writer is active. After a downgrade, another writer may reserve
+the lock, but must wait for all read holds to end, including the downgraded hold.
+
+One atomic word holds a writer-reservation bit and a reader count. A writer
+reserves access before draining existing readers, preventing new readers from
+bypassing it. Waiters poll briefly (initially 32 failed attempts), then call
+`runtime.Gosched` on each failed attempt. There is no lock-local waiter queue,
+parking mechanism, FIFO guarantee, or bounded-wait guarantee. The spin threshold
+is a starting point, not a tuned optimum. Long reads, scans, callbacks, or
+descheduled holders can make this approach expensive. Readers retain their
+read hold for the entire access to protected data, not just the sortedness check.
+
+Do not copy a used lock, recursively acquire it, or upgrade a read hold to a
+write hold. The lock does not track goroutine identity. Invalid unlock/downgrade
+states panic, but recursive acquisition deadlocks rather than being detected.
+
+Run the focused tests and comparative lock benchmarks with:
+
+```sh
+go test -race -run TestSingleWriter -count=10
+go test -run '^$' -bench 'Benchmark(SingleWriter|SyncRWMutex)' -benchmem -cpu=1,4,8 -count=3
+go -C bench test -run '^$' -bench '^BenchmarkConcurrent' -benchmem -cpu=1,4,8 -count=3
+```
+
+The mixed benchmark reports writer latency and reader operations per write;
+faster writers alone do not establish better reader throughput. `sync.RWMutex`
+has no equivalent atomic downgrade operation.
+The concurrent tree benchmarks give tidwall an external `sync.RWMutex`; the
+ordinary single-thread comparisons still use its unsynchronized `Map`. The
+concurrent tidwall scan adapter holds its read lock across its benchmark-only,
+non-reentrant callback, unlike BP-tree's deletion-capable callbacks.
+
+### Initial locking measurements
+
+Same-day before/after samples (65,536 uint64 pairs; three 200ms runs) show the
+cost of the initial integration. These are sample medians, not confidence bounds.
+
+| Operation | Before locking | With locking |
+| --- | ---: | ---: |
+| Get hit, ns/op | 101.0 | 107.3 |
+| Fresh Put, ns/op | 215.9 | 224.4 |
+| Ordered scan up to 100,000, ns/key | 3.238 | 3.83 |
+
+The locked tree still beats the bare tidwall Map in these single-goroutine Put
+and scan samples, but **parallel scans do not yet scale competitively**. With
+`GOMAXPROCS=8`, the 1,000-key parallel-scan workload measures 2.300 aggregate
+ns/key for BP-tree versus 0.5213 for tidwall plus `sync.RWMutex`. That adapter
+holds one read lock for the whole scan and does not support callback mutation;
+BP-tree copies batches and reacquires its shared tree lock. Both the shared
+lock's contention and the callback contract matter in this comparison.
+
+Eight competing update writers measure 267.6 ns/op for BP-tree versus 585.8 for
+the locked tidwall adapter. In the separate one-writer/eight-reader workload,
+BP-tree measures 366.0 ns/write with about 0.206 reads/write; tidwall measures
+6,855 ns/write with about 12.42 reads/write. The writer advantage comes with
+much less reader progress: this is not evidence of a fair or balanced workload
+win. Spin/yield waiting also consumes CPU that these wall-clock timings do not
+quantify. Per-node locking and waiter fairness remain follow-up work.
+
+Raw results and reproduction commands:
+[locking report](benchmark-results/2026-10-09-lock/summary.txt).
 
 ------------------
 Copyright (C) 2026, Jason E. Aten, Ph.D.

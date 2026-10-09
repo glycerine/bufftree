@@ -1,0 +1,56 @@
+2026-10-09 initial locking integration
+
+Go 1.26.4, Linux/amd64, AMD Ryzen Threadripper 3960X.
+Default tree configuration: fanout 256, log 42, blocks 32, block size 34.
+Benchmark load: 65,536 uint64 keys and values. No parameter retuning in this change.
+
+Protocol:
+- SingleWriterRWMutex: 4-byte atomic reader count + writer reservation bit.
+- Any goroutine may request exclusive access. Contending writers wait, not panic.
+- Atomic exclusive-to-one-reader downgrade; no unlocked interval.
+- Brief polling (32 failures), then runtime.Gosched; no parked queue or FIFO guarantee.
+- Tree-wide guard protects topology, membership bookkeeping, and shared scratch.
+- Scan preparation is exclusive and downgrades before copying from the leaf.
+- Callbacks run unlocked, using up to 128 shallow record copies (2 KiB for uint64 pairs).
+- Callback mutations invalidate unvisited copies and force a strict forward re-seek.
+- Iterators retain no locks between calls. Each iterator itself is single-goroutine.
+- No transaction snapshots, WriteTx, per-node locking, or caller-side writer gate.
+
+Single-goroutine sample medians, before -> after:
+Get hit:             101.0 -> 107.3 ns/op
+Fresh Put:           215.9 -> 224.4 ns/op
+Scan up to 100,000:  3.238 -> 3.83 ns/visited key
+Both samples used three 200ms repetitions of the same underlying benchmark loops.
+After-table tidwall (bare Map): 120.4 ns/Get, 307.2 ns/fresh Put, 4.19 ns/scan key.
+These are small-sample medians, not statistically established regression bounds.
+Scan, Get, and existing-key update benchmark paths reported zero heap allocations.
+
+Concurrent medians at GOMAXPROCS=8, BP-tree vs tidwall with an external sync.RWMutex:
+- Parallel Get: 129.8 vs 130.0 aggregate ns/op.
+- Parallel Scan1000: 2.300 vs 0.5213 aggregate ns/visited key.
+- Eight contending writers, existing-key updates: 267.6 vs 585.8 aggregate ns/op.
+- One writer + eight lookup readers: 366.0 vs 6855 ns/write;
+  median reader progress is 0.2055 vs 12.42 reads/write.
+The tidwall scan adapter holds one read lock across non-reentrant benchmark callbacks;
+it does not offer BP-tree's deleting-callback contract. Shared tree-lock contention
+and batch copying limit scan scaling. Writer throughput is not reader fairness.
+The mixed workload does not hold its read/write ratio fixed and does not measure CPU
+consumption or tail latency. The spin threshold is not claimed to be optimal.
+
+Files:
+before.txt            Pre-integration benchmark output, captured before code edits.
+readme-after.txt      Current integrated tree; generated README tables.
+concurrent-after.txt  Concurrent read, contending writer, and mixed workloads.
+
+Reproduce from repository root (run benchmarks without other tests concurrently):
+go -C bench test -run '^$' -bench 'BenchmarkCompare(Points|Iteration)/(Tree|Tidwall)/(GetHit|FreshPut|Scan10000|Scan100000)$' -benchtime=200ms -count=3
+go -C bench test -v -run '^TestReadmeBenchmarkTable$' -count=1 -benchtime=200ms -timeout=5m -args -bench-table -bench-table-count=3
+go -C bench test -run '^$' -bench '^BenchmarkConcurrent' -benchtime=200ms -cpu=1,4,8 -count=3
+
+Validation:
+go test -race -count=1 ./...
+go test -race -run 'Test(SingleWriter|TreeConcurrent|TreeMultiple|TreeOverlapping|TreeCallbacks|TreePrepared)' -count=5 -timeout=120s
+go vet ./...
+Tests cover overlapping writer admission, exclusive ownership, reader publication,
+atomic downgrade with queued contenders, GOMAXPROCS=1 progress, concurrent splits/
+merges/Clear, callback panic/reentry, and concurrent deletion while iterating.

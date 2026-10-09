@@ -1,0 +1,19 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       107.4 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       106.8 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       106.8 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       107.4 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       107.8 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       107.0 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshPut         	 1048576	       107.5 ns/op	      20 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       133.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       134.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       133.8 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       132.5 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       134.0 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       133.6 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneFinalists/f256-l32-h32-b34/FreshIndependent 	 1048576	       133.2 ns/op	      22 B/op	       0 allocs/op
+PASS

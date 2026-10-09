@@ -1,0 +1,25 @@
+File: bufftree-scan-tuned.test
+Build ID: dd8a87b527712386491029a83e3b12ebf1c49024
+Type: cpu
+Time: 2026-10-09 04:06:20 CDT
+Duration: 4.41s, Total samples = 4.41s (100.06%)
+Showing nodes accounting for 4.36s, 98.87% of 4.41s total
+Dropped 23 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     2.44s 55.33% 55.33%      4.37s 99.09%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).walk
+     1.36s 30.84% 86.17%      1.36s 30.84%  github.com/glycerine/bufftree/bench.comparisonIterationCases.func4.1
+     0.27s  6.12% 92.29%      0.36s  8.16%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).scanBlock
+     0.13s  2.95% 95.24%      0.49s 11.11%  github.com/glycerine/bufftree.(*scanCursor[go.shape.uint64,go.shape.uint64]).nextRun
+     0.06s  1.36% 96.60%      0.06s  1.36%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortBlock
+     0.03s  0.68% 97.28%      0.08s  1.81%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).prepareScan
+     0.03s  0.68% 97.96%      0.03s  0.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).isDead (inline)
+     0.02s  0.45% 98.41%      0.03s  0.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).partition (inline)
+     0.02s  0.45% 98.87%      0.05s  1.13%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).scanCursor
+         0     0% 98.87%      0.03s  0.68%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Put
+         0     0% 98.87%      4.37s 99.09%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Scan
+         0     0% 98.87%      0.03s  0.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).appendLog
+         0     0% 98.87%      0.03s  0.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+         0     0% 98.87%      0.03s  0.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).trySet
+         0     0% 98.87%      4.40s 99.77%  github.com/glycerine/bufftree/bench.comparisonIterationCases.func4
+         0     0% 98.87%      4.40s 99.77%  testing.(*B).launch
+         0     0% 98.87%      4.40s 99.77%  testing.(*B).runN

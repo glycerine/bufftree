@@ -26,6 +26,7 @@ type bpa[K cmp.Ordered, V any] struct {
 	accounted     int // contribution to the owning tree's cached length
 	dirty         bool
 	scanReady     bool // a previous scan has visited this leaf since redistribution
+	ordered       bool // entire leaf is sorted; guarded by the owning tree's lock
 	nextDirty     *bpa[K, V]
 	prevDirty     *bpa[K, V]
 	counts        []int
@@ -233,6 +234,7 @@ func (p *bpa[K, V]) del(k K) bool {
 		clear(block[len(block)-1:])
 		p.counts[b]--
 		p.sorted[b] = false
+		p.ordered = false
 		p.baseSize--
 	}
 	p.resolveSize()
@@ -241,6 +243,7 @@ func (p *bpa[K, V]) del(k K) bool {
 
 // appendLog requires a live entry whose key is not already in the log.
 func (p *bpa[K, V]) appendLog(e entry[K, V]) {
+	p.ordered = false
 	// Unused log slots have zero bits, established by newBPA/clearLog/load.
 	p.data[p.logN] = e
 	p.logN++
@@ -333,6 +336,7 @@ func (p *bpa[K, V]) flush() {
 	if p.logN == 0 {
 		return
 	}
+	p.ordered = false
 	p.sortLog()
 	log := p.log()
 	if p.headerN == 0 || lessKey(log[0].key, p.header(0).key) {
@@ -424,6 +428,7 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 	p.logN, p.size, p.headerN = 0, len(es), min(len(es), p.cfg.NumBlocks)
 	p.logSorted = true
 	p.scanReady = false
+	p.ordered = true
 	p.baseSize, p.countedLog = len(es), 0
 	pos := 0
 	for i := 0; i < p.headerN; i++ {
@@ -434,6 +439,19 @@ func (p *bpa[K, V]) load(es []entry[K, V]) {
 		copy(p.block(i), es[pos+1:pos+n])
 		p.sorted[i] = true
 		pos += n
+	}
+}
+
+// prepareOrdered runs exclusively before publishing a leaf to shared scans.
+// Cursor methods may still call sortLog/sortBlock, but those calls become
+// read-only once all their sorted flags are set.
+func (p *bpa[K, V]) prepareOrdered() {
+	if !p.ordered {
+		p.sortLog()
+		for i := 0; i < p.headerN; i++ {
+			p.sortBlock(i)
+		}
+		p.ordered = true
 	}
 }
 func (p *bpa[K, V]) collect() []entry[K, V] {

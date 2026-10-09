@@ -1,0 +1,204 @@
+BP-tree ordered-scan optimization and fresh-put retuning, 2026-10-09
+================================================================
+
+Environment: Go 1.26.4, Linux amd64, AMD Ryzen Threadripper 3960X.
+Scan baseline: de70087, already using compact records and void Put/Del.
+Final defaults: Fanout=256, LogSize=42, NumBlocks=32, BlockSize=34.
+Earlier defaults: Fanout=64, LogSize=32, NumBlocks=32, BlockSize=32.
+Competitors: tidwall/btree v1.8.1 and glycerine/rbtree v0.2.2.
+
+Implementation
+--------------
+Scan, Range, and All now visit contiguous runs rather than driving the merge
+cursor once per record. The reserved first slot of each block mirrors its
+header, making a sorted block plus its boundary record contiguous. This uses
+existing spare slots, not a separate scan array. All header overwrites,
+deletions, and loads synchronize the mirror, including pointer-value clearing.
+Explicit iterators retain their own cursor implementation.
+
+The run cursor resolves buffered shadows and tombstones at run boundaries;
+an empty log takes a separate fast path. After a leaf has been scanned before,
+a later long scan may flush its log to avoid repeated merging. First visits
+and narrow ranges retain lazy merging. Scratch-capacity checks avoid allocating
+on scans of tiny trees. Scan-driven physical movement increments the tree
+version. Every callback checks for mutation before touching borrowed storage
+again, including mutations caused by nested scans. Len remains exact.
+
+After the first parameter sweep, separator storage was changed to grow
+geometrically instead of allocating an exact-size array on each internal-node
+growth. Refresh clears only removed separators, not entries about to be
+overwritten. A string-key regression test checks clearing and regrowth.
+No production unsafe, assembly, or architecture-specific implementation.
+
+Dict and its iterator, examples, and active benchmark rows were removed at the
+user's request. Tree tests formerly sharing dict_test.go were retained in
+maprange_test.go and other Tree tests. Historical benchmark artifacts are left
+intact. Deleted code remains recoverable from Git history. make bench now
+measures 22 distinct cases instead of 29.
+
+Controlled final results
+------------------------
+Pinned to CPU 6, -cpu=1, median of five samples unless noted. Initial load is
+65,536 uint64 key/value entries. Do not compare these pinned timings directly
+with the unpinned README tables or earlier unpinned results.
+
+Repeated ordered scans, ns/visited key (five 500ms samples):
+Maximum length             Baseline Tree     Final Tree     Final tidwall
+10,000                            4.216          3.003             3.802
+100,000                           4.179          3.089             3.785
+
+Final Tree takes 26-29% less time than baseline Tree and 18-21% less time than
+tidwall on these length-limited scans. Both containers include callback work
+and visited-key accounting. Tidwall needs a length-limit adapter around
+Ascend; its unrestricted native traversal is measured separately below.
+
+Fresh inserts (five samples, 1,048,576 timed inserts, ns/Put):
+                         Baseline Tree     Final Tree     Final tidwall
+65,536 initial keys              121.5          108.4             152.3
+
+Final Tree takes 10.8% less time than the scan baseline and 28.8% less time
+than tidwall. Allocation traffic is 20 B/Put versus tidwall's 45 B/Put.
+Rounded 0 allocs/op does not mean insertion never allocates.
+Fixtures are loaded outside timing; splitting, redistribution and growth are
+inside. Each batch inserts 65,536 disjoint odd keys into the even-key fixture.
+
+Larger load, 1,048,576 initial keys (three samples):
+                                        Final Tree     tidwall
+Fresh Put, ns/Put                            188.8       353.8
+Scan maximum 10,000, ns/key                   3.374       6.482
+Scan maximum 100,000, ns/key                  3.305       6.462
+
+Caveats and mixed workloads
+--------------------------
+First scans after loading, including lazy sorting (three samples of 64 scans;
+fixture construction outside timing), ns/visited key:
+Length                     Baseline Tree     Final Tree     Final tidwall
+100                                9.167          13.47             6.723
+10,000                             4.975          5.165             3.764
+65,536                             4.955          5.133             3.747
+
+The fresh-put-focused geometry regresses first scans, especially the short
+first query. At the old geometry, the scan-only optimization improved the
+first-scan medians to 8.126 / 4.667 / 4.879 (cold-current.txt); retuning favors
+writes over these cold scans. The repeated-scan win is not a universal win.
+
+32 existing-key writes followed by a random scan; BOTH phases timed,
+three 300ms samples, ns per visited key (includes write time):
+Maximum length                    Baseline Tree     Final Tree     tidwall
+100                                       67.61          66.20       80.76
+10,000                                    5.062          3.610       4.642
+65,536                                    4.517          3.054       3.999
+
+Native full traversal (Tree.All versus tidwall.Map.Scan), ns/key:
+Baseline Tree 8.099; final Tree 3.885; final tidwall 2.376.
+All improves substantially but still loses to tidwall's native full traversal.
+The baseline has three samples; final has three 300ms samples. This test does
+not impose the length-limit adapter on tidwall.
+
+Parameter sweep and selection
+-----------------------------
+237 unique configurations across successive geometry, refinement,
+neighborhood, finalist, second-leg and confirmation rounds. Discovery covered
+internal fanout, log size, block count and block size, including non-powers of
+two. Early rounds use fewer timed operations; do not rank their absolute times
+against later rounds. Raw samples and all configurations are preserved.
+
+Finalists use two fresh-key patterns: the README odd/even adjacency trace and
+independent disjoint even keys from the same permutation. Each is measured
+at 65,536 and 1,048,576 initially loaded keys. Rank by equal-weight geometric
+mean of the FOUR median ns/Put values. Scans do not contribute to selection,
+honoring the user's explicit priority for fresh puts.
+
+Before the separator change, f256-l32-h32-b34 ranked first among 18 finalists
+(score 155.93 versus 163.21 for f64-l32-h32-b32). Separator growth reduced
+large-load medians from 192.2/212.0 to 188.8/209.0; small-load results were
+roughly flat, 106.8/132.3 versus 107.4/133.6. Allocation traffic fell by about
+1 B/Put in the independent and large cases. See refresh-*.txt.
+
+The 33-configuration second-leg sweep found f256-l40-h32-b34 best, score
+152.75 versus 154.21 for its 32-entry-log counterpart. A final nine-config
+confirmation explored nearby logs and fanouts with FIVE samples of 1,048,576
+timed inserts per workload:
+
+Configuration          Small adjacent  Small independent  Large adjacent  Large independent  Score
+f256-l42-h32-b34                109.6              135.9           185.5              203.4  153.97
+f256-l46-h32-b34                111.2              138.3           181.3              202.1  154.07
+f256-l44-h32-b34                110.4              138.2           183.2              204.1  154.55
+f256-l32-h32-b34                108.4              134.4           188.7              208.1  154.66
+f256-l40-h32-b34                109.3              136.0           188.2              208.8  155.46
+
+Adopt the best observed configuration even though its additional 0.4% over
+the intermediate 32-entry log, and 0.07% over the runner-up, are NOT
+statistically established advantages. Rankings vary across runs. This is a
+measured workload-specific choice, not proof of a globally optimal geometry.
+
+Memory
+------
+At fixed geometry, the scan changes do not increase retained heap:
+2,474,184 bytes at 100,000 entries, unchanged from the compact-record version.
+The final write-focused defaults use 2,560,376 bytes (25.60 B/key), +3.5%.
+That remains 29% below the original 3,609,800 bytes (36.10 B/key). Tidwall
+retains 2,513,408 bytes (25.13 B/key). Go map: 2,364,576; rbtree: 6,400,080.
+
+Final leaf record array: 1,162 * 16 = 18,592 bytes, plus two bitmap words
+(16 bytes), excluding metadata. Live leaf capacity is 1,088 keys. The larger
+log crosses a Go allocation-size boundary; nominal array bytes are not
+retained heap bytes. Shared redistribution scratch capacity is 17 KiB for
+uint64 pairs. Isolated post-GC measurements include metadata and tree buffers.
+
+Validation
+----------
+go test -count=1: PASS
+go test -race -count=1: PASS
+go -C bench test -count=1: PASS
+go -C bench test -race -count=1: PASS
+
+Coverage includes randomized map/scan models, balanced splits/merges/root
+collapse, header mirror overwrites/deletion/resurrection, pointer clearing,
+NaNs, bitmap word boundaries, exact deferred counts, live callback mutation,
+nested scan preparation with retained iterators, and zero-allocation queries.
+Two fixtures assumed a 32-entry log; they now establish their intended log
+state independently of the default size. No current Go source or README
+references the removed Dict API.
+
+Artifact guide
+--------------
+*-tuned*.txt, readme-tuned.txt: final defaults and implementation.
+scan-before-pinned.txt, fresh-before.txt, all-before.txt, cold-before.txt,
+mixed-before.txt: de70087 baseline, with added harnesses where necessary.
+scan-final-pinned.txt, fresh-final.txt, large-final.txt, all-final.txt,
+memory-final.txt, readme.txt: scan optimization BEFORE retuning and Dict removal.
+cold-current.txt, mixed-current.txt: final adaptive scan algorithm at OLD defaults.
+cold-final.txt, mixed-final.txt: EARLIER eager-flushing experiment, NOT final.
+*-trial.txt: development experiments, not the shipped result.
+tune-*.txt: full parameter sweep samples; see round-specific iteration counts.
+refresh-*.txt: controlled separator-growth experiment at f256-l32-h32-b34.
+tuned-before.cpu, tuned-profile-*.txt: fresh-put profile after first tuning,
+before geometric separator growth and final log-size tuning.
+
+Reproduction
+------------
+Build once: go -C bench test -c -o /tmp/bufftree-scan-tuned.test
+Run these serially to avoid benchmark interference:
+
+taskset -c 6 /tmp/bufftree-scan-tuned.test -test.run='^$' \
+  -test.bench='^BenchmarkCompareIteration$/^(Tree|Tidwall)$/^Scan' \
+  -test.benchtime=500ms -test.count=5 -test.cpu=1
+taskset -c 6 /tmp/bufftree-scan-tuned.test -test.run='^$' \
+  -test.bench='^BenchmarkFreshPut$/^(Tree|Tidwall)$' \
+  -test.benchtime=1048576x -test.count=5 -test.cpu=1
+taskset -c 6 /tmp/bufftree-scan-tuned.test -test.run='^$' \
+  -test.bench='^BenchmarkTuneConfirm$/./^Fresh' \
+  -test.benchtime=1048576x -test.count=5 -test.cpu=1
+
+Prefix with BUFFTREE_BENCH_N=1048576 for large-load checks. The mixed and
+native-full-traversal benchmarks use -test.benchtime=300ms -test.count=3;
+BenchmarkScanFirst uses -test.benchtime=64x -test.count=3. All use -test.cpu=1
+and taskset -c 6. Memory: make memory. Unpinned tables:
+make bench BENCH_TIME=250ms BENCH_COUNT=5
+
+To reproduce intermediate geometries without changing defaults, use the
+explicit configuration benchmarks in bench/tuning_bench_test.go. Baseline
+comparisons require the old production sources at de70087. The cold/mixed/All
+baseline harnesses were compiled with old bpa.go/tree.go via a Go overlay,
+while other production code still had its old defaults.

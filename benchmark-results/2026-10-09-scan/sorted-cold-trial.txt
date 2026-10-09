@@ -1,0 +1,14 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkScanFirst/Tree/Scan100         	      64	       736.4 ns/op	 135800373 entries/s	         7.364 iter_ns/key	       100.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan100         	      64	       865.9 ns/op	 115483859 entries/s	         8.659 iter_ns/key	       100.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan100         	      64	       782.0 ns/op	 127874683 entries/s	         7.820 iter_ns/key	       100.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan10000       	      64	     60065 ns/op	 166485960 entries/s	         6.007 iter_ns/key	     10000 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan10000       	      64	     56325 ns/op	 177541894 entries/s	         5.632 iter_ns/key	     10000 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan10000       	      64	     56490 ns/op	 177022041 entries/s	         5.649 iter_ns/key	     10000 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan65536       	      64	    401582 ns/op	 163194451 entries/s	         6.128 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan65536       	      64	    378372 ns/op	 173205284 entries/s	         5.773 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkScanFirst/Tree/Scan65536       	      64	    374595 ns/op	 174951563 entries/s	         5.716 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+PASS

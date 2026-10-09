@@ -1,0 +1,15 @@
+# started on Fri Oct  9 04:06:08 2026
+
+
+ Performance counter stats for 'taskset -c 6 /tmp/bufftree-scan-tuned.test -test.run=^$ -test.bench=^BenchmarkCompareIteration$/^Tree$/^Scan100000$ -test.benchtime=8192x -test.cpu=1' (3 runs):
+
+     2,793,192,946      cycles                                                                  ( +-  1.16% )  (71.46%)
+     8,452,244,137      instructions                     #    3.03  insn per cycle              ( +-  0.00% )  (71.47%)
+     1,318,232,797      branches                                                                ( +-  0.01% )  (71.46%)
+         8,863,524      branch-misses                    #    0.67% of all branches             ( +-  0.25% )  (71.46%)
+     5,422,038,440      L1-dcache-loads                                                         ( +-  0.03% )  (71.46%)
+        70,042,084      L1-dcache-load-misses            #    1.29% of all L1-dcache accesses   ( +-  0.56% )  (71.37%)
+         6,332,505      cache-misses                                                            ( +-  2.66% )  (71.36%)
+
+           0.65270 +- 0.00745 seconds time elapsed  ( +-  1.14% )
+

@@ -1,0 +1,78 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkConcurrentRead/Tree/Get           	 2610301	        91.69 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get           	 2593820	        90.31 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get           	 2647261	        91.48 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-4         	 1743627	       129.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-4         	 1852674	       129.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-4         	 1846226	       130.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-8         	 1832312	       129.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-8         	 1849107	       129.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Get-8         	 1848672	       129.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000      	   63666	      3683 ns/op	 269597803 entries/s	         3.709 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000      	   66073	      3631 ns/op	 273432990 entries/s	         3.657 iter_ns/key	       992.8 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000      	   66667	      3599 ns/op	 275828614 entries/s	         3.625 iter_ns/key	       992.8 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-4    	   83146	      2659 ns/op	 373429560 entries/s	         2.678 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-4    	  110232	      2431 ns/op	 408468392 entries/s	         2.448 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-4    	   92275	      2590 ns/op	 383368049 entries/s	         2.608 iter_ns/key	       993.0 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-8    	  120021	      2284 ns/op	 434785823 entries/s	         2.300 iter_ns/key	       993.1 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-8    	  115304	      2264 ns/op	 438756017 entries/s	         2.279 iter_ns/key	       993.3 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/Tree/Scan1000-8    	  112626	      2360 ns/op	 420851281 entries/s	         2.376 iter_ns/key	       993.2 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get           	 2039142	       114.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get           	 2114114	       112.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get           	 2147803	       112.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-4         	 1781659	       132.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-4         	 1804952	       128.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-4         	 1872717	       129.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-8         	 2001675	       128.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-8         	 2030778	       130.0 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Get-8         	 1833302	       130.7 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000      	   60506	      3965 ns/op	 250387570 entries/s	         3.994 iter_ns/key	       992.8 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000      	   60687	      3892 ns/op	 255087115 entries/s	         3.920 iter_ns/key	       992.8 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000      	   61244	      3918 ns/op	 253389162 entries/s	         3.946 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-4    	  217755	      1021 ns/op	 972499793 entries/s	         1.028 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-4    	  227390	      1022 ns/op	 971936231 entries/s	         1.029 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-4    	  226296	      1022 ns/op	 971249366 entries/s	         1.030 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-8    	  429010	       517.5 ns/op	1918447426 entries/s	         0.5213 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-8    	  423199	       517.9 ns/op	1917041699 entries/s	         0.5216 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentRead/TidwallRWMutex/Scan1000-8    	  420890	       517.4 ns/op	1918951652 entries/s	         0.5211 iter_ns/key	       992.9 keys/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree                        	 2430388	        98.28 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree                        	 2461140	        97.20 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree                        	 2470778	        96.89 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-4                      	  843163	       293.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-4                      	  808257	       297.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-4                      	  810948	       298.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-8                      	  926211	       271.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-8                      	  980618	       265.5 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/Tree-8                      	  967207	       267.6 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex              	 2023417	       117.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex              	 2036637	       117.4 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex              	 2037034	       117.3 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-4            	  564776	       523.1 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-4            	  483246	       528.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-4            	  442586	       533.9 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-8            	  447129	       587.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-8            	  425194	       585.8 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentWrite/TidwallRWMutex-8            	  447060	       565.2 ns/op	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree                       	 2513380	        95.03 ns/op	         0.02961 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree                       	 2547924	        93.71 ns/op	         0.03469 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree                       	 2540061	        94.66 ns/op	         0.03370 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4                     	  697201	       337.1 ns/op	         0.1175 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4                     	  675882	       342.8 ns/op	         0.1994 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4                     	  688291	       339.1 ns/op	         0.1961 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8                     	  556022	       374.0 ns/op	         0.2026 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8                     	  616626	       360.5 ns/op	         0.2055 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8                     	  595827	       366.0 ns/op	         0.2079 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex             	  641596	       609.1 ns/op	         1.726 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex             	  582075	       509.4 ns/op	         1.561 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex             	  670351	       480.8 ns/op	         1.093 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4           	   81640	      3334 ns/op	         5.911 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4           	   69962	      3375 ns/op	         5.868 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4           	   74788	      3451 ns/op	         5.844 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8           	   34406	      6708 ns/op	        12.42 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8           	   35071	      6989 ns/op	        12.93 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8           	   34854	      6855 ns/op	        12.37 reads/write	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree/bench	27.876s

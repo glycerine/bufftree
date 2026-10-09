@@ -1,7 +1,9 @@
 // Package bufftree implements generic in-memory BP-trees with buffered,
 // partitioned leaves. Tree iterates by key.
-// Trees and their iterators require external synchronization
-// when used by multiple goroutines. Ordered reads may sort or flush leaves.
+// Tree methods are safe for concurrent use. Ordered reads may sort or flush
+// leaves under exclusive access, then downgrade for shared reading. Iteration
+// is live, not a snapshot; callbacks run unlocked and may delete entries.
+// Each individual iterator requires external synchronization if shared.
 package bufftree
 
 // Config measures node sizes in entries, not bytes. Zero numeric fields use defaults.

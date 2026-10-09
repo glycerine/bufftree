@@ -1,0 +1,17 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkCompareIteration/Tree/Scan10000         	   21624	     16849 ns/op	 296388850 entries/s	         3.374 iter_ns/key	      4994 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000         	   21550	     16275 ns/op	 306846259 entries/s	         3.259 iter_ns/key	      4994 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan10000         	   21541	     16878 ns/op	 295890348 entries/s	         3.380 iter_ns/key	      4994 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000        	    2222	    160789 ns/op	 299270870 entries/s	         3.341 iter_ns/key	     48119 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000        	    2230	    158859 ns/op	 302910577 entries/s	         3.301 iter_ns/key	     48120 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tree/Scan100000        	    2245	    158762 ns/op	 302616042 entries/s	         3.305 iter_ns/key	     48044 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000      	   10000	     32360 ns/op	 154269897 entries/s	         6.482 iter_ns/key	      4992 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000      	   10000	     32241 ns/op	 154837474 entries/s	         6.458 iter_ns/key	      4992 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan10000      	   10000	     32427 ns/op	 153949407 entries/s	         6.496 iter_ns/key	      4992 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000     	    1110	    314744 ns/op	 154743967 entries/s	         6.462 iter_ns/key	     48705 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000     	    1111	    315462 ns/op	 154455751 entries/s	         6.474 iter_ns/key	     48725 keys/op	       0 B/op	       0 allocs/op
+BenchmarkCompareIteration/Tidwall/Scan100000     	    1107	    313282 ns/op	 155347923 entries/s	         6.437 iter_ns/key	     48668 keys/op	       0 B/op	       0 allocs/op
+PASS

@@ -1,0 +1,47 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkTuneNeighborhood/f64-l32-h36-b32/FreshPut         	 1048576	       205.9 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f64-l32-h36-b32/FreshPut         	 1048576	       204.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f64-l32-h36-b32/FreshPut         	 1048576	       205.4 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f64-l32-h32-b36/FreshPut         	 1048576	       203.8 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f64-l32-h32-b36/FreshPut         	 1048576	       204.4 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f64-l32-h32-b36/FreshPut         	 1048576	       202.8 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h36-b32/FreshPut        	 1048576	       204.0 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h36-b32/FreshPut        	 1048576	       202.5 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h36-b32/FreshPut        	 1048576	       203.0 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h32-b36/FreshPut        	 1048576	       201.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h32-b36/FreshPut        	 1048576	       201.2 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f128-l32-h32-b36/FreshPut        	 1048576	       202.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h36-b32/FreshPut        	 1048576	       207.4 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h36-b32/FreshPut        	 1048576	       203.9 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h36-b32/FreshPut        	 1048576	       204.6 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h32-b36/FreshPut        	 1048576	       202.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h32-b36/FreshPut        	 1048576	       202.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f160-l32-h32-b36/FreshPut        	 1048576	       202.6 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b32/FreshPut        	 1048576	       203.9 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b32/FreshPut        	 1048576	       205.8 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b32/FreshPut        	 1048576	       203.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b36/FreshPut        	 1048576	       202.4 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b36/FreshPut        	 1048576	       201.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b36/FreshPut        	 1048576	       203.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h36-b32/FreshPut        	 1048576	       202.6 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h36-b32/FreshPut        	 1048576	       200.5 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h36-b32/FreshPut        	 1048576	       201.3 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h32-b36/FreshPut        	 1048576	       200.7 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h32-b36/FreshPut        	 1048576	       200.0 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f256-l32-h32-b36/FreshPut        	 1048576	       201.5 ns/op	      22 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h36-b32/FreshPut        	 1048576	       202.9 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h36-b32/FreshPut        	 1048576	       203.9 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h36-b32/FreshPut        	 1048576	       202.8 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h32-b36/FreshPut        	 1048576	       202.0 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h32-b36/FreshPut        	 1048576	       201.0 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f384-l32-h32-b36/FreshPut        	 1048576	       202.7 ns/op	      23 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b32/FreshPut        	 1048576	       206.2 ns/op	      28 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b32/FreshPut        	 1048576	       203.2 ns/op	      28 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h32-b32/FreshPut        	 1048576	       203.4 ns/op	      28 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b36/FreshPut        	 1048576	       216.9 ns/op	      25 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b36/FreshPut        	 1048576	       216.4 ns/op	      25 B/op	       0 allocs/op
+BenchmarkTuneNeighborhood/f192-l32-h36-b36/FreshPut        	 1048576	       216.6 ns/op	      25 B/op	       0 allocs/op
+PASS

@@ -12,7 +12,7 @@ func TestFirstScanDefersLogFlush(t *testing.T) {
 	if p.logN != 5 || p.scanReady {
 		t.Fatal("unexpected cold-scan fixture")
 	}
-	version := tr.version
+	version := tr.version.Load()
 	for pass := 0; pass < 2; pass++ {
 		count := 0
 		tr.Scan(0, 1000, func(k, v int) bool {
@@ -25,11 +25,11 @@ func TestFirstScanDefersLogFlush(t *testing.T) {
 		if count != n {
 			t.Fatal("cold/prepared scan count")
 		}
-		if pass == 0 && (p.logN != 5 || tr.version != version) {
+		if pass == 0 && (p.logN != 5 || tr.version.Load() != version) {
 			t.Fatal("first scan eagerly flushed its log")
 		}
 	}
-	if p.logN != 0 || tr.version == version {
+	if p.logN != 0 || tr.version.Load() == version {
 		t.Fatal("repeat long scan did not prepare its leaf")
 	}
 }
@@ -89,7 +89,7 @@ func TestScanPreparationPreservesLiveCursors(t *testing.T) {
 	if !it.Next() || it.Key() != 0 {
 		t.Fatal("initial iterator position")
 	}
-	version := tr.version
+	version := tr.version.Load()
 	count := 0
 	tr.Scan(0, 10000, func(k, v int) bool {
 		if k != count {
@@ -104,7 +104,7 @@ func TestScanPreparationPreservesLiveCursors(t *testing.T) {
 		}
 		return true
 	})
-	if count != 4096 || tr.version == version {
+	if count != 4096 || tr.version.Load() == version {
 		t.Fatal("fixture did not exercise scan preparation")
 	}
 	for k := 1; k < 4096; k++ {

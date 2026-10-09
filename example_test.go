@@ -2,9 +2,23 @@ package bufftree_test
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/glycerine/bufftree"
 )
+
+func ExampleSingleWriterRWMutex_Downgrade() {
+	var mu bufftree.SingleWriterRWMutex
+	data := []int{3, 1, 2}
+
+	mu.Lock()
+	slices.Sort(data)
+	mu.Downgrade() // Keep protection while admitting other readers.
+	fmt.Println(data)
+	mu.RUnlock() // Downgrade leaves one read hold, not a write hold.
+
+	// Output: [1 2 3]
+}
 
 func ExampleTree() {
 	tree := bufftree.NewBPTree[int, string](nil)

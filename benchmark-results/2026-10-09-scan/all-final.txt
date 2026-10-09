@@ -1,0 +1,11 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor 
+BenchmarkOrderedAll/Tree         	    1372	    260907 ns/op	 251185765 entries/s	         3.981 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkOrderedAll/Tree         	    1370	    261029 ns/op	 251068307 entries/s	         3.983 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkOrderedAll/Tree         	    1370	    260931 ns/op	 251162362 entries/s	         3.981 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkOrderedAll/Tidwall      	    2414	    158487 ns/op	 413510602 entries/s	         2.418 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkOrderedAll/Tidwall      	    2419	    158308 ns/op	 413976686 entries/s	         2.416 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+BenchmarkOrderedAll/Tidwall      	    2406	    149607 ns/op	 438053537 entries/s	         2.283 iter_ns/key	     65536 keys/op	       0 B/op	       0 allocs/op
+PASS

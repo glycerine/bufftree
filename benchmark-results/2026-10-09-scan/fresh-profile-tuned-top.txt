@@ -1,0 +1,51 @@
+File: bufftree-scan-tuned.test
+Build ID: dd8a87b527712386491029a83e3b12ebf1c49024
+Type: cpu
+Time: 2026-10-09 04:06:12 CDT
+Duration: 7.92s, Total samples = 3.58s (45.23%)
+Active filters:
+   tagfocus=phase=fresh-put
+Showing nodes accounting for 3.55s, 99.16% of 3.58s total
+Dropped 10 nodes (cum <= 0.02s)
+      flat  flat%   sum%        cum   cum%
+     0.93s 25.98% 25.98%      0.94s 26.26%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).findLeaf
+     0.42s 11.73% 37.71%      0.56s 15.64%  github.com/glycerine/bufftree.sortEntries[go.shape.uint64,go.shape.uint64]
+     0.34s  9.50% 47.21%      0.34s  9.50%  github.com/glycerine/bufftree.equalKey[go.shape.uint64] (inline)
+     0.29s  8.10% 55.31%      2.09s 58.38%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).trySet
+     0.28s  7.82% 63.13%      1.72s 48.04%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).flush
+     0.19s  5.31% 68.44%      0.19s  5.31%  github.com/glycerine/bufftree.lessKey[go.shape.uint64] (inline)
+     0.15s  4.19% 72.63%      0.15s  4.19%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).block (inline)
+     0.12s  3.35% 75.98%      0.12s  3.35%  github.com/glycerine/bufftree.lower[go.shape.uint64,go.shape.uint64]
+     0.11s  3.07% 79.05%      3.58s   100%  github.com/glycerine/bufftree/bench.benchmarkFreshPut
+     0.10s  2.79% 81.84%      0.10s  2.79%  runtime.memclrNoHeapPointers
+     0.09s  2.51% 84.36%      0.09s  2.51%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).capacity (inline)
+     0.08s  2.23% 86.59%      0.08s  2.23%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).markDirty (inline)
+     0.08s  2.23% 88.83%      1.62s 45.25%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).appendLog
+     0.07s  1.96% 90.78%      0.34s  9.50%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).collectInto
+     0.06s  1.68% 92.46%      0.06s  1.68%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).isDead (inline)
+     0.05s  1.40% 93.85%      3.47s 96.93%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).Put
+     0.05s  1.40% 95.25%      0.05s  1.40%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).header (inline)
+     0.05s  1.40% 96.65%      0.05s  1.40%  runtime.memmove
+     0.03s  0.84% 97.49%      0.11s  3.07%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).load
+     0.02s  0.56% 98.04%      0.02s  0.56%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).log (inline)
+     0.02s  0.56% 98.60%      0.02s  0.56%  runtime.nextFreeFast (inline)
+     0.02s  0.56% 99.16%      0.02s  0.56%  runtime.scanblock
+         0     0% 99.16%      0.13s  3.63%  github.com/glycerine/bufftree.(*Tree[go.shape.uint64,go.shape.uint64]).splitLeaf
+         0     0% 99.16%      0.41s 11.45%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).rebuild
+         0     0% 99.16%      0.09s  2.51%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortBlock
+         0     0% 99.16%      0.48s 13.41%  github.com/glycerine/bufftree.(*bpa[go.shape.uint64,go.shape.uint64]).sortLog
+         0     0% 99.16%      0.05s  1.40%  github.com/glycerine/bufftree.newBPA[go.shape.uint64,go.shape.uint64]
+         0     0% 99.16%      3.58s   100%  github.com/glycerine/bufftree/bench.BenchmarkFreshPut.func1
+         0     0% 99.16%      0.02s  0.56%  runtime.deductAssistCredit
+         0     0% 99.16%      0.02s  0.56%  runtime.gcAssistAlloc
+         0     0% 99.16%      0.02s  0.56%  runtime.gcAssistAlloc.func2
+         0     0% 99.16%      0.02s  0.56%  runtime.gcAssistAlloc1
+         0     0% 99.16%      0.02s  0.56%  runtime.gcDrainN
+         0     0% 99.16%      0.05s  1.40%  runtime.makeslice
+         0     0% 99.16%      0.05s  1.40%  runtime.mallocgc
+         0     0% 99.16%      0.03s  0.84%  runtime.mallocgcSmallNoscan
+         0     0% 99.16%      0.02s  0.56%  runtime.markroot
+         0     0% 99.16%      0.02s  0.56%  runtime.markrootBlock
+         0     0% 99.16%      0.03s  0.84%  runtime.systemstack
+         0     0% 99.16%      3.58s   100%  testing.(*B).launch
+         0     0% 99.16%      3.58s   100%  testing.(*B).runN
