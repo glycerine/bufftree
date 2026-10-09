@@ -84,6 +84,12 @@ modifying the tree’s buffer-pool bookkeeping.
 
 Ordinary point Get does not need these mutations.
 
+Note that we did not implement the optmistic concurrency control scheme
+described in the paper. It appears unsound prima facia. We could not prove it
+sound with a frontier model attempting a LEAN proof. The 
+paper offers no soundness argument. The reference implementation
+code looks buggy because some locking is commented out.
+
 ----------------------------
 This package provides a BP-tree with sorted key-order iteration.
 
