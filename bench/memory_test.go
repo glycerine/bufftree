@@ -2,11 +2,13 @@ package bench
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"testing"
 )
 
@@ -51,7 +53,11 @@ func TestMemoryUsage100K(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var rows [][]string
+	type measurement struct {
+		label string
+		bytes uint64
+	}
+	var measurements []measurement
 	for _, c := range memoryCases {
 		cmd := exec.CommandContext(t.Context(), executable,
 			"-test.run=^TestMemoryUsage100K$", "-test.count=1")
@@ -74,9 +80,16 @@ func TestMemoryUsage100K(t *testing.T) {
 		if !found || result.Layout != c.layout || result.Entries != memoryEntries || result.Bytes == 0 {
 			t.Fatalf("%s: invalid heap measurement %+v\n%s", c.label, result, output)
 		}
-		rows = append(rows, []string{c.label, fmt.Sprint(result.Bytes),
-			fmt.Sprintf("%.2f", float64(result.Bytes)/(1<<20)),
-			fmt.Sprintf("%.2f", float64(result.Bytes)/memoryEntries)})
+		measurements = append(measurements, measurement{c.label, result.Bytes})
+	}
+	slices.SortStableFunc(measurements, func(a, b measurement) int {
+		return cmp.Compare(b.bytes, a.bytes)
+	})
+	var rows [][]string
+	for _, m := range measurements {
+		rows = append(rows, []string{m.label, fmt.Sprint(m.bytes),
+			fmt.Sprintf("%.2f", float64(m.bytes)/(1<<20)),
+			fmt.Sprintf("%.2f", float64(m.bytes)/memoryEntries)})
 	}
 
 	fmt.Printf("\n%s %s/%s; 100,000 entries; uint64 keys and values\n",

@@ -28,9 +28,9 @@ The Put row measures insertion of a fresh key.
 
 | Operation (showing ns/key) | BPTree | builtin Go map | tidwall/btree | red-black tree | insdict.Dict |
 | -------------------------- | -----: | -------------: | ------------: | -------------: | -----------: |
-| Get                        |  100.2 |           16.5 |         115.6 |          199.1 |         22.1 |
-| Put                        |  214.6 |          166.5 |         313.6 |          622.7 |        138.8 |
-| Ordered scan               |   3.20 |  not supported |          4.15 |          15.73 |         5.56 |
+| Get                        |  100.2 |           16.5 |         115.6 |          199.1 |         25.5 |
+| Put                        |  214.6 |          166.5 |         313.6 |          622.7 |        150.1 |
+| Ordered scan               |   3.20 |  not supported |          4.15 |          15.73 |         7.46 |
 
 ~~~
 This compares:
@@ -310,10 +310,10 @@ go -C bench test -v -run '^TestMemoryUsage100K$' -count=1
 | Container         | Heap bytes | MiB  | B/key |
 | ----------------- | ---------: | ---: | ----: |
 | glycerine/rbtree  |    6400080 | 6.10 | 64.00 |
+| insdict.Dict      |    5562488 | 5.30 | 55.62 |
 | bufftree.BPTree   |    2560376 | 2.44 | 25.60 |
 | tidwall/btree.Map |    2513408 | 2.40 | 25.13 |
 | builtin Go map    |    2364576 | 2.26 | 23.65 |
-| insdict.Dict      |    5562488 | 5.30 | 55.62 |
 
 It reports retained heap bytes, MiB, and bytes per key for BPTree,
 the built-in Go map, tidwall's generic Map, rbtree, and insdict.Dict. It shares
