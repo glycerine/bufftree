@@ -1,0 +1,24 @@
+goos: linux
+goarch: amd64
+pkg: github.com/glycerine/bufftree/bench
+cpu: AMD Ryzen Threadripper 3960X 24-Core Processor
+BenchmarkConcurrentUpdate/Tree	2493018	103.3 ns/op	0.08760 reads/write	0 B/op	0 allocs/op
+BenchmarkConcurrentUpdate/Tree	 2532273	        99.20 ns/op	         0.04362 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree           	 2500240	        95.58 ns/op	         0.0000004 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4         	  665595	       332.6 ns/op	         0.01264 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4         	  672810	       330.6 ns/op	         0.01250 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-4         	  716797	       332.0 ns/op	         0.01247 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8         	  568051	       366.7 ns/op	         0.01089 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8         	  639040	       352.2 ns/op	         0.009024 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/Tree-8         	  615199	       348.5 ns/op	         0.009829 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex           	 1000000	       445.4 ns/op	         1.113 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex           	 1000000	       491.7 ns/op	         1.107 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex           	 1000000	       450.7 ns/op	         1.176 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4         	   72348	      3227 ns/op	         4.350 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4         	   74192	      3294 ns/op	         4.348 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-4         	   66945	      3393 ns/op	         4.327 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8         	   33331	      7347 ns/op	        10.24 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8         	   30999	      7165 ns/op	        10.11 reads/write	       0 B/op	       0 allocs/op
+BenchmarkConcurrentUpdate/TidwallRWMutex-8         	   31836	      7394 ns/op	        10.16 reads/write	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/glycerine/bufftree/bench	6.670s
